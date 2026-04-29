@@ -17,14 +17,9 @@ export function WeeklySummary() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    const now = new Date()
-    const dow = now.getDay()
-    const isWeekend = dow === 0 || dow === 6
-
-    if (!isWeekend) {
-      const lastShown = localStorage.getItem('summary_last_week')
-      if (lastShown === String(getWeekNumber(now))) return
-    }
+    const lastShown = localStorage.getItem('summary_last_week')
+    const weekNum = getWeekNumber()
+    if (lastShown === String(weekNum)) return
 
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()]).then(
       ([, schedules, assignments, memos]) => {

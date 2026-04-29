@@ -3,9 +3,9 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Course, CourseSchedule, Assignment, Memo, MoodTag } from '@/lib/types'
+import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, updateCourse } from '@/lib/data'
-import { getWeekNumber } from '@/lib/semester'
+import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 
 const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
@@ -69,7 +69,7 @@ export default function CoursesPage() {
     }
   }
 
-  const totalWeeks = 15
+  const totalWeeks = getSemesterConfig().teachingWeeks
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -257,8 +257,8 @@ export default function CoursesPage() {
                         return (
                           <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
                             style={{
-                              backgroundColor: tag === '⭐喜欢' ? 'rgba(245,158,11,0.1)' : tag === '🥱苟住' ? 'rgba(107,114,128,0.1)' : tag === '💪硬扛' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                              color: tag === '⭐喜欢' ? '#F59E0B' : tag === '🥱苟住' ? '#6B7280' : tag === '💪硬扛' ? '#EF4444' : '#10B981',
+                              backgroundColor: `${getMoodColor(tag)}1A`,
+                              color: getMoodColor(tag),
                             }}>
                             {tag} ×{count}
                           </span>
@@ -286,7 +286,7 @@ export default function CoursesPage() {
                       </button>
                       {isExpanded && (
                         <div className="mt-2 space-y-1">
-                          {courseAssignments.sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 5).map((a) => {
+                          {[...courseAssignments].sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 5).map((a) => {
                             const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
                             const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
                             return (

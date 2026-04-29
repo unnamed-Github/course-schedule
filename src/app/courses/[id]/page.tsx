@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Course, CourseSchedule, Assignment, Memo, MoodTag } from '@/lib/types'
+import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment, updateAssignment, deleteAssignment, getMemos, createMemo, deleteMemo } from '@/lib/data'
-import { getWeekNumber } from '@/lib/semester'
+import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
@@ -100,7 +100,8 @@ export default function CourseDetailPage() {
   }
 
   const perWeek = schedules.length
-  const totalClasses = perWeek * 15
+  const totalWeeks = getSemesterConfig().teachingWeeks
+  const totalClasses = perWeek * totalWeeks
   const completedClasses = Math.min(perWeek * (weekNum - 1), totalClasses)
   const remaining = totalClasses - completedClasses
 
@@ -230,8 +231,8 @@ export default function CourseDetailPage() {
                 return (
                   <span key={tag} className="text-[10px] px-2 py-1 rounded-full font-medium"
                     style={{
-                      backgroundColor: tag === '⭐喜欢' ? 'rgba(245,158,11,0.1)' : tag === '🥱苟住' ? 'rgba(107,114,128,0.1)' : tag === '💪硬扛' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                      color: tag === '⭐喜欢' ? '#F59E0B' : tag === '🥱苟住' ? '#6B7280' : tag === '💪硬扛' ? '#EF4444' : '#10B981',
+                      backgroundColor: `${getMoodColor(tag)}1A`,
+                      color: getMoodColor(tag),
                     }}>
                     {tag} ×{count}
                   </span>
@@ -349,8 +350,8 @@ export default function CourseDetailPage() {
                       {m.mood_tags.map((tag) => (
                         <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full"
                           style={{
-                            backgroundColor: tag === '⭐喜欢' ? 'rgba(245,158,11,0.1)' : tag === '🥱苟住' ? 'rgba(107,114,128,0.1)' : tag === '💪硬扛' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
-                            color: tag === '⭐喜欢' ? '#F59E0B' : tag === '🥱苟住' ? '#6B7280' : tag === '💪硬扛' ? '#EF4444' : '#10B981',
+                            backgroundColor: `${getMoodColor(tag)}1A`,
+                            color: getMoodColor(tag),
                           }}>
                           {tag}
                         </span>

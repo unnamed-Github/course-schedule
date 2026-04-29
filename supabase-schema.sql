@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS courses (
   classroom TEXT DEFAULT '',
   color TEXT DEFAULT '#D4856B',
   week_type TEXT DEFAULT 'all' CHECK (week_type IN ('all', 'odd', 'even')),
+  "order" INTEGER DEFAULT 99,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -42,7 +43,9 @@ CREATE TABLE IF NOT EXISTS memos (
   course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
   mood_emoji TEXT DEFAULT '😊',
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  mood_tags JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 学期配置表
@@ -51,14 +54,15 @@ CREATE TABLE IF NOT EXISTS semester_config (
   value TEXT NOT NULL
 );
 
--- 启用 Row Level Security（个人应用，允许 anon 读写）
+-- 启用 Row Level Security
+-- 注: 本项目为个人应用，RLS 对 anon key 开放完整读写权限。
+-- 部署前可在 Supabase Dashboard 中收紧策略或启用 JWT 验证。
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE semester_config ENABLE ROW LEVEL SECURITY;
 
--- RLS 策略：允许所有操作（个人应用，非多租户）
 CREATE POLICY "Allow all on courses" ON courses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on course_schedules" ON course_schedules FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on assignments" ON assignments FOR ALL USING (true) WITH CHECK (true);

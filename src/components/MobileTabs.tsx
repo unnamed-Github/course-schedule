@@ -24,7 +24,7 @@ export function MobileTabs() {
     >
       <div className="flex items-center justify-around h-16 px-2">
         {TABS.map((tab) => {
-          const isActive = pathname === tab.href
+          const isActive = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href + '/'))
           return (
             <Link
               key={tab.href}

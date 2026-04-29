@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const GENTLE_WORDS = [
@@ -15,10 +15,13 @@ const GENTLE_WORDS = [
 ]
 
 const COOLDOWN_MS = 15 * 60 * 1000
+const SHOW_DELAY_MS = 10000
+const HIDE_DELAY_MS = 4000
 
 export function EasterEgg() {
   const [visible, setVisible] = useState(false)
   const [word, setWord] = useState('')
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
     const checkAndMaybeShow = () => {
@@ -34,11 +37,14 @@ export function EasterEgg() {
       setVisible(true)
       localStorage.setItem('easter_egg_last', now.toString())
 
-      setTimeout(() => setVisible(false), 4000)
+      hideTimerRef.current = setTimeout(() => setVisible(false), HIDE_DELAY_MS)
     }
 
-    const timer = setTimeout(checkAndMaybeShow, 10000)
-    return () => clearTimeout(timer)
+    const timer = setTimeout(checkAndMaybeShow, SHOW_DELAY_MS)
+    return () => {
+      clearTimeout(timer)
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current)
+    }
   }, [])
 
   return (

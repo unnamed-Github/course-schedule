@@ -28,7 +28,18 @@ export interface Assignment {
   created_at: string
 }
 
-export type MoodTag = '⭐喜欢' | '🥱苟住' | '💪硬扛' | '🌈期待'
+export const MOOD_TAGS = [
+  { value: '⭐喜欢' as const, emoji: '⭐', label: '喜欢', color: '#F59E0B' },
+  { value: '🥱苟住' as const, emoji: '🥱', label: '苟住', color: '#6B7280' },
+  { value: '💪硬扛' as const, emoji: '💪', label: '硬扛', color: '#EF4444' },
+  { value: '🌈期待' as const, emoji: '🌈', label: '期待', color: '#10B981' },
+]
+
+export type MoodTag = (typeof MOOD_TAGS)[number]['value']
+
+export function getMoodColor(tag: MoodTag): string {
+  return MOOD_TAGS.find((t) => t.value === tag)?.color ?? '#6B7280'
+}
 
 export interface Memo {
   id: string

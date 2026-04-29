@@ -43,7 +43,7 @@ export function WarmthBanner() {
       const timeGreetings = hour < 12 ? MORNING_GREETINGS : hour < 18 ? AFTERNOON_GREETINGS : EVENING_GREETINGS
       const timeGreet = timeGreetings[Math.floor(Math.random() * timeGreetings.length)]
 
-      let pool = BUSY_WORDS
+      let pool
       if (count >= 4) pool = BUSY_WORDS
       else if (count >= 2) pool = NORMAL_WORDS
       else pool = LIGHT_WORDS

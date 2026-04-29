@@ -35,7 +35,7 @@ const SEMESTER: SemesterConfig = {
   ],
 }
 
-const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
+export const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
   1: { start: '08:00', end: '08:50' },
   2: { start: '09:00', end: '09:50' },
   3: { start: '10:20', end: '11:10' },
@@ -48,6 +48,14 @@ const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
   10: { start: '20:00', end: '20:50' },
   11: { start: '21:00', end: '22:30' },
 }
+
+const PERIOD_TIMES_MS: Record<number, { startMs: number; endMs: number }> = Object.fromEntries(
+  Object.entries(PERIOD_TIMES).map(([period, time]) => {
+    const [sh, sm] = time.start.split(':').map(Number)
+    const [eh, em] = time.end.split(':').map(Number)
+    return [Number(period), { startMs: sh * 3600000 + sm * 60000, endMs: eh * 3600000 + em * 60000 }]
+  })
+) as Record<number, { startMs: number; endMs: number }>
 
 export function getPeriodTime(period: number) {
   return PERIOD_TIMES[period] ?? null
@@ -86,25 +94,24 @@ export function getDayDate(weekNumber: number, dayOfWeek: number): Date {
   return date
 }
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function isHoliday(date: Date): Holiday | null {
-  const d = date.toISOString().slice(0, 10)
+  const d = toDateStr(date)
   return SEMESTER.holidays.find((h) => d >= h.start && d <= h.end) ?? null
 }
 
 export function getMakeupInfo(date: Date): MakeupDay | null {
-  const d = date.toISOString().slice(0, 10)
+  const d = toDateStr(date)
   return SEMESTER.makeupDays.find((m) => m.date === d) ?? null
 }
 
 export function getCurrentPeriod(now: Date = new Date()): number | null {
-  for (const [period, time] of Object.entries(PERIOD_TIMES)) {
-    const [sh, sm] = time.start.split(':').map(Number)
-    const [eh, em] = time.end.split(':').map(Number)
-    const startMs = sh * 3600000 + sm * 60000
-    const endMs = eh * 3600000 + em * 60000
-    const currentMs =
-      now.getHours() * 3600000 + now.getMinutes() * 60000 + now.getSeconds() * 1000
-    if (currentMs >= startMs && currentMs <= endMs) {
+  const currentMs = now.getHours() * 3600000 + now.getMinutes() * 60000 + now.getSeconds() * 1000
+  for (const [period, time] of Object.entries(PERIOD_TIMES_MS)) {
+    if (currentMs >= time.startMs && currentMs <= time.endMs) {
       return Number(period)
     }
   }

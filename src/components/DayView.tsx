@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
@@ -39,10 +39,10 @@ export function DayView() {
   const [viewDate, setViewDate] = useState(new Date())
 
   useEffect(() => {
-    getCourses().then(setCourses)
-    getSchedules().then(setSchedules)
-    getAssignments().then(setAssignments)
-    getMemos().then(setMemos)
+    getCourses().then(setCourses).catch((e) => console.error('DayView getCourses failed:', e))
+    getSchedules().then(setSchedules).catch((e) => console.error('DayView getSchedules failed:', e))
+    getAssignments().then(setAssignments).catch((e) => console.error('DayView getAssignments failed:', e))
+    getMemos().then(setMemos).catch((e) => console.error('DayView getMemos failed:', e))
   }, [])
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export function DayView() {
     return () => clearInterval(timer)
   }, [])
 
-  const courseMap = new Map(courses.map((c) => [c.id, c]))
+  const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
 
   const dayNames = ['日', '一', '二', '三', '四', '五', '六']
   const weekNum = getWeekNumber(viewDate)
@@ -73,8 +73,8 @@ export function DayView() {
 
   const isToday = isSameDay(viewDate, new Date())
 
-  const START_MIN = 480
-  const END_MIN = 1350
+  const START_MIN = 480 // 08:00 = 8 * 60
+  const END_MIN = 1350  // 22:30 = 22 * 60 + 30
   const nowPos = isToday ? ((nowMinutes - START_MIN) / (END_MIN - START_MIN)) * 100 : -1
 
   const goToToday = () => setViewDate(new Date())
