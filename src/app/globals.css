@@ -34,6 +34,8 @@
   --fg-secondary: #6B7280;
   --border: #E5E7EB;
   --card-bg: #FFFFFF;
+  --nav-bg: rgba(255, 251, 245, 0.85);
+  --tab-bg: rgba(255, 255, 255, 0.92);
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
   --highlight-glow: 0 0 0 3px rgba(245, 158, 11, 0.25);
@@ -57,6 +59,8 @@
   --fg-secondary: #94A3B8;
   --border: #1E293B;
   --card-bg: #1E293B;
+  --nav-bg: rgba(15, 23, 42, 0.85);
+  --tab-bg: rgba(30, 41, 59, 0.92);
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
   --highlight-glow: 0 0 0 3px rgba(251, 191, 36, 0.3);

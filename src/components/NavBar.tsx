@@ -31,7 +31,7 @@ export function NavBar() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50" style={{ backgroundColor: 'rgba(255,251,245,0.85)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}>
+    <header className="sticky top-0 z-50" style={{ backgroundColor: 'var(--nav-bg)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}>
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold tracking-tight flex-shrink-0" style={{ color: 'var(--fg)' }}>
           课表 · 竹

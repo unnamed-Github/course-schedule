@@ -17,7 +17,7 @@ export function MobileTabs() {
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
       style={{
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: 'var(--tab-bg)',
         borderTop: '1px solid var(--border)',
         backdropFilter: 'blur(12px)',
         boxShadow: '0 -1px 8px rgba(0,0,0,0.03)',
