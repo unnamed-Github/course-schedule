@@ -161,7 +161,7 @@ export default function CoursesPage() {
                 }}
               >
                 {/* Color bar top */}
-                <div style={{ height: 4, backgroundColor: course.color }} />
+                <div style={{ height: 4, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}88 100%)` }} />
 
                 <div className="p-4">
                   {/* Header */}

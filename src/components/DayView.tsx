@@ -236,7 +236,7 @@ export function DayView() {
                     </p>
                   </div>
                   {isOverdue && (
-                    <span className="text-[10px] text-[#EF4444] animate-pulse font-medium">超时</span>
+                    <span className="text-[10px] text-[#EF4444] font-medium" style={{ animation: 'breathe-danger 3s ease-in-out infinite' }}>超时</span>
                   )}
                 </div>
               )

@@ -17,9 +17,10 @@ export function MobileTabs() {
     <nav
       className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
       style={{
-        backgroundColor: 'var(--card-bg)',
+        backgroundColor: 'rgba(255,255,255,0.92)',
         borderTop: '1px solid var(--border)',
-        boxShadow: '0 -1px 3px rgba(0,0,0,0.04)',
+        backdropFilter: 'blur(12px)',
+        boxShadow: '0 -1px 8px rgba(0,0,0,0.03)',
       }}
     >
       <div className="flex items-center justify-around h-16 px-2">

@@ -239,11 +239,7 @@ export function WeekView() {
                             </span>
                           </div>
                         ) : daySchedules.length === 0 ? (
-                          <div className="flex-1 flex items-center justify-center m-0.5 rounded-lg" style={{ border: '1px dashed var(--border)', opacity: 0.4 }}>
-                            <span className="text-[10px]" style={{ color: 'var(--fg-secondary)', opacity: 0.3 }}>
-                              可添加
-                            </span>
-                          </div>
+                          <div className="flex-1" />
                         ) : (
                           daySchedules.map((schedule) => {
                             const course = courseMap.get(schedule.course_id)
@@ -254,7 +250,7 @@ export function WeekView() {
                               <motion.div
                                 key={schedule.id}
                                 layout
-                                className="rounded-lg px-2 py-1 text-xs cursor-pointer relative overflow-hidden group"
+                                className="rounded-lg px-2 py-1.5 cursor-pointer relative overflow-hidden group"
                                 style={{
                                   backgroundColor: active
                                     ? `${course.color}18`
@@ -264,12 +260,14 @@ export function WeekView() {
                                 }}
                                 whileHover={{ scale: 1.02 }}
                               >
-                                <div className="font-semibold truncate pr-3" style={{ color: course.color }}>
+                                <div className="font-semibold truncate pr-3 text-sm" style={{ color: course.color }}>
                                   {course.name}
                                 </div>
-                                <div className="truncate text-[10px] mt-0.5" style={{ color: 'var(--fg-secondary)' }}>
-                                  {schedule.location !== '—' ? schedule.location : ''}
-                                </div>
+                                {schedule.location !== '—' && (
+                                  <div className="truncate text-[10px] mt-0.5 opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: 'var(--fg-secondary)' }}>
+                                    {schedule.location}
+                                  </div>
+                                )}
                                 {active && (
                                   <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
                                 )}

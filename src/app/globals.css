@@ -45,6 +45,12 @@
   --danger-bg: rgba(239, 68, 68, 0.1);
 }
 
+/* Time-of-day background tints */
+@keyframes breathe-danger {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 .dark {
   --bg: #0F172A;
   --fg: #E2E8F0;
@@ -68,6 +74,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.8s ease;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }

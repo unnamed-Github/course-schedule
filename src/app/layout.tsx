@@ -3,6 +3,8 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { NavBar } from "@/components/NavBar"
 import { MobileTabs } from "@/components/MobileTabs"
+import { DayPhaseTint } from "@/components/DayPhaseTint"
+import { PageTransition } from "@/components/PageTransition"
 
 export const metadata: Metadata = {
   title: "课表 · 竹",
@@ -22,9 +24,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
+          <DayPhaseTint />
           <NavBar />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-24 md:pb-8">
-            {children}
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-28 md:pb-10">
+            <PageTransition>
+              {children}
+            </PageTransition>
           </main>
           <MobileTabs />
         </ThemeProvider>

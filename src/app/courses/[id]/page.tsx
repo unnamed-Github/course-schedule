@@ -126,7 +126,7 @@ export default function CourseDetailPage() {
         className="rounded-2xl overflow-hidden"
         style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}
       >
-        <div style={{ height: 4, backgroundColor: course.color }} />
+        <div style={{ height: 4, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}88 100%)` }} />
         <div className="p-5">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -283,8 +283,9 @@ export default function CourseDetailPage() {
                     {a.status === 'submitted' ? '✅' : '⬜'}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${a.status === 'submitted' ? 'line-through opacity-50' : ''}`} style={{ color: 'var(--fg)' }}>
+                    <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--fg)' }}>
                       {a.title}
+                      {a.status === 'submitted' && <span className="ml-1.5 text-[10px]" style={{ color: 'var(--success)' }}>✓</span>}
                     </p>
                     <p className={`text-xs ${isOverdue ? 'text-[#EF4444]' : isNear ? 'text-[#F59E0B]' : ''}`}
                       style={!isOverdue && !isNear ? { color: 'var(--fg-secondary)' } : {}}>
