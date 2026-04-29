@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
@@ -26,6 +26,7 @@ export function DayView() {
   const [nowMinutes, setNowMinutes] = useState(0)
   const [viewDate, setViewDate] = useState(new Date())
   const [loaded, setLoaded] = useState(false)
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
@@ -65,7 +66,22 @@ export function DayView() {
     <div className="max-w-2xl mx-auto space-y-6">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-3">
         <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)]" style={{ color: 'var(--text-secondary)' }}>←</button>
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{viewDateLabel}</h2>
+        <button
+          onClick={() => dateInputRef.current?.showPicker?.()}
+          className="text-lg font-semibold hover:opacity-70 transition-opacity cursor-pointer"
+          style={{ color: 'var(--text-primary)' }}
+          title="点击选择日期"
+        >
+          {viewDateLabel}
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          value={formatDateFull(viewDate)}
+          onChange={(e) => { if (e.target.value) setViewDate(new Date(e.target.value + 'T00:00:00')) }}
+          className="absolute opacity-0 pointer-events-none"
+          aria-label="选择日期"
+        />
         <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)]" style={{ color: 'var(--text-secondary)' }}>→</button>
       </motion.div>
 

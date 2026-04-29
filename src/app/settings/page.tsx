@@ -4,6 +4,9 @@ import { useRef, useState } from 'react'
 import { getCourses, getSchedules } from '@/lib/data'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { useTheme } from '@/components/ThemeProvider'
+import { getSemesterConfig } from '@/lib/semester'
+
+const semester = getSemesterConfig()
 
 export default function SettingsPage() {
   const { theme, toggle } = useTheme()
@@ -77,6 +80,35 @@ export default function SettingsPage() {
           <div className="flex justify-between"><span>教学周</span><span>第 1-15 周</span></div>
           <div className="flex justify-between"><span>考试周</span><span>第 16-17 周</span></div>
           <div className="flex justify-between"><span>节假日</span><span>清明 4/5 · 五一 5/1-5 · 端午 6/19</span></div>
+        </div>
+      </div>
+
+      {/* 节假日 / 调休管理 */}
+      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+        <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>📅 节假日与调休</h3>
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>假期安排</p>
+            <div className="space-y-1.5">
+              {semester.holidays.map((h) => (
+                <div key={h.name} className="flex items-center justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <span>{h.name}</span>
+                  <span>{h.start}{h.end !== h.start ? ` — ${h.end}` : ''}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border-t pt-3" style={{ borderColor: 'var(--border-light)' }}>
+            <p className="text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>调课 / 补课</p>
+            <div className="space-y-1.5">
+              {semester.makeupDays.map((m) => (
+                <div key={m.date} className="flex items-center justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <span>{m.date}</span>
+                  <span>补周{m.replacesDayOfWeek} · {m.weekType === 'odd' ? '单周' : m.weekType === 'even' ? '双周' : '每周'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

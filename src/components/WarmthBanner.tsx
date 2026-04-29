@@ -13,8 +13,17 @@ const BUSY_WORDS = ['今天满课，加油呀～', '撑住，课多也有课多�
 const NORMAL_WORDS = ['今天节奏刚好，稳着来 🌿', '按部就班就是胜利', '一步一步，不急不躁']
 const LIGHT_WORDS = ['今天课不多，偷得半日闲 ☕', '轻松的一天，享受一下', '放慢脚步也很好']
 
+const ENCOURAGEMENTS = [
+  '今天也闪闪发光 ✨',
+  '你比自己想象的更棒',
+  '再忙也要记得喝水呀 🥤',
+  '每一步都算数',
+  '保持呼吸，你做得很好',
+]
+
 export function WarmthBanner() {
   const [message, setMessage] = useState('')
+  const [encouragement, setEncouragement] = useState('')
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
@@ -40,6 +49,7 @@ export function WarmthBanner() {
 
       const word = pool[Math.floor(Math.random() * pool.length)]
       setMessage(`${timeGreet}，${count}节课。${word}`)
+      setEncouragement(ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)])
     })
   }, [])
 
@@ -53,26 +63,25 @@ export function WarmthBanner() {
     <AnimatePresence>
       {visible && message && (
         <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3 }}
-          className="mb-4 rounded-2xl overflow-hidden relative"
-          style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+          initial={{ opacity: 0, y: -8, height: 0 }}
+          animate={{ opacity: 1, y: 0, height: 'auto' }}
+          exit={{ opacity: 0, y: -8, height: 0 }}
+          className="mb-4 py-2 text-center relative"
         >
-          <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: 'var(--accent-warm)' }} />
-          <div className="py-3 px-5 flex items-center justify-between">
-            <p className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
-              {message}
-            </p>
-            <button
-              onClick={handleClose}
-              className="w-6 h-6 flex items-center justify-center rounded-full opacity-40 hover:opacity-70 transition-opacity text-sm flex-shrink-0 ml-3"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              ✕
-            </button>
-          </div>
+          <p className="text-sm" style={{ color: 'var(--fg-secondary)' }}>
+            {message}
+          </p>
+          <p className="text-xs mt-0.5 italic" style={{ color: 'var(--fg-secondary)', opacity: 0.6 }}>
+            {encouragement}
+          </p>
+          <button
+            onClick={handleClose}
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs"
+            style={{ color: 'var(--fg-secondary)' }}
+            aria-label="关闭问候"
+          >
+            ✕
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
