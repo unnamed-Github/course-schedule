@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CourseSchedule, Course } from '@/lib/types'
-import { getCourses, getSchedules } from '@/lib/data'
-import { getWeekCourses, getCurrentPeriod, getWeekNumber, getWeekDateRange, getTodayCourses, getMakeupInfo, isHoliday } from '@/lib/schedule'
+import { CourseSchedule, Course, Memo } from '@/lib/types'
+import { getCourses, getSchedules, getMemos } from '@/lib/data'
+import { getCurrentPeriod, getWeekNumber, getWeekDateRange, getMakeupInfo, isHoliday } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
 
 const DAYS = ['一', '二', '三', '四', '五', '六', '日']
@@ -17,14 +17,14 @@ const PERIOD_GROUPS = [
   { label: '11节', start: 11, end: 11, time: '21:00-22:30' },
 ]
 
-function parseTimeToMinutes(time: string) {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
+function formatDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function WeekView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
+  const [memos, setMemos] = useState<Memo[]>([])
   const [weekNum, setWeekNum] = useState(0)
   const [weekRange, setWeekRange] = useState<{ start: Date; end: Date } | null>(null)
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
@@ -33,6 +33,7 @@ export function WeekView() {
   useEffect(() => {
     getCourses().then(setCourses)
     getSchedules().then(setSchedules)
+    getMemos().then(setMemos)
 
     const wn = getWeekNumber()
     setWeekNum(wn)
@@ -63,14 +64,23 @@ export function WeekView() {
 
   const formatDate = (d: Date) => `${d.getMonth() + 1}月${d.getDate()}日`
 
-  // Determine which day columns to show (normally Mon-Fri, but include Saturday if makeup)
   const showDays = [1, 2, 3, 4, 5]
-  if (makeup && makeup.replacesDayOfWeek <= 5) {
-    // makeup day already covered in Mon-Fri
+
+  // Build memo map: course_id -> count for the current week
+  const memoCountMap = new Map<string, number>()
+  if (weekRange) {
+    memos.forEach((m) => {
+      const memoDate = m.created_at.slice(0, 10)
+      const weekStart = formatDateStr(weekRange.start)
+      const weekEnd = formatDateStr(weekRange.end)
+      if (memoDate >= weekStart && memoDate <= weekEnd) {
+        memoCountMap.set(m.course_id, (memoCountMap.get(m.course_id) ?? 0) + 1)
+      }
+    })
   }
+
   const allSchedules = schedules
 
-  // Check if a course at a specific period group is currently active
   function isCurrentCourse(schedule: CourseSchedule) {
     if (currentDay === 0 || currentPeriod === null) return false
     return (
@@ -206,9 +216,9 @@ export function WeekView() {
                             </span>
                           </div>
                         ) : daySchedules.length === 0 ? (
-                          <div className="flex-1 flex items-center justify-center">
-                            <span className="text-[10px]" style={{ color: 'var(--border)' }}>
-                              —
+                          <div className="flex-1 flex items-center justify-center m-0.5 rounded-lg" style={{ border: '1px dashed var(--border)', opacity: 0.4 }}>
+                            <span className="text-[10px]" style={{ color: 'var(--fg-secondary)', opacity: 0.3 }}>
+                              可添加
                             </span>
                           </div>
                         ) : (
@@ -216,11 +226,12 @@ export function WeekView() {
                             const course = courseMap.get(schedule.course_id)
                             if (!course) return null
                             const active = isCurrentCourse(schedule)
+                            const memoCount = memoCountMap.get(schedule.course_id) ?? 0
                             return (
                               <motion.div
                                 key={schedule.id}
                                 layout
-                                className="rounded-lg px-2 py-1 text-xs cursor-pointer relative overflow-hidden"
+                                className="rounded-lg px-2 py-1 text-xs cursor-pointer relative overflow-hidden group"
                                 style={{
                                   backgroundColor: active
                                     ? `${course.color}18`
@@ -230,7 +241,7 @@ export function WeekView() {
                                 }}
                                 whileHover={{ scale: 1.02 }}
                               >
-                                <div className="font-semibold truncate" style={{ color: course.color }}>
+                                <div className="font-semibold truncate pr-3" style={{ color: course.color }}>
                                   {course.name}
                                 </div>
                                 <div className="truncate text-[10px] mt-0.5" style={{ color: 'var(--fg-secondary)' }}>
@@ -238,6 +249,9 @@ export function WeekView() {
                                 </div>
                                 {active && (
                                   <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
+                                )}
+                                {memoCount > 0 && !active && (
+                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#10B981]" title={`${memoCount}条备忘`} />
                                 )}
                               </motion.div>
                             )

@@ -12,6 +12,23 @@ function parseTimeToMinutes(time: string) {
   return h * 60 + m
 }
 
+function formatDateFull(d: Date) {
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const date = d.getDate()
+  return `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`
+}
+
+function addDays(d: Date, days: number) {
+  const r = new Date(d)
+  r.setDate(r.getDate() + days)
+  return r
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+}
+
 export function DayView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
@@ -19,16 +36,19 @@ export function DayView() {
   const [memos, setMemos] = useState<Memo[]>([])
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [nowMinutes, setNowMinutes] = useState(0)
+  const [viewDate, setViewDate] = useState(new Date())
+
+  useEffect(() => {
+    getCourses().then(setCourses)
+    getSchedules().then(setSchedules)
+    getAssignments().then(setAssignments)
+    getMemos().then(setMemos)
+  }, [])
 
   useEffect(() => {
     const now = new Date()
     setCurrentPeriod(getCurrentPeriod(now))
     setNowMinutes(now.getHours() * 60 + now.getMinutes())
-
-    getCourses().then(setCourses)
-    getSchedules().then(setSchedules)
-    getAssignments().then(setAssignments)
-    getMemos().then(setMemos)
 
     const timer = setInterval(() => {
       const n = new Date()
@@ -38,34 +58,53 @@ export function DayView() {
     return () => clearInterval(timer)
   }, [])
 
-  const todaySchedules = getTodayCourses(schedules)
   const courseMap = new Map(courses.map((c) => [c.id, c]))
 
-  const now = new Date()
-  const weekNum = getWeekNumber(now)
   const dayNames = ['日', '一', '二', '三', '四', '五', '六']
-  const todayLabel = `${now.getMonth() + 1}月${now.getDate()}日 周${dayNames[now.getDay()]} · 第${weekNum}周`
+  const weekNum = getWeekNumber(viewDate)
+  const viewDateLabel = `${viewDate.getMonth() + 1}月${viewDate.getDate()}日 周${dayNames[viewDate.getDay()]} · 第${weekNum}周`
 
-  const todayStr = now.toISOString().slice(0, 10)
-  const todayAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === todayStr)
-  const todayMemos = memos.filter((m) => m.created_at.slice(0, 10) === todayStr)
+  const viewDateStr = formatDateFull(viewDate)
+  const viewAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === viewDateStr)
+  const viewMemos = memos.filter((m) => m.created_at.slice(0, 10) === viewDateStr)
 
-  const sortedSchedules = [...todaySchedules].sort((a, b) => a.start_period - b.start_period)
+  const viewSchedules = getTodayCourses(schedules, viewDate)
+  const sortedSchedules = [...viewSchedules].sort((a, b) => a.start_period - b.start_period)
 
-  // Time range for timeline: 8:00 to 22:30
+  const isToday = isSameDay(viewDate, new Date())
+
   const START_MIN = 480
   const END_MIN = 1350
-  const nowPos = ((nowMinutes - START_MIN) / (END_MIN - START_MIN)) * 100
+  const nowPos = isToday ? ((nowMinutes - START_MIN) / (END_MIN - START_MIN)) * 100 : -1
+
+  const goToToday = () => setViewDate(new Date())
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+      {/* Date Navigator */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center"
+        className="flex items-center justify-center gap-3"
       >
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{todayLabel}</h2>
+        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="btn-ghost text-sm px-2" style={{ color: 'var(--fg-secondary)' }}>
+          ←
+        </button>
+        <div className="text-center min-w-[200px]">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{viewDateLabel}</h2>
+        </div>
+        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="btn-ghost text-sm px-2" style={{ color: 'var(--fg-secondary)' }}>
+          →
+        </button>
       </motion.div>
+
+      {!isToday && (
+        <div className="text-center">
+          <button onClick={goToToday} className="btn-ghost text-xs" style={{ color: '#F59E0B' }}>
+            回到今天
+          </button>
+        </div>
+      )}
 
       {/* Timeline */}
       <section>
@@ -76,12 +115,11 @@ export function DayView() {
             style={{ border: '1px dashed var(--border)' }}
           >
             <p className="text-sm" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>
-              今天没有课程 🎉
+              这天没有课程 🎉
             </p>
           </div>
         ) : (
           <div className="relative">
-            {/* Current time indicator */}
             {nowPos >= 0 && nowPos <= 100 && (
               <div
                 className="absolute left-0 right-0 z-10 flex items-center"
@@ -98,11 +136,11 @@ export function DayView() {
                 if (!course) return null
                 const startTime = getPeriodTime(schedule.start_period)
                 const endTime = getPeriodTime(schedule.end_period)
-                const isNow =
+                const isNow = isToday &&
                   currentPeriod !== null &&
                   currentPeriod >= schedule.start_period &&
                   currentPeriod <= schedule.end_period
-                const isPast = currentPeriod !== null && schedule.end_period < currentPeriod
+                const isPast = isToday && currentPeriod !== null && schedule.end_period < currentPeriod
 
                 return (
                   <motion.div
@@ -110,7 +148,7 @@ export function DayView() {
                     initial={{ opacity: 0, x: -12 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: schedule.start_period * 0.02 }}
-                    className="rounded-2xl p-4 flex items-start gap-4"
+                    className="rounded-2xl p-4 flex items-start gap-4 hover:shadow-md transition-shadow"
                     style={{
                       backgroundColor: 'var(--card-bg)',
                       border: isNow
@@ -178,12 +216,12 @@ export function DayView() {
         {/* Assignments */}
         <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
           <h3 className="text-xs font-medium mb-2" style={{ color: 'var(--fg-secondary)' }}>
-            今日截止 ({todayAssignments.length})
+            {isToday ? '今日' : '当天'}截止 ({viewAssignments.length})
           </h3>
-          {todayAssignments.length === 0 ? (
+          {viewAssignments.length === 0 ? (
             <p className="text-xs py-2" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无</p>
           ) : (
-            todayAssignments.map((a) => {
+            viewAssignments.map((a) => {
               const course = courseMap.get(a.course_id)
               const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
               return (
@@ -209,12 +247,12 @@ export function DayView() {
         {/* Memos */}
         <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
           <h3 className="text-xs font-medium mb-2" style={{ color: 'var(--fg-secondary)' }}>
-            今日备忘 ({todayMemos.length})
+            {isToday ? '今日' : '当天'}备忘 ({viewMemos.length})
           </h3>
-          {todayMemos.length === 0 ? (
+          {viewMemos.length === 0 ? (
             <p className="text-xs py-2" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无</p>
           ) : (
-            todayMemos.map((m) => {
+            viewMemos.map((m) => {
               const course = courseMap.get(m.course_id)
               return (
                 <div key={m.id} className="flex items-start gap-2 py-1.5 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>

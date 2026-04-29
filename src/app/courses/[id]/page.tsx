@@ -251,7 +251,12 @@ export default function CourseDetailPage() {
 
         {showAssignmentForm && (
           <div className="mb-3 p-4 rounded-2xl space-y-2" style={{ backgroundColor: 'var(--bg)' }}>
-            <input placeholder="标题" value={assignmentForm.title} onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))}
+            <input
+              placeholder="标题"
+              value={assignmentForm.title}
+              onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }}
+              autoFocus
               className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
             <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))}
               className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
@@ -331,10 +336,14 @@ export default function CourseDetailPage() {
         ) : (
           <div className="space-y-2">
             {memos.map((m) => (
-              <div key={m.id} className="flex items-start gap-3 py-2 border-b last:border-0 group" style={{ borderColor: 'var(--border)' }}>
-                <span className="text-lg flex-shrink-0">{m.mood_emoji}</span>
+              <div key={m.id} className="flex items-start gap-3 group">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: 'var(--border)' }}>
+                  {m.mood_emoji}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm" style={{ color: 'var(--fg)' }}>{m.content}</p>
+                  <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 inline-block max-w-full" style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)' }}>
+                    <p className="text-sm" style={{ color: 'var(--fg)' }}>{m.content}</p>
+                  </div>
                   {m.mood_tags && m.mood_tags.length > 0 && (
                     <div className="flex gap-1 mt-1">
                       {m.mood_tags.map((tag) => (
