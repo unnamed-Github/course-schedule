@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CourseSchedule, Course, Memo } from '@/lib/types'
-import { getCourses, getSchedules, getMemos } from '@/lib/data'
+import Link from 'next/link'
+import { CourseSchedule, Course, Assignment, Memo, MoodTag } from '@/lib/types'
+import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, getMakeupInfo, isHoliday } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
 
@@ -17,22 +18,31 @@ const PERIOD_GROUPS = [
   { label: '11节', start: 11, end: 11, time: '21:00-22:30' },
 ]
 
+const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
+
 function formatDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function formatDateTime(iso: string) {
+  return iso.slice(0, 16).replace('T', ' ')
 }
 
 export function WeekView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
   const [weekNum, setWeekNum] = useState(0)
   const [weekRange, setWeekRange] = useState<{ start: Date; end: Date } | null>(null)
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [currentDay, setCurrentDay] = useState<number>(0)
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
 
   useEffect(() => {
     getCourses().then(setCourses)
     getSchedules().then(setSchedules)
+    getAssignments().then(setAssignments)
     getMemos().then(setMemos)
 
     const wn = getWeekNumber()
@@ -66,7 +76,6 @@ export function WeekView() {
 
   const showDays = [1, 2, 3, 4, 5]
 
-  // Build memo map: course_id -> count for the current week
   const memoCountMap = new Map<string, number>()
   if (weekRange) {
     memos.forEach((m) => {
@@ -79,8 +88,6 @@ export function WeekView() {
     })
   }
 
-  const allSchedules = schedules
-
   function isCurrentCourse(schedule: CourseSchedule) {
     if (currentDay === 0 || currentPeriod === null) return false
     return (
@@ -89,6 +96,24 @@ export function WeekView() {
       currentPeriod <= schedule.end_period
     )
   }
+
+  // Detail panel data
+  const selectedCourse = selectedCourseId ? courseMap.get(selectedCourseId) ?? null : null
+  const selectedSchedules = selectedCourseId ? schedules.filter((s) => s.course_id === selectedCourseId) : []
+  const selectedAssignments = selectedCourseId
+    ? assignments.filter((a) => a.course_id === selectedCourseId).sort((a, b) => a.due_date.localeCompare(b.due_date))
+    : []
+  const selectedMemos = selectedCourseId
+    ? memos.filter((m) => m.course_id === selectedCourseId)
+    : []
+
+  // Tag counts for selected course
+  const selectedTagCounts: Record<string, number> = {}
+  selectedMemos.forEach((m) => {
+    m.mood_tags?.forEach((t) => { selectedTagCounts[t] = (selectedTagCounts[t] ?? 0) + 1 })
+  })
+
+  const DAY_MAP: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五' }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -182,7 +207,7 @@ export function WeekView() {
 
                   {/* Day cells */}
                   {showDays.map((day) => {
-                    const daySchedules = allSchedules.filter(
+                    const daySchedules = schedules.filter(
                       (s) => {
                         if (s.day_of_week !== day) return false
                         if (s.week_type === 'odd' && weekNum % 2 === 0) return false
@@ -231,6 +256,7 @@ export function WeekView() {
                               <motion.div
                                 key={schedule.id}
                                 layout
+                                onClick={() => setSelectedCourseId(course.id)}
                                 className="rounded-lg px-2 py-1 text-xs cursor-pointer relative overflow-hidden group"
                                 style={{
                                   backgroundColor: active
@@ -266,6 +292,176 @@ export function WeekView() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Detail Overlay */}
+      <AnimatePresence>
+        {selectedCourseId && selectedCourse && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40"
+              style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
+              onClick={() => setSelectedCourseId(null)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              className="fixed inset-x-4 top-20 z-50 mx-auto max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl p-5"
+              style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}
+            >
+              {/* Close */}
+              <button
+                onClick={() => setSelectedCourseId(null)}
+                className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full opacity-40 hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--fg-secondary)' }}
+              >
+                ✕
+              </button>
+
+              {/* Course header */}
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
+                  style={{ backgroundColor: selectedCourse.color }}
+                >
+                  {selectedCourse.name.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold" style={{ color: 'var(--fg)' }}>{selectedCourse.name}</h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--fg-secondary)' }}>
+                    {selectedCourse.teacher !== '—' && `${selectedCourse.teacher} · `}
+                    {selectedCourse.classroom !== '—' ? selectedCourse.classroom : ''}
+                    {selectedCourse.week_type !== 'all' && ` · ${selectedCourse.week_type === 'odd' ? '单周' : '双周'}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Schedule times */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {selectedSchedules.map((s) => (
+                  <span key={s.id} className="chip text-[10px]" style={{ borderColor: 'var(--border)' }}>
+                    周{DAY_MAP[s.day_of_week]} {s.start_period}-{s.end_period}节
+                  </span>
+                ))}
+              </div>
+
+              {/* Mood tags */}
+              {Object.keys(selectedTagCounts).length > 0 && (
+                <div className="mb-4">
+                  <p className="text-[10px] mb-1.5" style={{ color: 'var(--fg-secondary)' }}>心情标签</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {ALL_TAGS.map((tag) => {
+                      const count = selectedTagCounts[tag] ?? 0
+                      if (count === 0) return null
+                      return (
+                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                          style={{
+                            backgroundColor: tag === '⭐喜欢' ? 'rgba(245,158,11,0.1)' : tag === '🥱苟住' ? 'rgba(107,114,128,0.1)' : tag === '💪硬扛' ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)',
+                            color: tag === '⭐喜欢' ? '#F59E0B' : tag === '🥱苟住' ? '#6B7280' : tag === '💪硬扛' ? '#EF4444' : '#10B981',
+                          }}>
+                          {tag} ×{count}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Assignments */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-medium" style={{ color: 'var(--fg-secondary)' }}>
+                    作业 ({selectedAssignments.length})
+                  </p>
+                  <Link
+                    href={`/courses/${selectedCourseId}`}
+                    className="text-[10px]"
+                    style={{ color: '#F59E0B' }}
+                    onClick={() => setSelectedCourseId(null)}
+                  >
+                    全部 →
+                  </Link>
+                </div>
+                {selectedAssignments.length === 0 ? (
+                  <p className="text-[10px] py-1" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无</p>
+                ) : (
+                  <div className="space-y-1">
+                    {selectedAssignments.slice(0, 5).map((a) => {
+                      const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+                      const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
+                      return (
+                        <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
+                          <span>{a.status === 'submitted' ? '✅' : '📝'}</span>
+                          <span className="truncate" style={{ color: isOverdue ? '#EF4444' : isNear ? '#F59E0B' : 'var(--fg-secondary)' }}>
+                            {a.title}
+                          </span>
+                          <span className="flex-shrink-0" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>
+                            {formatDateTime(a.due_date).slice(5)}
+                          </span>
+                          {isOverdue && <span className="text-[#EF4444]">⚠️</span>}
+                          {isNear && <span className="text-[#F59E0B]">⏰</span>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Memos */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-medium" style={{ color: 'var(--fg-secondary)' }}>
+                    备忘 ({selectedMemos.length})
+                  </p>
+                  <Link
+                    href={`/courses/${selectedCourseId}`}
+                    className="text-[10px]"
+                    style={{ color: '#F59E0B' }}
+                    onClick={() => setSelectedCourseId(null)}
+                  >
+                    全部 →
+                  </Link>
+                </div>
+                {selectedMemos.length === 0 ? (
+                  <p className="text-[10px] py-1" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {selectedMemos.slice(0, 5).map((m) => (
+                      <div key={m.id} className="flex items-start gap-2">
+                        <span className="text-sm flex-shrink-0">{m.mood_emoji}</span>
+                        <div className="min-w-0">
+                          <p className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>{m.content}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: 'var(--fg-secondary)', opacity: 0.4 }}>
+                            {formatDateTime(m.created_at).slice(5)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer action */}
+              <div className="mt-4 pt-3 border-t flex justify-end" style={{ borderColor: 'var(--border)' }}>
+                <Link
+                  href={`/courses/${selectedCourseId}`}
+                  className="rounded-xl px-4 py-1.5 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90"
+                  onClick={() => setSelectedCourseId(null)}
+                >
+                  查看完整详情
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

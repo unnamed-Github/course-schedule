@@ -6,6 +6,13 @@ import { usePathname } from "next/navigation"
 import { useTheme } from "@/components/ThemeProvider"
 import { getWeekNumber } from "@/lib/semester"
 
+const TABS = [
+  { href: "/", label: "周视图" },
+  { href: "/day", label: "日视图" },
+  { href: "/courses", label: "课程" },
+  { href: "/settings", label: "设置" },
+]
+
 export function NavBar() {
   const pathname = usePathname()
   const { theme, toggle } = useTheme()
@@ -18,10 +25,31 @@ export function NavBar() {
   return (
     <header className="sticky top-0 z-50 backdrop-blur-md" style={{ backgroundColor: 'var(--bg)', borderBottom: '1px solid var(--border)' }}>
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold tracking-tight" style={{ color: 'var(--fg)' }}>
+        <Link href="/" className="text-xl font-bold tracking-tight flex-shrink-0" style={{ color: 'var(--fg)' }}>
           课表 · 竹
         </Link>
-        <div className="flex items-center gap-3">
+
+        {/* Desktop tabs */}
+        <nav className="hidden md:flex items-center gap-1">
+          {TABS.map((tab) => {
+            const isActive = pathname === tab.href
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="px-3 py-1.5 rounded-lg text-sm transition-colors"
+                style={{
+                  color: isActive ? 'var(--fg)' : 'var(--fg-secondary)',
+                  backgroundColor: isActive ? 'var(--border)' : 'transparent',
+                }}
+              >
+                {tab.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="flex items-center gap-3 flex-shrink-0">
           {weekNum !== null && (
             <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: 'var(--border)', color: 'var(--fg-secondary)' }}>
               📅 第{weekNum}/15周
