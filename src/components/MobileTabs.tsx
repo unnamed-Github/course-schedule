@@ -30,15 +30,14 @@ export function MobileTabs() {
             <Link
               key={tab.href}
               href={tab.href}
-              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors"
-              style={{
-                color: isActive ? 'var(--fg)' : 'var(--fg-secondary)',
-              }}
+              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors relative"
+              style={{ color: isActive ? 'var(--fg)' : 'var(--fg-secondary)' }}
             >
               <span className="text-lg">{tab.icon}</span>
-              <span className="text-[10px] font-medium whitespace-nowrap">
-                {tab.label}
-              </span>
+              <span className="text-[10px] font-medium whitespace-nowrap">{tab.label}</span>
+              {isActive && (
+                <div className="absolute -bottom-2 w-1 h-1 rounded-full" style={{ backgroundColor: 'var(--warning)' }} />
+              )}
             </Link>
           )
         })}

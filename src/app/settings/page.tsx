@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-4">
-      <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>⚙️ 设置</h2>
+      <h2 className="text-xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>⚙️ 设置</h2>
 
       {/* Data */}
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>

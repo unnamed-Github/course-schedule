@@ -142,7 +142,7 @@ export function WeekView() {
           ← 上一周
         </button>
         <div className="text-center">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>
+          <h2 className="text-xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>
             第 {weekNum}/15 周
           </h2>
           {weekRange && (
@@ -253,7 +253,7 @@ export function WeekView() {
                                   <div className="truncate text-[10px] mt-0.5 opacity-0 group-hover:opacity-60 transition-opacity" style={{ color: 'var(--fg-secondary)' }}>{schedule.location}</div>
                                 )}
                                 {active && <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />}
-                                {memoCount > 0 && !active && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#10B981]" title={`${memoCount}条备忘`} />}
+                                {memoCount > 0 && !active && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--success)' }} title={`${memoCount}条备忘`} />}
                               </motion.div>
                             )
                           })
@@ -350,10 +350,10 @@ export function WeekView() {
                       return (
                         <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
                           <span>{a.status === 'submitted' ? '✅' : '📝'}</span>
-                          <span className="truncate" style={{ color: isOverdue ? '#EF4444' : isNear ? '#F59E0B' : 'var(--fg-secondary)' }}>{a.title}</span>
+                          <span className="truncate" style={{ color: isOverdue ? 'var(--danger)' : isNear ? 'var(--warning)' : 'var(--fg-secondary)' }}>{a.title}</span>
                           <span className="flex-shrink-0" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>{formatDateTime(a.due_date).slice(5)}</span>
-                          {isOverdue && <span style={{ color: '#EF4444' }}>⚠</span>}
-                          {isNear && <span style={{ color: '#F59E0B' }}>⏰</span>}
+                          {isOverdue && <span style={{ color: 'var(--danger)' }}>⚠</span>}
+                          {isNear && <span style={{ color: 'var(--warning)' }}>⏰</span>}
                         </div>
                       )
                     })}

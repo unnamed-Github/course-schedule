@@ -82,7 +82,7 @@ export function WeeklySummary() {
               </div>
               <div className="w-px h-5" style={{ backgroundColor: 'var(--border)' }} />
               <div>
-                <span className="text-xl font-bold" style={{ color: '#F59E0B' }}>{stats.memos}</span>
+                <span className="text-xl font-bold" style={{ color: 'var(--warning)' }}>{stats.memos}</span>
                 <span className="text-xs ml-1" style={{ color: 'var(--fg-secondary)' }}>备忘</span>
               </div>
             </div>

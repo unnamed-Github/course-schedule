@@ -195,7 +195,7 @@ export default function CourseDetailPage() {
               <div className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>已上</div>
             </div>
             <div>
-              <div className="text-lg font-bold" style={{ color: '#10B981' }}>{remaining}</div>
+              <div className="text-lg font-bold" style={{ color: 'var(--success)' }}>{remaining}</div>
               <div className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>剩余</div>
             </div>
           </div>
@@ -287,7 +287,7 @@ export default function CourseDetailPage() {
                       {a.title}
                       {a.status === 'submitted' && <span className="ml-1.5 text-[10px]" style={{ color: 'var(--success)' }}>✓</span>}
                     </p>
-                    <p className={`text-xs ${isOverdue ? 'text-[#EF4444]' : isNear ? 'text-[#F59E0B]' : ''}`}
+                    <p className={`text-xs ${isOverdue ? 'text-[var(--danger)]' : isNear ? 'text-[var(--warning)]' : ''}`}
                       style={!isOverdue && !isNear ? { color: 'var(--fg-secondary)' } : {}}>
                       截止: {a.due_date.slice(0, 16).replace('T', ' ')}
                       {isOverdue && ' ⚠️'}

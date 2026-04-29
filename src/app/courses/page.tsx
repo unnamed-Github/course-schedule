@@ -74,7 +74,7 @@ export default function CoursesPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>
+        <h2 className="text-xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>
           课程总览 · 第 {weekNum}/{totalWeeks} 周
         </h2>
         <div className="flex items-center gap-2">
@@ -237,7 +237,7 @@ export default function CoursesPage() {
                           style={{
                             backgroundColor: isCompleted ? course.color : 'transparent',
                             border: isCurrent && !isCompleted
-                              ? `1.5px solid #F59E0B`
+                              ? `1.5px solid var(--warning)`
                               : isCompleted
                                 ? 'none'
                                 : `1px dashed var(--border)`,
@@ -270,7 +270,7 @@ export default function CoursesPage() {
                   {/* Stats */}
                   <div className="flex justify-between mt-3 text-[10px]" style={{ color: 'var(--fg-secondary)' }}>
                     <span>已上 {completedClasses}</span>
-                    <span style={{ color: '#10B981' }}>剩 {totalClasses - completedClasses}</span>
+                    <span style={{ color: 'var(--success)' }}>剩 {totalClasses - completedClasses}</span>
                   </div>
 
                   {/* Collapsed assignment list */}
@@ -292,11 +292,11 @@ export default function CoursesPage() {
                             return (
                               <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
                                 <span>{a.status === 'submitted' ? '✅' : '📝'}</span>
-                                <span className="truncate" style={{ color: isOverdue ? '#EF4444' : isNear ? '#F59E0B' : 'var(--fg-secondary)' }}>
+                                <span className="truncate" style={{ color: isOverdue ? 'var(--danger)' : isNear ? 'var(--warning)' : 'var(--fg-secondary)' }}>
                                   {a.title}
                                 </span>
-                                {isOverdue && <span className="text-[#EF4444]">⚠️</span>}
-                                {isNear && <span className="text-[#F59E0B]">⏰</span>}
+                                {isOverdue && <span style={{ color: 'var(--danger)' }}>⚠️</span>}
+                                {isNear && <span style={{ color: 'var(--warning)' }}>⏰</span>}
                               </div>
                             )
                           })}

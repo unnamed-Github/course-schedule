@@ -97,7 +97,7 @@ export function DayView() {
           ←
         </button>
         <div className="text-center min-w-[200px]">
-          <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>{viewDateLabel}</h2>
+          <h2 className="text-xl font-semibold tracking-tight" style={{ color: 'var(--fg)' }}>{viewDateLabel}</h2>
         </div>
         <button onClick={() => setViewDate(addDays(viewDate, 1))} className="btn-ghost text-sm px-2" style={{ color: 'var(--fg-secondary)' }}>
           →
