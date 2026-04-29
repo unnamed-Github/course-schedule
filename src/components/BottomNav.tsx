@@ -17,7 +17,7 @@ export function BottomNav() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-50"
       style={{
-        backgroundColor: 'rgba(255,255,255,0.82)',
+        backgroundColor: 'var(--tab-glass-bg)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderTop: '1px solid var(--border-light)',

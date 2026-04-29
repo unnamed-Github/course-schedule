@@ -130,7 +130,7 @@ export default function CourseDetailPage() {
                   </select>
                 </div>
               </div>
-              <button onClick={handleSaveEdit} className="rounded-xl px-4 py-2 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90">保存修改</button>
+              <button onClick={handleSaveEdit} className="rounded-xl px-4 py-2 text-xs text-white font-medium hover:opacity-90" style={{ backgroundColor: 'var(--accent-warm)' }}>保存修改</button>
             </div>
           )}
 

@@ -35,6 +35,8 @@
   --success-bg: rgba(16, 185, 129, 0.08);
   --warning-bg: rgba(245, 158, 11, 0.08);
   --danger-bg: rgba(239, 68, 68, 0.08);
+  --nav-glass-bg: rgba(255, 251, 245, 0.8);
+  --tab-glass-bg: rgba(255, 255, 255, 0.82);
 }
 
 [data-theme="dark"] {
@@ -64,6 +66,8 @@
   --success-bg: rgba(52, 211, 153, 0.1);
   --warning-bg: rgba(251, 191, 36, 0.1);
   --danger-bg: rgba(248, 113, 113, 0.1);
+  --nav-glass-bg: rgba(15, 23, 42, 0.8);
+  --tab-glass-bg: rgba(30, 41, 59, 0.82);
 }
 
 @keyframes breathe-danger {
