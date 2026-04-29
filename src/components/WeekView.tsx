@@ -10,10 +10,10 @@ import { getPeriodTime } from '@/lib/semester'
 const DAYS = ['一', '二', '三', '四', '五', '六', '日']
 const PERIOD_GROUPS = [
   { label: '1-2节', start: 1, end: 2, time: '08:00-09:50' },
-  { label: '3-4节', start: 3, end: 4, time: '10:05-11:50' },
-  { label: '5-6节', start: 5, end: 6, time: '14:00-15:45' },
-  { label: '7-8节', start: 7, end: 8, time: '16:05-17:50' },
-  { label: '9-10节', start: 9, end: 10, time: '19:00-20:45' },
+  { label: '3-4节', start: 3, end: 4, time: '10:20-12:10' },
+  { label: '5-6节', start: 5, end: 6, time: '14:00-15:50' },
+  { label: '7-8节', start: 7, end: 8, time: '16:20-18:10' },
+  { label: '9-10节', start: 9, end: 10, time: '19:00-20:50' },
   { label: '11节', start: 11, end: 11, time: '21:00-22:30' },
 ]
 

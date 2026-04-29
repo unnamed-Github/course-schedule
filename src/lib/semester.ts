@@ -37,15 +37,15 @@ const SEMESTER: SemesterConfig = {
 
 const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
   1: { start: '08:00', end: '08:50' },
-  2: { start: '08:55', end: '09:45' },
-  3: { start: '10:05', end: '10:55' },
-  4: { start: '11:00', end: '11:50' },
+  2: { start: '09:00', end: '09:50' },
+  3: { start: '10:20', end: '11:10' },
+  4: { start: '11:20', end: '12:10' },
   5: { start: '14:00', end: '14:50' },
-  6: { start: '14:55', end: '15:45' },
-  7: { start: '16:05', end: '16:55' },
-  8: { start: '17:00', end: '17:50' },
+  6: { start: '15:00', end: '15:50' },
+  7: { start: '16:20', end: '17:10' },
+  8: { start: '17:20', end: '18:10' },
   9: { start: '19:00', end: '19:50' },
-  10: { start: '19:55', end: '20:45' },
+  10: { start: '20:00', end: '20:50' },
   11: { start: '21:00', end: '22:30' },
 }
 
