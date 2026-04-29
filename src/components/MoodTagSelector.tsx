@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { MOOD_TAGS, type MoodTag, getMoodColor } from '@/lib/types'
+import { MOOD_TAGS, type MoodTag } from '@/lib/types'
 
 interface MoodTagSelectorProps {
   selected: MoodTag[]
@@ -9,14 +9,6 @@ interface MoodTagSelectorProps {
 }
 
 export function MoodTagSelector({ selected, onChange }: MoodTagSelectorProps) {
-  const toggle = (tag: MoodTag) => {
-    if (selected.includes(tag)) {
-      onChange(selected.filter((t) => t !== tag))
-    } else {
-      onChange([...selected, tag])
-    }
-  }
-
   return (
     <div className="flex flex-wrap gap-2">
       {MOOD_TAGS.map((option) => {
@@ -24,17 +16,20 @@ export function MoodTagSelector({ selected, onChange }: MoodTagSelectorProps) {
         return (
           <motion.button
             key={option.value}
-            onClick={() => toggle(option.value)}
-            whileTap={{ scale: 0.9 }}
-            className="chip text-sm"
+            onClick={() => {
+              if (isSelected) onChange(selected.filter((t) => t !== option.value))
+              else onChange([...selected, option.value])
+            }}
+            whileTap={{ scale: [1, 1.15, 1] }}
+            transition={{ duration: 0.2 }}
+            className="px-3 py-1 rounded-full text-sm font-medium transition-colors"
             style={{
-              backgroundColor: isSelected ? `${option.color}15` : 'transparent',
-              borderColor: isSelected ? option.color : 'var(--border)',
-              color: isSelected ? option.color : 'var(--fg-secondary)',
-              fontWeight: isSelected ? 600 : 400,
+              backgroundColor: isSelected ? `${option.color}1A` : 'transparent',
+              border: `1px solid ${isSelected ? option.color : 'var(--border-light)'}`,
+              color: isSelected ? option.color : 'var(--text-secondary)',
             }}
           >
-            <span>{option.emoji}</span>
+            <span className="mr-1">{option.emoji}</span>
             <span>{option.label}</span>
           </motion.button>
         )

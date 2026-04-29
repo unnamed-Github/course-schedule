@@ -10,6 +10,8 @@ import { MoodTagSelector } from '@/components/MoodTagSelector'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
+export const dynamic = 'auto'
+
 export default function CourseDetailPage() {
   const params = useParams()
   const router = useRouter()

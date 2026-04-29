@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/ThemeProvider"
-import { NavBar } from "@/components/NavBar"
-import { MobileTabs } from "@/components/MobileTabs"
-import { DayPhaseTint } from "@/components/DayPhaseTint"
+import { TopBar } from "@/components/TopBar"
+import { BottomNav } from "@/components/BottomNav"
 import { PageTransition } from "@/components/PageTransition"
 
 export const metadata: Metadata = {
@@ -17,21 +16,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="zh-CN"
-      className="h-full antialiased"
-      suppressHydrationWarning
-    >
+    <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <DayPhaseTint />
-          <NavBar />
-          <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-28 md:pb-10">
+          <TopBar />
+          <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-24">
             <PageTransition>
               {children}
             </PageTransition>
           </main>
-          <MobileTabs />
+          <BottomNav />
         </ThemeProvider>
       </body>
     </html>

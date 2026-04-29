@@ -23,7 +23,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!mounted) return
-    document.documentElement.classList.toggle("dark", theme === "dark")
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark")
+    } else {
+      document.documentElement.removeAttribute("data-theme")
+    }
     localStorage.setItem("theme", theme)
   }, [theme, mounted])
 
