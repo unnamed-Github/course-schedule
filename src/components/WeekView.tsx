@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { CourseSchedule, Course, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, getMakeupInfo, isHoliday } from '@/lib/schedule'
 import { PERIOD_TIMES } from '@/lib/semester'
+import { SkeletonGrid } from './Skeleton'
 
 const DAYS = ['一', '二', '三', '四', '五', '六', '日']
 const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
@@ -39,12 +40,16 @@ export function WeekView() {
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [currentDay, setCurrentDay] = useState<number>(0)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    getCourses().then(setCourses)
-    getSchedules().then(setSchedules)
-    getAssignments().then(setAssignments)
-    getMemos().then(setMemos)
+    Promise.all([
+      getCourses(), getSchedules(), getAssignments(), getMemos()
+    ]).then(([c, sc, a, m]) => {
+      setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m)
+      setLoaded(true)
+    })
 
     const wn = getWeekNumber()
     setWeekNum(wn)
@@ -60,14 +65,17 @@ export function WeekView() {
   }, [])
 
   const changeWeek = useCallback((delta: number) => {
-    setWeekNum((prev) => {
-      const newWeek = prev + delta
-      setWeekRange(getWeekDateRange(newWeek))
-      return newWeek
-    })
-    setCurrentDay(0)
-    setCurrentPeriod(null)
-    setExpandedId(null)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setWeekNum((prev) => {
+        const newWeek = prev + delta
+        setWeekRange(getWeekDateRange(newWeek))
+        return newWeek
+      })
+      setCurrentDay(0)
+      setCurrentPeriod(null)
+      setExpandedId(null)
+    }, 200)
   }, [])
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
@@ -105,6 +113,10 @@ export function WeekView() {
 
       <div className="overflow-x-auto">
         <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+          {!loaded ? (
+            <SkeletonGrid />
+          ) : (
+            <>
           <div className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)' }}>
             <div className="p-2" />
             {showDays.map((day) => (
@@ -241,6 +253,8 @@ export function WeekView() {
               ))}
             </motion.div>
           </AnimatePresence>
+        </>
+          )}
         </div>
       </div>
     </div>

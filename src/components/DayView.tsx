@@ -6,25 +6,16 @@ import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
 import { getTodayCourses, getCurrentPeriod, getWeekNumber } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
+import { SkeletonCard } from './Skeleton'
 
 function formatDateFull(d: Date) {
-  const year = d.getFullYear()
-  const month = d.getMonth() + 1
-  const date = d.getDate()
+  const year = d.getFullYear(); const month = d.getMonth() + 1; const date = d.getDate()
   return `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`
 }
+function addDays(d: Date, days: number) { const r = new Date(d); r.setDate(r.getDate() + days); return r }
+function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate() }
 
-function addDays(d: Date, days: number) {
-  const r = new Date(d); r.setDate(r.getDate() + days); return r
-}
-
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
-
-const START_MIN = 480
-const END_MIN = 1350
-const TOTAL_MIN = END_MIN - START_MIN
+const START_MIN = 480; const END_MIN = 1350; const TOTAL_MIN = END_MIN - START_MIN
 
 export function DayView() {
   const [courses, setCourses] = useState<Course[]>([])
@@ -34,33 +25,41 @@ export function DayView() {
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [nowMinutes, setNowMinutes] = useState(0)
   const [viewDate, setViewDate] = useState(new Date())
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    getCourses().then(setCourses)
-    getSchedules().then(setSchedules)
-    getAssignments().then(setAssignments)
-    getMemos().then(setMemos)
+    Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
+      .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
   }, [])
 
   useEffect(() => {
     const tick = () => { const n = new Date(); setCurrentPeriod(getCurrentPeriod(n)); setNowMinutes(n.getHours() * 60 + n.getMinutes()) }
-    tick()
-    const timer = setInterval(tick, 60000)
-    return () => clearInterval(timer)
+    tick(); const timer = setInterval(tick, 60000); return () => clearInterval(timer)
   }, [])
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
-
   const dayNames = ['日', '一', '二', '三', '四', '五', '六']
   const weekNum = getWeekNumber(viewDate)
   const viewDateLabel = `${viewDate.getMonth() + 1}月${viewDate.getDate()}日 周${dayNames[viewDate.getDay()]}`
-
   const viewDateStr = formatDateFull(viewDate)
   const viewAssignments = assignments.filter((a) => a.due_date.slice(0, 10) === viewDateStr)
   const viewMemos = memos.filter((m) => m.created_at.slice(0, 10) === viewDateStr)
   const sortedSchedules = getTodayCourses(schedules, viewDate).sort((a, b) => a.start_period - b.start_period)
   const isToday = isSameDay(viewDate, new Date())
   const nowTop = isToday && nowMinutes >= START_MIN && nowMinutes <= END_MIN ? nowMinutes - START_MIN : -1
+
+  if (!loaded) {
+    return (
+      <div className="max-w-2xl mx-auto space-y-3 pt-4">
+        <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'var(--border-light)', opacity: 0.3 }} />
+          <div className="h-6 w-32 rounded" style={{ backgroundColor: 'var(--border-light)', opacity: 0.3 }} />
+          <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'var(--border-light)', opacity: 0.3 }} />
+        </div>
+        {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -82,7 +81,6 @@ export function DayView() {
         </div>
       ) : (
         <div className="relative ml-14" style={{ minHeight: `${TOTAL_MIN + 60}px` }}>
-          {/* Hour markers */}
           <div className="absolute left-[-56px] top-0 bottom-0 w-10 pointer-events-none">
             {[8,9,10,11,12,13,14,15,16,17,18,19,20,21,22].map((h) => {
               const top = h * 60 - START_MIN
@@ -96,8 +94,6 @@ export function DayView() {
             })}
           </div>
           <div className="absolute left-[-12px] top-0 w-px h-full" style={{ backgroundColor: 'var(--border-light)' }} />
-
-          {/* Now indicator */}
           {nowTop >= 0 && (
             <div className="absolute left-[-12px] right-0 z-20 flex items-center pointer-events-none" style={{ top: `${nowTop}px` }}>
               <div className="w-2 h-2 rounded-full -ml-[5px]" style={{ backgroundColor: 'var(--accent-warm)' }} />
@@ -107,17 +103,14 @@ export function DayView() {
               </span>
             </div>
           )}
-
           {sortedSchedules.map((schedule) => {
             const course = courseMap.get(schedule.course_id)
             if (!course) return null
-            const st = getPeriodTime(schedule.start_period)
-            const et = getPeriodTime(schedule.end_period)
+            const st = getPeriodTime(schedule.start_period); const et = getPeriodTime(schedule.end_period)
             if (!st || !et) return null
             const topPx = (parseInt(st.start.split(':')[0]) * 60 + parseInt(st.start.split(':')[1])) - START_MIN
             const isNow = isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
             const isPast = isToday && currentPeriod !== null && schedule.end_period < currentPeriod
-
             return (
               <motion.div key={schedule.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: schedule.start_period * 0.03 }}
                 className="absolute left-0 right-0 pr-2" style={{ top: `${topPx}px`, zIndex: isNow ? 10 : 1 }}>
