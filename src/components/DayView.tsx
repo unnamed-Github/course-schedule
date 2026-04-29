@@ -182,7 +182,7 @@ export function DayView() {
                           </span>
                         )}
                         {isPast && (
-                          <span className="text-[10px] ml-auto" style={{ color: '#10B981' }}>
+                          <span className="text-[10px] ml-auto" style={{ color: 'var(--success)' }}>
                             ✓
                           </span>
                         )}
