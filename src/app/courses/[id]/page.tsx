@@ -12,6 +12,16 @@ const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡
 
 export const dynamic = 'auto'
 
+function countdown(dueDate: string): string {
+  const diff = new Date(dueDate).getTime() - Date.now()
+  if (diff < 0) return '已逾期'
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(hours / 24)
+  if (days > 0) return `${days}天后截止`
+  if (hours > 0) return `${hours}小时后截止`
+  return '即将截止'
+}
+
 export default function CourseDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -44,259 +54,168 @@ export default function CourseDetailPage() {
     setWeekNum(getWeekNumber())
   }, [courseId])
 
-  const handleSaveEdit = async () => {
-    const updated = await updateCourse(courseId, editForm)
-    if (updated) { setCourse(updated); setEditing(false) }
-  }
-
+  const handleSaveEdit = async () => { const u = await updateCourse(courseId, editForm); if (u) { setCourse(u); setEditing(false) } }
   const handleAddAssignment = async () => {
     if (!assignmentForm.title || !assignmentForm.due_date) return
-    const a = await createAssignment({
-      course_id: courseId,
-      title: assignmentForm.title,
-      description: assignmentForm.description,
-      due_date: new Date(assignmentForm.due_date).toISOString(),
-      status: 'pending',
-    })
-    setAssignments((prev) => [...prev, a])
-    setAssignmentForm({ title: '', description: '', due_date: '' })
-    setShowAssignmentForm(false)
+    const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending' })
+    setAssignments((prev) => [...prev, a]); setAssignmentForm({ title: '', description: '', due_date: '' }); setShowAssignmentForm(false)
   }
-
-  const handleToggleAssignment = async (id: string, currentStatus: string) => {
-    const updated = await updateAssignment(id, {
-      status: currentStatus === 'submitted' ? 'pending' : 'submitted',
-    })
-    if (updated) setAssignments((prev) => prev.map((a) => (a.id === id ? updated : a)))
+  const handleToggleAssignment = async (id: string, s: string) => {
+    const u = await updateAssignment(id, { status: s === 'submitted' ? 'pending' : 'submitted' })
+    if (u) setAssignments((prev) => prev.map((a) => (a.id === id ? u : a)))
   }
-
-  const handleDeleteAssignment = async (id: string) => {
-    await deleteAssignment(id)
-    setAssignments((prev) => prev.filter((a) => a.id !== id))
-  }
-
+  const handleDeleteAssignment = async (id: string) => { await deleteAssignment(id); setAssignments((prev) => prev.filter((a) => a.id !== id)) }
   const handleAddMemo = async () => {
     if (!memoForm.content) return
-    const m = await createMemo({
-      course_id: courseId,
-      content: memoForm.content,
-      mood_emoji: memoForm.mood_emoji,
-      mood_tags: memoForm.mood_tags,
-    })
-    setMemos((prev) => [m, ...prev])
-    setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] })
-    setShowMemoForm(false)
+    const m = await createMemo({ course_id: courseId, content: memoForm.content, mood_emoji: memoForm.mood_emoji, mood_tags: memoForm.mood_tags })
+    setMemos((prev) => [m, ...prev]); setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] }); setShowMemoForm(false)
   }
+  const handleDeleteMemo = async (id: string) => { await deleteMemo(id); setMemos((prev) => prev.filter((m) => m.id !== id)) }
 
-  const handleDeleteMemo = async (id: string) => {
-    await deleteMemo(id)
-    setMemos((prev) => prev.filter((m) => m.id !== id))
-  }
-
-  if (!course) {
-    return (
-      <div className="max-w-2xl mx-auto text-center py-20">
-        <p style={{ color: 'var(--fg-secondary)' }}>课程未找到</p>
-      </div>
-    )
-  }
+  if (!course) return <div className="max-w-2xl mx-auto text-center py-20"><p style={{ color: 'var(--text-secondary)' }}>课程未找到</p></div>
 
   const perWeek = schedules.length
   const totalWeeks = getSemesterConfig().teachingWeeks
   const totalClasses = perWeek * totalWeeks
   const completedClasses = Math.min(perWeek * (weekNum - 1), totalClasses)
   const remaining = totalClasses - completedClasses
+  const progressRate = totalClasses > 0 ? Math.round((completedClasses / totalClasses) * 100) : 0
+  const circumference = 2 * Math.PI * 28
+  const progressOffset = circumference - (progressRate / 100) * circumference
 
   const DAY_MAP: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五' }
-
-  const moodCounts: Record<string, number> = {}
-  memos.forEach((m) => { moodCounts[m.mood_emoji] = (moodCounts[m.mood_emoji] ?? 0) + 1 })
-
   const tagCounts: Record<string, number> = {}
-  memos.forEach((m) => {
-    m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 })
-  })
+  memos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
+
+  const sortedAssignments = [...assignments].sort((a, b) => a.due_date.localeCompare(b.due_date))
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
       <button onClick={() => router.back()} className="btn-ghost text-xs">← 返回课程列表</button>
 
-      {/* Course Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl overflow-hidden"
-        style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}
-      >
-        <div style={{ height: 4, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}88 100%)` }} />
+      {/* ======== HEADER CARD ======== */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+        <div style={{ height: 5, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}66 100%)` }} />
         <div className="p-5">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl font-bold"
-                style={{ backgroundColor: course.color }}
-              >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl font-bold" style={{ backgroundColor: course.color }}>
                 {course.name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: 'var(--fg)' }}>{course.name}</h1>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--fg-secondary)' }}>
+                <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h1>
+                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {course.teacher !== '—' ? course.teacher : ''}
                   {course.classroom !== '—' ? ` · ${course.classroom}` : ''}
                 </p>
               </div>
             </div>
-            <button onClick={() => setEditing(!editing)} className="btn-ghost text-xs">
-              {editing ? '取消' : '编辑'}
-            </button>
+            <button onClick={() => setEditing(!editing)} className="btn-ghost text-xs">{editing ? '取消' : '编辑'}</button>
           </div>
 
           {editing && (
-            <div className="mt-4 pt-4 border-t space-y-3" style={{ borderColor: 'var(--border)' }}>
+            <div className="mt-4 pt-4 border-t space-y-3" style={{ borderColor: 'var(--border-light)' }}>
               <div className="grid grid-cols-2 gap-3">
-                {(['name', 'teacher', 'classroom'] as const).map((field) => (
-                  <div key={field}>
-                    <label className="text-[10px] block mb-1" style={{ color: 'var(--fg-secondary)' }}>
-                      {field === 'name' ? '课程名' : field === 'teacher' ? '教师' : '教室'}
-                    </label>
-                    <input
-                      value={editForm[field]}
-                      onChange={(e) => setEditForm((f) => ({ ...f, [field]: e.target.value }))}
-                      className="w-full rounded-xl px-3 py-2 text-sm"
-                      style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}
-                    />
+                {(['name', 'teacher', 'classroom'] as const).map((f) => (
+                  <div key={f}>
+                    <label className="text-[10px] block mb-1" style={{ color: 'var(--text-secondary)' }}>{f === 'name' ? '课程名' : f === 'teacher' ? '教师' : '教室'}</label>
+                    <input value={editForm[f]} onChange={(e) => setEditForm((pf) => ({ ...pf, [f]: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
                   </div>
                 ))}
-                <div>
-                  <label className="text-[10px] block mb-1" style={{ color: 'var(--fg-secondary)' }}>颜色</label>
-                  <input type="color" value={editForm.color} onChange={(e) => setEditForm((f) => ({ ...f, color: e.target.value }))} className="w-full h-10 rounded-xl cursor-pointer" />
-                </div>
-                <div>
-                  <label className="text-[10px] block mb-1" style={{ color: 'var(--fg-secondary)' }}>单双周</label>
-                  <select value={editForm.week_type} onChange={(e) => setEditForm((f) => ({ ...f, week_type: e.target.value as 'all' | 'odd' | 'even' }))}
-                    className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--fg)' }}>
-                    <option value="all">每周</option>
-                    <option value="odd">单周</option>
-                    <option value="even">双周</option>
+                <div><label className="text-[10px] block mb-1" style={{ color: 'var(--text-secondary)' }}>颜色</label><input type="color" value={editForm.color} onChange={(e) => setEditForm((pf) => ({ ...pf, color: e.target.value }))} className="w-full h-10 rounded-xl cursor-pointer" /></div>
+                <div><label className="text-[10px] block mb-1" style={{ color: 'var(--text-secondary)' }}>单双周</label>
+                  <select value={editForm.week_type} onChange={(e) => setEditForm((pf) => ({ ...pf, week_type: e.target.value as 'all' | 'odd' | 'even' }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
+                    <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
                   </select>
                 </div>
               </div>
-              <button onClick={handleSaveEdit} className="rounded-xl px-4 py-2 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90">
-                保存修改
-              </button>
+              <button onClick={handleSaveEdit} className="rounded-xl px-4 py-2 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90">保存修改</button>
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-3 mt-4 text-center">
-            <div>
-              <div className="text-lg font-bold" style={{ color: 'var(--fg)' }}>{perWeek}</div>
-              <div className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>每周课时</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold" style={{ color: '#F59E0B' }}>{completedClasses}</div>
-              <div className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>已上</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold" style={{ color: 'var(--success)' }}>{remaining}</div>
-              <div className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>剩余</div>
+          {/* Progress ring + stats */}
+          <div className="flex items-center gap-5 mt-5">
+            <svg width="64" height="64" className="flex-shrink-0">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="var(--border-light)" strokeWidth="4" />
+              <circle cx="32" cy="32" r="28" fill="none" stroke={course.color} strokeWidth="4" strokeLinecap="round"
+                strokeDasharray={circumference} strokeDashoffset={progressOffset}
+                transform="rotate(-90 32 32)" style={{ transition: 'stroke-dashoffset 0.6s ease' }} />
+              <text x="32" y="35" textAnchor="middle" fill="var(--text-primary)" fontSize="14" fontWeight="700">{progressRate}%</text>
+            </svg>
+            <div className="grid grid-cols-3 flex-1 text-center gap-2">
+              <div><div className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{perWeek}</div><div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>周课时</div></div>
+              <div><div className="text-base font-bold" style={{ color: 'var(--accent-warm)' }}>{completedClasses}</div><div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>已上</div></div>
+              <div><div className="text-base font-bold" style={{ color: 'var(--accent-success)' }}>{remaining}</div><div className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>剩余</div></div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-1.5 mt-3">
             {schedules.map((s) => (
-              <span key={s.id} className="chip text-[10px]" style={{ borderColor: 'var(--border)' }}>
-                {DAY_MAP[s.day_of_week]} {s.start_period}-{s.end_period}节
-              </span>
+              <span key={s.id} className="chip">{DAY_MAP[s.day_of_week]} {s.start_period}-{s.end_period}节</span>
             ))}
           </div>
         </div>
       </motion.div>
 
-      {/* Mood Distribution */}
-      {(Object.keys(moodCounts).length > 0 || Object.keys(tagCounts).length > 0) && (
-        <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
-          <h3 className="text-xs font-medium mb-3" style={{ color: 'var(--fg)' }}>心情统计</h3>
-          {Object.keys(moodCounts).length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {Object.entries(moodCounts).sort(([, a], [, b]) => b - a).map(([emoji, count]) => (
-                <span key={emoji} className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: 'var(--border)' }}>
-                  {emoji} {count}次
+      {/* ======== MOOD ======== */}
+      {Object.keys(tagCounts).length > 0 && (
+        <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+          <h3 className="text-xs font-medium mb-3" style={{ color: 'var(--text-primary)' }}>心情统计</h3>
+          <div className="flex gap-2 flex-wrap">
+            {(['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待'] as MoodTag[]).map((tag) => {
+              const count = tagCounts[tag] ?? 0
+              if (count === 0) return null
+              return (
+                <span key={tag} className="text-[10px] px-2 py-1 rounded-full font-medium" style={{ backgroundColor: `${getMoodColor(tag)}1A`, color: getMoodColor(tag) }}>
+                  {tag} ×{count}
                 </span>
-              ))}
-            </div>
-          )}
-          {Object.keys(tagCounts).length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {(['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待'] as MoodTag[]).map((tag) => {
-                const count = tagCounts[tag] ?? 0
-                if (count === 0) return null
-                return (
-                  <span key={tag} className="text-[10px] px-2 py-1 rounded-full font-medium"
-                    style={{
-                      backgroundColor: `${getMoodColor(tag)}1A`,
-                      color: getMoodColor(tag),
-                    }}>
-                    {tag} ×{count}
-                  </span>
-                )
-              })}
-            </div>
-          )}
+              )
+            })}
+          </div>
         </div>
       )}
 
-      {/* Assignments */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+      {/* ======== ASSIGNMENTS ======== */}
+      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-medium" style={{ color: 'var(--fg)' }}>作业 ({assignments.length})</h3>
+          <h3 className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>📝 作业 ({assignments.length})</h3>
           <button onClick={() => setShowAssignmentForm(!showAssignmentForm)} className="btn-ghost text-xs">+ 添加</button>
         </div>
 
         {showAssignmentForm && (
-          <div className="mb-3 p-4 rounded-2xl space-y-2" style={{ backgroundColor: 'var(--bg)' }}>
-            <input
-              placeholder="标题"
-              value={assignmentForm.title}
-              onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }}
-              autoFocus
-              className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
-            <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))}
-              className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
-            <input type="datetime-local" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm((f) => ({ ...f, due_date: e.target.value }))}
-              className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
+          <div className="mb-3 p-4 rounded-2xl space-y-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <input placeholder="标题" value={assignmentForm.title} onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }} autoFocus className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+            <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+            <input type="datetime-local" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
             <div className="flex gap-2">
-              <button onClick={handleAddAssignment} className="rounded-xl px-4 py-1.5 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90">添加</button>
+              <button onClick={handleAddAssignment} className="btn-primary text-xs">添加</button>
               <button onClick={() => setShowAssignmentForm(false)} className="btn-ghost text-xs">取消</button>
             </div>
           </div>
         )}
 
         {assignments.length === 0 && !showAssignmentForm ? (
-          <p className="text-xs py-3 text-center" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无作业</p>
+          <p className="text-xs py-3 text-center" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无作业</p>
         ) : (
-          <div className="space-y-1">
-            {assignments.sort((a, b) => a.due_date.localeCompare(b.due_date)).map((a) => {
+          <div className="space-y-0.5">
+            {sortedAssignments.map((a) => {
               const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
               const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
               return (
-                <div key={a.id} className="flex items-center gap-3 py-2 border-b last:border-0" style={{ borderColor: 'var(--border)' }}>
-                  <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0">
-                    {a.status === 'submitted' ? '✅' : '⬜'}
-                  </button>
+                <div key={a.id} className="flex items-center gap-3 py-2.5 px-3 rounded-xl group hover:bg-[var(--border-light)]/30 transition-colors">
+                  <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0">{a.status === 'submitted' ? '✅' : '⬜'}</button>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--fg)' }}>
-                      {a.title}
-                      {a.status === 'submitted' && <span className="ml-1.5 text-[10px]" style={{ color: 'var(--success)' }}>✓</span>}
-                    </p>
-                    <p className={`text-xs ${isOverdue ? 'text-[var(--danger)]' : isNear ? 'text-[var(--warning)]' : ''}`}
-                      style={!isOverdue && !isNear ? { color: 'var(--fg-secondary)' } : {}}>
-                      截止: {a.due_date.slice(0, 16).replace('T', ' ')}
-                      {isOverdue && ' ⚠️'}
-                      {isNear && ' ⏰'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-0.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : course.color, minHeight: '16px', width: 2 }} />
+                      <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <span className="ml-1.5 text-[10px]" style={{ color: 'var(--accent-success)' }}>✓</span>}</p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
+                      <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{a.due_date.slice(0, 16).replace('T', ' ')}</span>
+                    </div>
                   </div>
-                  <button onClick={() => handleDeleteAssignment(a.id)} className="text-xs opacity-30 hover:opacity-60">✕</button>
+                  <button onClick={() => handleDeleteAssignment(a.id)} className="text-xs opacity-0 group-hover:opacity-30 transition-opacity">✕</button>
                 </div>
               )
             })}
@@ -304,68 +223,51 @@ export default function CourseDetailPage() {
         )}
       </div>
 
-      {/* Memos */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
+      {/* ======== MEMOS ======== */}
+      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-medium" style={{ color: 'var(--fg)' }}>课堂备忘 ({memos.length})</h3>
+          <h3 className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>📌 课堂备忘 ({memos.length})</h3>
           <button onClick={() => setShowMemoForm(!showMemoForm)} className="btn-ghost text-xs">+ 添加</button>
         </div>
 
         {showMemoForm && (
-          <div className="mb-3 p-4 rounded-2xl space-y-3" style={{ backgroundColor: 'var(--bg)' }}>
-            <textarea placeholder="写下备忘..." value={memoForm.content} onChange={(e) => setMemoForm((f) => ({ ...f, content: e.target.value }))} rows={2}
-              className="w-full rounded-xl px-3 py-2 text-sm resize-none" style={{ border: '1px solid var(--border)', color: 'var(--fg)', backgroundColor: 'var(--card-bg)' }} />
+          <div className="mb-3 p-4 rounded-2xl space-y-3" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <textarea placeholder="写下备忘..." value={memoForm.content} onChange={(e) => setMemoForm((f) => ({ ...f, content: e.target.value }))} rows={2} className="w-full rounded-xl px-3 py-2 text-sm resize-none" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px]" style={{ color: 'var(--fg-secondary)' }}>心情:</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>心情:</span>
               {EMOJI_OPTIONS.map((emoji) => (
-                <button key={emoji} onClick={() => setMemoForm((f) => ({ ...f, mood_emoji: emoji }))}
-                  className={`text-lg p-1 rounded-lg ${memoForm.mood_emoji === emoji ? 'ring-1 ring-[var(--border)]' : ''}`}>
-                  {emoji}
-                </button>
+                <button key={emoji} onClick={() => setMemoForm((f) => ({ ...f, mood_emoji: emoji }))} className={`text-lg p-1 rounded-lg transition-colors ${memoForm.mood_emoji === emoji ? 'bg-[var(--border-light)]' : ''}`}>{emoji}</button>
               ))}
             </div>
-            <div>
-              <span className="text-[10px] mb-1 block" style={{ color: 'var(--fg-secondary)' }}>心情标签:</span>
-              <MoodTagSelector selected={memoForm.mood_tags} onChange={(tags) => setMemoForm((f) => ({ ...f, mood_tags: tags }))} />
-            </div>
+            <div><span className="text-[10px] mb-1 block" style={{ color: 'var(--text-secondary)' }}>心情标签:</span><MoodTagSelector selected={memoForm.mood_tags} onChange={(tags) => setMemoForm((f) => ({ ...f, mood_tags: tags }))} /></div>
             <div className="flex gap-2">
-              <button onClick={handleAddMemo} className="rounded-xl px-4 py-1.5 text-xs text-white font-medium bg-[#F59E0B] hover:opacity-90">添加</button>
+              <button onClick={handleAddMemo} className="btn-primary text-xs">添加</button>
               <button onClick={() => setShowMemoForm(false)} className="btn-ghost text-xs">取消</button>
             </div>
           </div>
         )}
 
         {memos.length === 0 && !showMemoForm ? (
-          <p className="text-xs py-3 text-center" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>暂无备忘</p>
+          <p className="text-xs py-3 text-center" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无备忘</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {memos.map((m) => (
               <div key={m.id} className="flex items-start gap-3 group">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: 'var(--border)' }}>
-                  {m.mood_emoji}
-                </div>
+                <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: 'var(--border-light)' }}>{m.mood_emoji}</div>
                 <div className="flex-1 min-w-0">
-                  <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 inline-block max-w-full" style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)' }}>
-                    <p className="text-sm" style={{ color: 'var(--fg)' }}>{m.content}</p>
+                  <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 inline-block max-w-full" style={{ backgroundColor: `${course.color}08`, border: `1px solid ${course.color}1A` }}>
+                    <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{m.content}</p>
                   </div>
                   {m.mood_tags && m.mood_tags.length > 0 && (
                     <div className="flex gap-1 mt-1">
                       {m.mood_tags.map((tag) => (
-                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full"
-                          style={{
-                            backgroundColor: `${getMoodColor(tag)}1A`,
-                            color: getMoodColor(tag),
-                          }}>
-                          {tag}
-                        </span>
+                        <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${getMoodColor(tag)}1A`, color: getMoodColor(tag) }}>{tag}</span>
                       ))}
                     </div>
                   )}
-                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>
-                    {m.created_at.slice(5, 16).replace('T', ' ')}
-                  </p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>{m.created_at.slice(5, 16).replace('T', ' ')}</p>
                 </div>
-                <button onClick={() => handleDeleteMemo(m.id)} className="text-xs opacity-0 group-hover:opacity-30 transition-opacity">✕</button>
+                <button onClick={() => handleDeleteMemo(m.id)} className="text-xs opacity-0 group-hover:opacity-30 transition-opacity mt-1">✕</button>
               </div>
             ))}
           </div>

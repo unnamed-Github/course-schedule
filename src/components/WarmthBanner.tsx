@@ -68,16 +68,16 @@ export function WarmthBanner() {
           exit={{ opacity: 0, y: -8, height: 0 }}
           className="mb-4 py-2 text-center relative"
         >
-          <p className="text-sm" style={{ color: 'var(--fg-secondary)' }}>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             {message}
           </p>
-          <p className="text-xs mt-0.5 italic" style={{ color: 'var(--fg-secondary)', opacity: 0.6 }}>
+          <p className="text-xs mt-0.5 italic" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
             {encouragement}
           </p>
           <button
             onClick={handleClose}
             className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs"
-            style={{ color: 'var(--fg-secondary)' }}
+            style={{ color: 'var(--text-secondary)' }}
             aria-label="关闭问候"
           >
             ✕

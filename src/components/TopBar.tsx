@@ -16,7 +16,7 @@ export function TopBar() {
   return (
     <header
       className="sticky top-0 z-50 h-14 flex items-center justify-between px-4"
-      style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)' }}
+      style={{ backgroundColor: 'rgba(255,251,245,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border-light)' }}
     >
       <button
         onClick={toggle}

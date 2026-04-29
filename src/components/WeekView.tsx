@@ -173,7 +173,9 @@ export function WeekView() {
                                 onClick={() => setExpandedId(isExpanded ? null : schedule.id)}
                                 className="rounded-2xl p-2 cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
                                 style={{
-                                  backgroundColor: `${course.color}1A`,
+                                  backgroundColor: `${course.color}14`,
+                                  backdropFilter: 'blur(4px)',
+                                  WebkitBackdropFilter: 'blur(4px)',
                                   borderLeft: `4px solid ${course.color}`,
                                   boxShadow: active ? '0 0 0 2px var(--accent-warm)' : 'none',
                                 }}
