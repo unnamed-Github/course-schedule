@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-cream: #FDF6ED;
+  --color-warm-beige: #F5EDE0;
+  --color-sand: #E8D5C4;
+  --color-terracotta: #D4856B;
+  --color-rust: #B5654B;
+  --color-moss: #7D9346;
+  --color-sage: #A7B99A;
+  --color-caramel: #C4915C;
+  --color-paper: #FFF9F2;
+  --color-ink: #4A3F35;
+  --color-ink-light: #8B7E6F;
+
+  --radius-card: 1rem;
+  --radius-btn: 0.75rem;
+  --shadow-card: 0 2px 12px rgba(74, 63, 53, 0.08);
+  --shadow-card-hover: 0 4px 20px rgba(74, 63, 53, 0.14);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #FDF6ED;
+  --foreground: #4A3F35;
+}
+
+.dark {
+  --background: #1E1B18;
+  --foreground: #E8D5C4;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), "Hiragino Sans", "Noto Sans SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
