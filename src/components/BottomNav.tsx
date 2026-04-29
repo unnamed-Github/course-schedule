@@ -34,7 +34,7 @@ export function BottomNav() {
               style={{ color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)' }}
             >
               <span className="text-lg">{tab.icon}</span>
-              <span className={`text-[10px] whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[10px] whitespace-nowrap hidden md:block ${isActive ? 'font-semibold' : 'font-medium'}`}>
                 {tab.label}
               </span>
             </Link>

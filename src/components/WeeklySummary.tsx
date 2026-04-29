@@ -21,13 +21,14 @@ export function WeeklySummary() {
     const dow = now.getDay()
     const isWeekend = dow === 0 || dow === 6
 
-    if (!isWeekend) {
-      const lastShown = localStorage.getItem('summary_last_week')
-      if (lastShown === String(getWeekNumber(now))) return
-    }
+    if (!isWeekend) return
+
+    const currentWeek = getWeekNumber(now)
+    const lastShown = localStorage.getItem('summary_last_week')
+    if (lastShown === String(currentWeek)) return
 
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()]).then(([, schedules, assignments, memos]) => {
-      const weekNum = getWeekNumber()
+      const weekNum = currentWeek
       const weekSchedules = schedules.filter((s) => {
         if (s.week_type === 'odd' && weekNum % 2 === 0) return false
         if (s.week_type === 'even' && weekNum % 2 !== 0) return false
@@ -57,7 +58,10 @@ export function WeeklySummary() {
               <div className="w-px h-5" style={{ backgroundColor: 'var(--border-light)' }} />
               <div><span className="text-xl font-bold" style={{ color: 'var(--accent-warm)' }}>{stats.memos}</span><span className="text-xs ml-1" style={{ color: 'var(--text-secondary)' }}>备忘</span></div>
             </div>
-            <p className="text-xs mt-3 italic" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>{encouragement.text}</p>
+            <p className="text-sm mt-3 italic" style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+              {encouragement.text}
+            </p>
+            <button onClick={() => setVisible(false)} className="mt-4 btn-ghost text-xs">知道了</button>
           </div>
         </motion.div>
       )}

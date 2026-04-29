@@ -66,17 +66,23 @@ export function WarmthBanner() {
           initial={{ opacity: 0, y: -8, height: 0 }}
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, y: -8, height: 0 }}
-          className="mb-4 py-2 text-center relative"
+          className="mb-4 relative h-12 flex items-center px-4 rounded-2xl overflow-hidden"
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            borderLeft: '4px solid var(--accent-warm)',
+          }}
         >
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            {message}
-          </p>
-          <p className="text-xs mt-0.5 italic" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-            {encouragement}
-          </p>
+          <div className="flex-1 min-w-0 flex flex-col justify-center">
+            <p className="text-base font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+              {message}
+            </p>
+            <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+              {encouragement}
+            </p>
+          </div>
           <button
             onClick={handleClose}
-            className="absolute right-0 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs"
+            className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
             style={{ color: 'var(--text-secondary)' }}
             aria-label="关闭问候"
           >

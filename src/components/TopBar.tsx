@@ -2,15 +2,23 @@
 
 import { useEffect, useState } from "react"
 import { useTheme } from "@/components/ThemeProvider"
-import { getWeekNumber, getSemesterConfig } from "@/lib/semester"
+import { getWeekNumber, getSemesterConfig, getWeekDateRange } from "@/lib/semester"
 
 export function TopBar() {
   const { theme, toggle } = useTheme()
   const [weekNum, setWeekNum] = useState<number | null>(null)
+  const [dateLabel, setDateLabel] = useState("")
   const totalWeeks = getSemesterConfig().teachingWeeks
 
   useEffect(() => {
-    setWeekNum(getWeekNumber())
+    const wn = getWeekNumber()
+    setWeekNum(wn)
+    const range = getWeekDateRange(wn)
+    const sm = range.start.getMonth() + 1
+    const sd = range.start.getDate()
+    const em = range.end.getMonth() + 1
+    const ed = range.end.getDate()
+    setDateLabel(`${sm}/${sd}—${em}/${ed}`)
   }, [])
 
   return (
@@ -29,11 +37,13 @@ export function TopBar() {
 
       {weekNum !== null && (
         <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          第{weekNum}/{totalWeeks}周 · {new Date().getMonth() + 1}/{new Date().getDate()}
+          第{weekNum}/{totalWeeks}周 · {dateLabel}
         </span>
       )}
 
-      <div className="w-9" />
+      <div className="w-9 flex items-center justify-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+        {new Date().getMonth() + 1}/{new Date().getDate()}
+      </div>
     </header>
   )
 }

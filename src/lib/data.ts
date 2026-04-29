@@ -68,6 +68,12 @@ export async function updateCourse(id: string, updates: Partial<Course>): Promis
   return data
 }
 
+export async function deleteCourse(id: string): Promise<boolean> {
+  const { error } = await supabase.from('courses').delete().eq('id', id)
+  invalidateCache('courses')
+  return !error
+}
+
 // ---------- Schedules ----------
 
 export async function getSchedules(courseId?: string): Promise<CourseSchedule[]> {

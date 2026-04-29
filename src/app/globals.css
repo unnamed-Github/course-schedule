@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--bg-primary);
   --color-foreground: var(--text-primary);
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
 }
 
 :root {
@@ -23,26 +23,19 @@
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
   --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
 
-  /* 向后兼容旧变量名 */
   --bg: var(--bg-primary);
   --fg: var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --card-bg: var(--bg-card);
   --border: var(--border-light);
-  --success: var(--accent-success);
-  --danger: var(--accent-danger);
-  --warning: var(--accent-warm);
-  --success-bg: rgba(16, 185, 129, 0.08);
-  --warning-bg: rgba(245, 158, 11, 0.08);
-  --danger-bg: rgba(239, 68, 68, 0.08);
   --nav-glass-bg: rgba(255, 251, 245, 0.8);
   --tab-glass-bg: rgba(255, 255, 255, 0.82);
-  --holiday-cell: rgba(0, 0, 0, 0.02);
+  --holiday-cell: rgba(0, 0, 0, 0.06);
   --makeup-badge: rgba(245, 158, 11, 0.08);
   --drop-highlight: rgba(59, 130, 246, 0.04);
 }
 
-[data-theme="dark"] {
+.dark {
   --bg-primary: #0F172A;
   --bg-card: #1E293B;
   --text-primary: #E2E8F0;
@@ -57,18 +50,11 @@
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
   --shadow-xl: 0 20px 25px rgba(0,0,0,0.6);
 
-  /* 向后兼容 */
   --bg: var(--bg-primary);
   --fg: var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --card-bg: var(--bg-card);
   --border: var(--border-light);
-  --success: var(--accent-success);
-  --danger: var(--accent-danger);
-  --warning: var(--accent-warm);
-  --success-bg: rgba(52, 211, 153, 0.1);
-  --warning-bg: rgba(251, 191, 36, 0.1);
-  --danger-bg: rgba(248, 113, 113, 0.1);
   --nav-glass-bg: rgba(15, 23, 42, 0.8);
   --tab-glass-bg: rgba(30, 41, 59, 0.82);
   --holiday-cell: rgba(255, 255, 255, 0.03);
@@ -78,6 +64,11 @@
 
 @keyframes breathe-danger {
   0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes breathe-warm {
+  0%, 100% { opacity: 0.85; }
   50% { opacity: 1; }
 }
 
@@ -99,7 +90,7 @@ body {
 
 .chip {
   display: inline-flex; align-items: center; gap: 0.25rem;
-  padding: 0.125rem 0.5rem; border-radius: 9999px;
+  padding: 0.125rem 0.5rem; border-radius: 0.5rem;
   border: 1px solid var(--border-light); font-size: 0.6875rem;
   color: var(--text-secondary); white-space: nowrap;
 }
