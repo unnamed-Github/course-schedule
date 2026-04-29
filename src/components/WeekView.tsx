@@ -115,7 +115,7 @@ export function WeekView() {
           <AnimatePresence mode="wait">
             <motion.div key={weekNum} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               {PERIOD_GROUPS.map((group) => (
-                <motion.div key={group.label} layout className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', minHeight: '80px' }}>
+                <div key={group.label} className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', minHeight: '80px' }}>
                   <div className="p-2 flex flex-col justify-center text-right pr-3" style={{ backgroundColor: 'var(--border-light)', opacity: 0.5 }}>
                     <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{group.label}</span>
                     <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>{group.time}</span>
@@ -156,18 +156,15 @@ export function WeekView() {
                             courseMemos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
 
                             return (
-                              <motion.div
+                              <div
                                 key={schedule.id}
-                                layout
                                 onClick={() => setExpandedId(isExpanded ? null : schedule.id)}
-                                className="rounded-2xl p-2 cursor-pointer overflow-hidden"
+                                className="rounded-2xl p-2 cursor-pointer overflow-hidden transition-shadow hover:shadow-md"
                                 style={{
                                   backgroundColor: `${course.color}1A`,
                                   borderLeft: `4px solid ${course.color}`,
                                   boxShadow: active ? '0 0 0 2px var(--accent-warm)' : 'none',
                                 }}
-                                whileHover={{ scale: isExpanded ? 1 : 1.02, boxShadow: isExpanded ? 'none' : 'var(--shadow-md)' }}
-                                whileTap={{ scale: isExpanded ? 1 : 0.98 }}
                               >
                                 <div className="flex items-start justify-between">
                                   <div className="min-w-0 flex-1">
@@ -176,64 +173,71 @@ export function WeekView() {
                                     <div className="text-xs truncate" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>{schedule.location !== '—' ? schedule.location : ''}</div>
                                   </div>
                                   <span className="text-[10px] ml-1 flex-shrink-0" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>{isExpanded ? '▲' : '▼'}</span>
-                                  {active && <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-[var(--accent-warm)] animate-pulse" />}
+                                  {active && !isExpanded && <div className="absolute top-1 right-6 w-1.5 h-1.5 rounded-full bg-[var(--accent-warm)] animate-pulse" />}
                                 </div>
 
-                                {isExpanded && (
-                                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: 'var(--border-light)' }}>
-                                    {/* Tags */}
-                                    {Object.keys(tagCounts).length > 0 && (
-                                      <div className="flex gap-1 flex-wrap">
-                                        {ALL_TAGS.map((tag) => {
-                                          const count = tagCounts[tag] ?? 0
-                                          if (count === 0) return null
-                                          return <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${getMoodColor(tag)}1A`, color: getMoodColor(tag) }}>{tag} ×{count}</span>
-                                        })}
-                                      </div>
-                                    )}
-
-                                    {/* Assignments */}
-                                    {courseAssignments.length > 0 && (
-                                      <div>
-                                        <p className="text-[10px] font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业 ({courseAssignments.length})</p>
-                                        {courseAssignments.slice(0, 4).map((a) => {
-                                          const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
-                                          const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
-                                          return (
-                                            <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
-                                              <span>{a.status === 'submitted' ? '✅' : '⬜'}</span>
-                                              <span className="truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)', opacity: a.status === 'submitted' ? 0.4 : 1 }}>{a.title}</span>
-                                              <span className="flex-shrink-0" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>{formatDateTime(a.due_date).slice(5)}</span>
-                                            </div>
-                                          )
-                                        })}
-                                      </div>
-                                    )}
-
-                                    {/* Memos */}
-                                    {courseMemos.length > 0 && (
-                                      <div>
-                                        <p className="text-[10px] font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>📌 备忘 ({courseMemos.length})</p>
-                                        {courseMemos.slice(0, 3).map((m) => (
-                                          <div key={m.id} className="text-[10px] flex items-start gap-1.5 rounded-lg px-2 py-1" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                                            <span>{m.mood_emoji}</span>
-                                            <span style={{ color: 'var(--text-secondary)' }}>{m.content}</span>
+                                <AnimatePresence initial={false}>
+                                  {isExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="mt-3 pt-2 border-t space-y-2" style={{ borderColor: 'var(--border-light)' }}>
+                                        {Object.keys(tagCounts).length > 0 && (
+                                          <div className="flex gap-1 flex-wrap">
+                                            {ALL_TAGS.map((tag) => {
+                                              const count = tagCounts[tag] ?? 0
+                                              if (count === 0) return null
+                                              return <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ backgroundColor: `${getMoodColor(tag)}1A`, color: getMoodColor(tag) }}>{tag} ×{count}</span>
+                                            })}
                                           </div>
-                                        ))}
-                                      </div>
-                                    )}
+                                        )}
 
-                                    <Link href={`/courses/${course.id}`} className="text-[10px] block" style={{ color: 'var(--accent-info)' }}>查看完整详情 →</Link>
-                                  </motion.div>
-                                )}
-                              </motion.div>
+                                        {courseAssignments.length > 0 && (
+                                          <div>
+                                            <p className="text-[10px] font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业 ({courseAssignments.length})</p>
+                                            {courseAssignments.slice(0, 4).map((a) => {
+                                              const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+                                              const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
+                                              return (
+                                                <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
+                                                  <span>{a.status === 'submitted' ? '✅' : '⬜'}</span>
+                                                  <span className="truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)', opacity: a.status === 'submitted' ? 0.4 : 1 }}>{a.title}</span>
+                                                  <span className="flex-shrink-0" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>{formatDateTime(a.due_date).slice(5)}</span>
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        )}
+
+                                        {courseMemos.length > 0 && (
+                                          <div>
+                                            <p className="text-[10px] font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>📌 备忘 ({courseMemos.length})</p>
+                                            {courseMemos.slice(0, 3).map((m) => (
+                                              <div key={m.id} className="text-[10px] flex items-start gap-1.5 rounded-lg px-2 py-1" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                                                <span>{m.mood_emoji}</span>
+                                                <span style={{ color: 'var(--text-secondary)' }}>{m.content}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+
+                                        <Link href={`/courses/${course.id}`} className="text-[10px] block" style={{ color: 'var(--accent-info)' }}>查看完整详情 →</Link>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
                             )
                           })
                         )}
                       </div>
                     )
                   })}
-                </motion.div>
+                </div>
               ))}
             </motion.div>
           </AnimatePresence>
