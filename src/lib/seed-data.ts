@@ -27,7 +27,7 @@ export const SCHEDULES: CourseSchedule[] = [
   { id: 's8', course_id: 'c6', day_of_week: 1, start_period: 5, end_period: 6, location: '智华107', week_type: 'all' },
   { id: 's9', course_id: 'c6', day_of_week: 3, start_period: 5, end_period: 6, location: '智华107', week_type: 'all' },
   { id: 's10', course_id: 'c7', day_of_week: 4, start_period: 5, end_period: 8, location: '—', week_type: 'all' },
-  { id: 's11', course_id: 'c8', day_of_week: 3, start_period: 7, end_period: 8, location: '一教325', week_type: 'odd' },
+  { id: 's11', course_id: 'c8', day_of_week: 3, start_period: 7, end_period: 8, location: '一教325', week_type: 'all' },
   { id: 's12', course_id: 'c8', day_of_week: 5, start_period: 5, end_period: 6, location: '一教325', week_type: 'odd' },
   { id: 's13', course_id: 'c9', day_of_week: 1, start_period: 7, end_period: 8, location: '智华108', week_type: 'all' },
   { id: 's14', course_id: 'c10', day_of_week: 1, start_period: 9, end_period: 10, location: '智华401', week_type: 'all' },
