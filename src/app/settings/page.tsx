@@ -42,7 +42,7 @@ export default function SettingsPage() {
           onDrop={async (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) await processFile(f) }}
           onClick={() => fileInputRef.current?.click()}
           className="rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors mb-3"
-          style={{ borderColor: dragOver ? 'var(--accent-info)' : 'var(--border-light)', backgroundColor: dragOver ? 'rgba(59,130,246,0.04)' : 'transparent' }}
+          style={{ borderColor: dragOver ? 'var(--accent-info)' : 'var(--border-light)', backgroundColor: dragOver ? 'var(--drop-highlight)' : 'transparent' }}
         >
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📁 拖拽 CSV/Excel 文件到此处</p>
           <p className="text-[10px] mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>或点击选择文件</p>

@@ -145,9 +145,9 @@ export function WeekView() {
                     })
 
                     return (
-                      <div key={day} className="p-1 flex flex-col gap-0.5" style={{ backgroundColor: holiday ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
+                      <div key={day} className="p-1 flex flex-col gap-0.5" style={{ backgroundColor: holiday ? 'var(--holiday-cell)' : 'transparent' }}>
                         {holiday && makeup ? (
-                          <div className="flex-1 flex items-center justify-center p-2 rounded-2xl" style={{ backgroundColor: 'rgba(245,158,11,0.08)' }}>
+                          <div className="flex-1 flex items-center justify-center p-2 rounded-2xl" style={{ backgroundColor: 'var(--makeup-badge)' }}>
                             <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>补课 · 周{DAYS[makeup.replacesDayOfWeek - 1]}</span>
                           </div>
                         ) : holiday ? (
