@@ -4,31 +4,40 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const TABS = [
-  { href: "/", label: "📅 周", shortLabel: "周" },
-  { href: "/day", label: "☀️ 日", shortLabel: "日" },
-  { href: "/courses", label: "📚 课程", shortLabel: "课" },
+  { href: "/", icon: "📅", label: "周视图" },
+  { href: "/day", icon: "📆", label: "日视图" },
+  { href: "/courses", icon: "📚", label: "课程" },
+  { href: "/settings", icon: "⚙️", label: "设置" },
 ]
 
 export function MobileTabs() {
   const pathname = usePathname()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-cream/95 dark:bg-[#1E1B18]/95 backdrop-blur border-t border-sand/40 dark:border-ink-light/20 safe-area-bottom">
-      <div className="flex items-center justify-around h-16">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderTop: '1px solid var(--border)',
+        boxShadow: '0 -1px 3px rgba(0,0,0,0.04)',
+      }}
+    >
+      <div className="flex items-center justify-around h-16 px-2">
         {TABS.map((tab) => {
           const isActive = pathname === tab.href
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`flex flex-col items-center gap-0.5 px-4 py-2 text-xs transition-colors ${
-                isActive
-                  ? "text-rust dark:text-terracotta"
-                  : "text-ink-light dark:text-sand/50"
-              }`}
+              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors"
+              style={{
+                color: isActive ? 'var(--fg)' : 'var(--fg-secondary)',
+              }}
             >
-              <span className="text-lg">{tab.shortLabel}</span>
-              <span className="text-[10px]">{tab.label.replace(/^[^\s]+\s/, "")}</span>
+              <span className="text-lg">{tab.icon}</span>
+              <span className="text-[10px] font-medium whitespace-nowrap">
+                {tab.label}
+              </span>
             </Link>
           )
         })}

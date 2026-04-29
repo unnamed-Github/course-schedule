@@ -5,6 +5,7 @@ export interface Course {
   classroom: string
   color: string
   week_type: 'all' | 'odd' | 'even'
+  order?: number
 }
 
 export interface CourseSchedule {
@@ -27,11 +28,14 @@ export interface Assignment {
   created_at: string
 }
 
+export type MoodTag = '⭐喜欢' | '🥱苟住' | '💪硬扛' | '🌈期待'
+
 export interface Memo {
   id: string
   course_id: string
   content: string
   mood_emoji: string
+  mood_tags?: MoodTag[]
   created_at: string
 }
 

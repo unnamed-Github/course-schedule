@@ -1,19 +1,19 @@
 import { Course, CourseSchedule } from './types'
 
 export const COURSES: Course[] = [
-  { id: 'c1', name: '线性代数', teacher: '陈懿茂', classroom: '智华106', color: '#D4856B', week_type: 'all' },
-  { id: 'c2', name: '电路基础', teacher: '高振', classroom: '一教327', color: '#7D9346', week_type: 'all' },
-  { id: 'c3', name: '网球', teacher: '白波', classroom: '欣园网球场', color: '#C4915C', week_type: 'all' },
-  { id: 'c4', name: '高等数学（下）', teacher: '刘博辰', classroom: '智华206', color: '#B5654B', week_type: 'all' },
-  { id: 'c5', name: '高等数学（下）习题课', teacher: '助教孙露露', classroom: '一教406', color: '#A7B99A', week_type: 'all' },
-  { id: 'c6', name: '大学物理（下）', teacher: '陈伟强', classroom: '智华107', color: '#D4856B', week_type: 'all' },
-  { id: 'c7', name: '书院教育', teacher: '—', classroom: '—', color: '#8B7E6F', week_type: 'all' },
-  { id: 'c8', name: '生命科学概论', teacher: '—', classroom: '一教325', color: '#C4915C', week_type: 'odd' },
-  { id: 'c9', name: '习近平思想概论', teacher: '杨少曼', classroom: '智华108', color: '#B5654B', week_type: 'all' },
-  { id: 'c10', name: '写作与交流', teacher: '袁博', classroom: '智华401', color: '#7D9346', week_type: 'all' },
-  { id: 'c11', name: '马原基本原理', teacher: '杨晗旭', classroom: '智华107', color: '#A7B99A', week_type: 'all' },
-  { id: 'c12', name: '线性代数习题课', teacher: '助教刘吉宇', classroom: '智华202', color: '#D4856B', week_type: 'all' },
-  { id: 'c13', name: '乐团排练', teacher: '—', classroom: '—', color: '#E8D5C4', week_type: 'all' },
+  { id: 'c1', name: '线性代数', teacher: '陈懿茂', classroom: '智华106', color: '#4F46E5', week_type: 'all', order: 1 },
+  { id: 'c2', name: '电路基础', teacher: '高振', classroom: '一教327', color: '#0891B2', week_type: 'all', order: 2 },
+  { id: 'c3', name: '网球', teacher: '白波', classroom: '欣园网球场', color: '#7C3AED', week_type: 'all', order: 3 },
+  { id: 'c4', name: '高等数学（下）', teacher: '刘博辰', classroom: '智华206', color: '#D97706', week_type: 'all', order: 4 },
+  { id: 'c5', name: '高等数学（下）习题课', teacher: '助教孙露露', classroom: '一教406', color: '#F59E0B', week_type: 'all', order: 5 },
+  { id: 'c6', name: '大学物理（下）', teacher: '陈伟强', classroom: '智华107', color: '#059669', week_type: 'all', order: 6 },
+  { id: 'c7', name: '书院教育', teacher: '—', classroom: '—', color: '#BE185D', week_type: 'all', order: 7 },
+  { id: 'c8', name: '生命科学概论', teacher: '—', classroom: '一教325', color: '#DC2626', week_type: 'odd', order: 8 },
+  { id: 'c9', name: '习近平思想概论', teacher: '杨少曼', classroom: '智华108', color: '#9D174D', week_type: 'all', order: 9 },
+  { id: 'c10', name: '写作与交流', teacher: '袁博', classroom: '智华401', color: '#2563EB', week_type: 'all', order: 10 },
+  { id: 'c11', name: '马原基本原理', teacher: '杨晗旭', classroom: '智华107', color: '#B91C1C', week_type: 'all', order: 11 },
+  { id: 'c12', name: '线性代数习题课', teacher: '助教刘吉宇', classroom: '智华202', color: '#6366F1', week_type: 'all', order: 12 },
+  { id: 'c13', name: '乐团排练', teacher: '—', classroom: '—', color: '#9333EA', week_type: 'all', order: 13 },
 ]
 
 export const SCHEDULES: CourseSchedule[] = [

@@ -1,13 +1,15 @@
 import { WeekView } from '@/components/WeekView'
-import { Greeting } from '@/components/Greeting'
+import { WarmthBanner } from '@/components/WarmthBanner'
 import { WeeklySummary } from '@/components/WeeklySummary'
+import { EasterEgg } from '@/components/EasterEgg'
 
 export default function HomePage() {
   return (
     <>
-      <Greeting />
+      <WarmthBanner />
       <WeekView />
       <WeeklySummary />
+      <EasterEgg />
     </>
   )
 }

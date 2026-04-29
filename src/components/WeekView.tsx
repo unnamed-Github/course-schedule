@@ -1,31 +1,21 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course } from '@/lib/types'
 import { getCourses, getSchedules } from '@/lib/data'
-import { getWeekCourses, getCurrentPeriod, getWeekNumber, getWeekDateRange } from '@/lib/schedule'
+import { getWeekCourses, getCurrentPeriod, getWeekNumber, getWeekDateRange, getTodayCourses, getMakeupInfo, isHoliday } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
 
-const DAYS = ['一', '二', '三', '四', '五']
-const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-
-function getScheduleStyle(schedule: CourseSchedule, course: Course) {
-  const start = getPeriodTime(schedule.start_period)
-  const end = getPeriodTime(schedule.end_period)
-  if (!start || !end) return {}
-
-  const startMin = parseTimeToMinutes(start.start)
-  const endMin = parseTimeToMinutes(end.end)
-  const top = ((startMin - 480) / (1350 - 480)) * 100
-  const height = ((endMin - startMin) / (1350 - 480)) * 100
-
-  return {
-    top: `${top}%`,
-    height: `${height}%`,
-    backgroundColor: course.color + '22',
-    borderLeftColor: course.color,
-  }
-}
+const DAYS = ['一', '二', '三', '四', '五', '六', '日']
+const PERIOD_GROUPS = [
+  { label: '1-2节', start: 1, end: 2, time: '08:00-09:50' },
+  { label: '3-4节', start: 3, end: 4, time: '10:05-11:50' },
+  { label: '5-6节', start: 5, end: 6, time: '14:00-15:45' },
+  { label: '7-8节', start: 7, end: 8, time: '16:05-17:50' },
+  { label: '9-10节', start: 9, end: 10, time: '19:00-20:45' },
+  { label: '11节', start: 11, end: 11, time: '21:00-22:30' },
+]
 
 function parseTimeToMinutes(time: string) {
   const [h, m] = time.split(':').map(Number)
@@ -49,12 +39,11 @@ export function WeekView() {
     setWeekRange(getWeekDateRange(wn))
 
     const now = new Date()
-    setCurrentDay(now.getDay() || 7)
+    const dow = now.getDay()
+    setCurrentDay(dow === 0 ? 7 : dow)
     setCurrentPeriod(getCurrentPeriod(now))
 
-    const timer = setInterval(() => {
-      setCurrentPeriod(getCurrentPeriod())
-    }, 60000)
+    const timer = setInterval(() => setCurrentPeriod(getCurrentPeriod()), 60000)
     return () => clearInterval(timer)
   }, [])
 
@@ -66,117 +55,201 @@ export function WeekView() {
     setCurrentPeriod(null)
   }
 
-  const displayCourses = getWeekCourses(schedules, weekNum)
   const courseMap = new Map(courses.map((c) => [c.id, c]))
+
+  const today = new Date()
+  const holiday = isHoliday(today)
+  const makeup = getMakeupInfo(today)
 
   const formatDate = (d: Date) => `${d.getMonth() + 1}月${d.getDate()}日`
 
+  // Determine which day columns to show (normally Mon-Fri, but include Saturday if makeup)
+  const showDays = [1, 2, 3, 4, 5]
+  if (makeup && makeup.replacesDayOfWeek <= 5) {
+    // makeup day already covered in Mon-Fri
+  }
+  const allSchedules = schedules
+
+  // Check if a course at a specific period group is currently active
+  function isCurrentCourse(schedule: CourseSchedule) {
+    if (currentDay === 0 || currentPeriod === null) return false
+    return (
+      schedule.day_of_week === currentDay &&
+      currentPeriod >= schedule.start_period &&
+      currentPeriod <= schedule.end_period
+    )
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Week Switcher */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => changeWeek(-1)}
-          className="px-3 py-1.5 rounded-btn bg-warm-beige dark:bg-ink-light/20 text-ink-light dark:text-sand/60 hover:text-ink dark:hover:text-sand transition-colors text-sm"
+          className="btn-ghost"
+          style={{ color: 'var(--fg-secondary)' }}
         >
           ← 上一周
         </button>
-        <h2 className="text-base font-medium text-ink dark:text-sand">
-          第 {weekNum} 周
+        <div className="text-center">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--fg)' }}>
+            第 {weekNum}/15 周
+          </h2>
           {weekRange && (
-            <span className="ml-2 text-sm text-ink-light dark:text-sand/50">
+            <p className="text-xs" style={{ color: 'var(--fg-secondary)' }}>
               {formatDate(weekRange.start)} — {formatDate(weekRange.end)}
-            </span>
+            </p>
           )}
-        </h2>
+        </div>
         <button
           onClick={() => changeWeek(1)}
-          className="px-3 py-1.5 rounded-btn bg-warm-beige dark:bg-ink-light/20 text-ink-light dark:text-sand/60 hover:text-ink dark:hover:text-sand transition-colors text-sm"
+          className="btn-ghost"
+          style={{ color: 'var(--fg-secondary)' }}
         >
           下一周 →
         </button>
       </div>
 
-      <div className="rounded-card bg-paper dark:bg-[#252220] shadow-card overflow-x-auto">
+      {/* Grid */}
+      <div className="overflow-x-auto">
         <div className="min-w-[640px]">
           {/* Day headers */}
-          <div className="grid grid-cols-[48px_1fr_1fr_1fr_1fr_1fr] border-b border-sand/30 dark:border-ink-light/10">
+          <div
+            className="grid rounded-t-2xl overflow-hidden"
+            style={{
+              gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`,
+              borderBottom: '1px solid var(--border)',
+            }}
+          >
             <div className="p-2" />
-            {DAYS.map((day, i) => (
+            {showDays.map((day) => (
               <div
                 key={day}
-                className={`p-2 text-center text-xs font-medium border-l border-sand/30 dark:border-ink-light/10 ${
-                  i + 1 === currentDay ? 'text-rust dark:text-terracotta' : 'text-ink-light dark:text-sand/50'
-                }`}
+                className="p-2 text-center text-xs font-semibold"
+                style={{
+                  color: day === currentDay ? 'var(--fg)' : 'var(--fg-secondary)',
+                  borderLeft: '1px solid var(--border)',
+                }}
               >
-                周{day}
+                周{DAYS[day - 1]}
               </div>
             ))}
           </div>
 
-          {/* Time grid */}
-          <div className="relative">
-            <div className="grid grid-cols-[48px_1fr_1fr_1fr_1fr_1fr]" style={{ height: '870px' }}>
-              {PERIODS.map((period) => {
-                const time = getPeriodTime(period)
-                const isCurrent = period === currentPeriod
-                return (
-                  <div key={period} className="contents">
-                    <div
-                      className={`p-1 text-[10px] leading-tight text-right pr-2 border-b border-sand/20 dark:border-ink-light/5 ${
-                        isCurrent ? 'text-rust dark:text-terracotta font-bold' : 'text-ink-light dark:text-sand/40'
-                      }`}
-                    >
-                      <div>{period}</div>
-                      {time && <div>{time.start}</div>}
-                    </div>
-                    {DAYS.map((_, di) => (
-                      <div
-                        key={di}
-                        className={`border-l border-b border-sand/20 dark:border-ink-light/5 ${
-                          di + 1 === currentDay && period === currentPeriod
-                            ? 'bg-rust/5 dark:bg-terracotta/10'
-                            : ''
-                        }`}
-                      />
-                    ))}
+          {/* Period rows */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={weekNum}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-b-2xl overflow-hidden"
+              style={{ border: '1px solid var(--border)', borderTop: 'none' }}
+            >
+              {PERIOD_GROUPS.map((group) => (
+                <div
+                  key={group.label}
+                  className="grid"
+                  style={{
+                    gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`,
+                    borderBottom: '1px solid var(--border)',
+                    minHeight: '72px',
+                  }}
+                >
+                  {/* Period label */}
+                  <div
+                    className="p-2 flex flex-col justify-center text-right pr-3"
+                    style={{ backgroundColor: 'var(--bg)' }}
+                  >
+                    <span className="text-xs font-medium" style={{ color: 'var(--fg-secondary)' }}>
+                      {group.label}
+                    </span>
+                    <span className="text-[10px]" style={{ color: 'var(--fg-secondary)', opacity: 0.6 }}>
+                      {group.time}
+                    </span>
                   </div>
-                )
-              })}
-            </div>
-          </div>
 
-          {/* Course blocks */}
-          <div className="relative" style={{ height: '870px', marginTop: '-870px' }}>
-            <div className="grid grid-cols-[48px_1fr_1fr_1fr_1fr_1fr]" style={{ height: '100%' }}>
-              <div />
-              {DAYS.map((_, dayIndex) => (
-                <div key={dayIndex} className="relative border-l border-transparent">
-                  {displayCourses
-                    .filter((s) => s.day_of_week === dayIndex + 1)
-                    .map((schedule) => {
-                      const course = courseMap.get(schedule.course_id)
-                      if (!course) return null
-                      const style = getScheduleStyle(schedule, course)
-                      return (
-                        <div
-                          key={schedule.id}
-                          className="absolute left-0.5 right-0.5 rounded-lg border-l-3 px-1.5 py-0.5 overflow-hidden text-xs cursor-pointer hover:opacity-80 transition-opacity"
-                          style={style}
-                          title={`${course.name}\n${course.teacher}\n${schedule.location}`}
-                        >
-                          <div className="font-semibold truncate" style={{ color: course.color }}>
-                            {course.name}
+                  {/* Day cells */}
+                  {showDays.map((day) => {
+                    const daySchedules = allSchedules.filter(
+                      (s) => {
+                        if (s.day_of_week !== day) return false
+                        if (s.week_type === 'odd' && weekNum % 2 === 0) return false
+                        if (s.week_type === 'even' && weekNum % 2 !== 0) return false
+                        if (s.start_period > group.end || s.end_period < group.start) return false
+                        return true
+                      }
+                    )
+
+                    return (
+                      <div
+                        key={day}
+                        className="p-0.5 relative flex flex-col gap-0.5"
+                        style={{
+                          borderLeft: '1px solid var(--border)',
+                          backgroundColor: holiday && day === makeup?.replacesDayOfWeek
+                            ? 'rgba(245, 158, 11, 0.05)'
+                            : holiday ? 'rgba(0,0,0,0.02)' : 'transparent',
+                        }}
+                      >
+                        {holiday && day === makeup?.replacesDayOfWeek ? (
+                          <div className="flex-1 flex items-center justify-center">
+                            <span className="text-[10px] font-medium" style={{ color: 'var(--fg-secondary)' }}>
+                              补课 · {DAYS[makeup.replacesDayOfWeek - 1]}
+                            </span>
                           </div>
-                          <div className="truncate text-ink-light dark:text-sand/40 leading-tight hidden sm:block">
-                            {schedule.location !== '—' ? schedule.location : ''}
+                        ) : holiday ? (
+                          <div className="flex-1 flex items-center justify-center">
+                            <span className="text-[10px]" style={{ color: 'var(--fg-secondary)', opacity: 0.5 }}>
+                              {holiday?.name}
+                            </span>
                           </div>
-                        </div>
-                      )
-                    })}
+                        ) : daySchedules.length === 0 ? (
+                          <div className="flex-1 flex items-center justify-center">
+                            <span className="text-[10px]" style={{ color: 'var(--border)' }}>
+                              —
+                            </span>
+                          </div>
+                        ) : (
+                          daySchedules.map((schedule) => {
+                            const course = courseMap.get(schedule.course_id)
+                            if (!course) return null
+                            const active = isCurrentCourse(schedule)
+                            return (
+                              <motion.div
+                                key={schedule.id}
+                                layout
+                                className="rounded-lg px-2 py-1 text-xs cursor-pointer relative overflow-hidden"
+                                style={{
+                                  backgroundColor: active
+                                    ? `${course.color}18`
+                                    : `${course.color}0D`,
+                                  borderLeft: `3px solid ${course.color}`,
+                                  boxShadow: active ? '0 0 0 2px rgba(245, 158, 11, 0.3)' : 'none',
+                                }}
+                                whileHover={{ scale: 1.02 }}
+                              >
+                                <div className="font-semibold truncate" style={{ color: course.color }}>
+                                  {course.name}
+                                </div>
+                                <div className="truncate text-[10px] mt-0.5" style={{ color: 'var(--fg-secondary)' }}>
+                                  {schedule.location !== '—' ? schedule.location : ''}
+                                </div>
+                                {active && (
+                                  <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-[#F59E0B] animate-pulse" />
+                                )}
+                              </motion.div>
+                            )
+                          })
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </div>

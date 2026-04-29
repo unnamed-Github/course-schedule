@@ -3,42 +3,61 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --font-sans: 'Inter', 'SF Pro Display', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
 
-  --color-cream: #FDF6ED;
-  --color-warm-beige: #F5EDE0;
-  --color-sand: #E8D5C4;
-  --color-terracotta: #D4856B;
-  --color-rust: #B5654B;
-  --color-moss: #7D9346;
-  --color-sage: #A7B99A;
-  --color-caramel: #C4915C;
-  --color-paper: #FFF9F2;
-  --color-ink: #4A3F35;
-  --color-ink-light: #8B7E6F;
+  --color-course-linear-algebra: #4F46E5;
+  --color-course-circuits: #0891B2;
+  --color-course-tennis: #7C3AED;
+  --color-course-advanced-math: #D97706;
+  --color-course-advanced-math-exercise: #F59E0B;
+  --color-course-physics: #059669;
+  --color-course-academy: #BE185D;
+  --color-course-life-science: #DC2626;
+  --color-course-xi-thought: #9D174D;
+  --color-course-writing: #2563EB;
+  --color-course-marxism: #B91C1C;
+  --color-course-linear-algebra-exercise: #6366F1;
+  --color-course-orchestra: #9333EA;
 
-  --radius-card: 1rem;
-  --radius-btn: 0.75rem;
-  --shadow-card: 0 2px 12px rgba(74, 63, 53, 0.08);
-  --shadow-card-hover: 0 4px 20px rgba(74, 63, 53, 0.14);
+  --color-gold: #F59E0B;
+  --color-gold-dark: #FBBF24;
+  --color-coral: #EF4444;
+  --color-mint: #10B981;
+  --color-mint-dark: #34D399;
 }
 
 :root {
-  --background: #FDF6ED;
-  --foreground: #4A3F35;
+  --bg: #FFFBF5;
+  --fg: #1A1A2E;
+  --fg-secondary: #6B7280;
+  --border: #E5E7EB;
+  --card-bg: #FFFFFF;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --highlight-glow: 0 0 0 3px rgba(245, 158, 11, 0.25);
 }
 
 .dark {
-  --background: #1E1B18;
-  --foreground: #E8D5C4;
+  --bg: #0F172A;
+  --fg: #E2E8F0;
+  --fg-secondary: #94A3B8;
+  --border: #1E293B;
+  --card-bg: #1E293B;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --highlight-glow: 0 0 0 3px rgba(251, 191, 36, 0.3);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), "Hiragino Sans", "Noto Sans SC", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }

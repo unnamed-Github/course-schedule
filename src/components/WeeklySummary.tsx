@@ -1,58 +1,75 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
 import { getWeekNumber } from '@/lib/semester'
-import { CourseSchedule } from '@/lib/types'
 
 export function WeeklySummary() {
   const [stats, setStats] = useState({ courses: 0, assignments: 0, memos: 0, week: 0 })
+  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()]).then(
-      ([courses, schedules, assignments, memos]) => {
+      ([, schedules, assignments, memos]) => {
         const weekNum = getWeekNumber()
         const weekSchedules = schedules.filter((s) => {
           if (s.week_type === 'odd' && weekNum % 2 === 0) return false
           if (s.week_type === 'even' && weekNum % 2 !== 0) return false
           return true
         })
-
-        const submittedAssignments = assignments.filter(
-          (a) => a.status === 'submitted'
-        )
+        const submitted = assignments.filter((a) => a.status === 'submitted')
 
         setStats({
           courses: weekSchedules.length,
-          assignments: submittedAssignments.length,
+          assignments: submitted.length,
           memos: memos.length,
           week: weekNum,
         })
+        setVisible(true)
       }
     )
   }, [])
 
-  if (stats.week === 0) return null
+  const totalAssignments = stats.assignments
+  const completionRate = totalAssignments > 0 ? Math.round((stats.assignments / Math.max(stats.assignments, 1)) * 100) : 100
 
   return (
-    <div className="rounded-card bg-paper dark:bg-[#252220] shadow-card p-4 mt-4 text-center">
-      <p className="text-xs text-ink-light dark:text-sand/50">第 {stats.week} 周小结</p>
-      <div className="flex items-center justify-center gap-6 mt-2">
-        <div>
-          <span className="text-lg font-semibold text-ink dark:text-sand">{stats.courses}</span>
-          <span className="text-xs text-ink-light dark:text-sand/50 ml-1">节课</span>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={visible ? { opacity: 1, scale: 1 } : {}}
+      className="mt-6 mx-auto max-w-sm"
+    >
+      <div
+        className="rounded-2xl p-6 text-center"
+        style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02))',
+          border: '1px solid rgba(245, 158, 11, 0.15)',
+        }}
+      >
+        <p className="text-xs" style={{ color: 'var(--fg-secondary)' }}>
+          第 {stats.week} 周小结
+        </p>
+        <div className="flex items-center justify-center gap-4 mt-3">
+          <div>
+            <span className="text-xl font-bold" style={{ color: 'var(--fg)' }}>{stats.courses}</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--fg-secondary)' }}>节课</span>
+          </div>
+          <div className="w-px h-5" style={{ backgroundColor: 'var(--border)' }} />
+          <div>
+            <span className="text-xl font-bold" style={{ color: '#10B981' }}>{stats.assignments}</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--fg-secondary)' }}>作业 ✓</span>
+          </div>
+          <div className="w-px h-5" style={{ backgroundColor: 'var(--border)' }} />
+          <div>
+            <span className="text-xl font-bold" style={{ color: '#F59E0B' }}>{stats.memos}</span>
+            <span className="text-xs ml-1" style={{ color: 'var(--fg-secondary)' }}>备忘</span>
+          </div>
         </div>
-        <div className="w-px h-6 bg-sand/30 dark:bg-ink-light/20" />
-        <div>
-          <span className="text-lg font-semibold text-rust dark:text-terracotta">{stats.assignments}</span>
-          <span className="text-xs text-ink-light dark:text-sand/50 ml-1">作业 ✓</span>
-        </div>
-        <div className="w-px h-6 bg-sand/30 dark:bg-ink-light/20" />
-        <div>
-          <span className="text-lg font-semibold text-moss dark:text-sage">{stats.memos}</span>
-          <span className="text-xs text-ink-light dark:text-sand/50 ml-1">备忘</span>
-        </div>
+        <p className="text-xs mt-3 italic" style={{ color: 'var(--fg-secondary)', opacity: 0.7 }}>
+          每一节课都有它的意义 🌱
+        </p>
       </div>
-    </div>
+    </motion.div>
   )
 }
