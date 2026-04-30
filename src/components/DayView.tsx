@@ -230,7 +230,7 @@ export function DayView() {
                 {isOngoing && isEndedEarly && (
                   <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: '#10B981' }}>
                     <div className="flex-1 h-1 rounded-full bg-white/30">
-                      <div className="h-full rounded-full bg-white" style={{ width: `${progress}%` }} />
+                      <div className="h-full rounded-full bg-white" style={{ width: '100%' }} />
                     </div>
                     <span className="text-[10px] text-white font-medium whitespace-nowrap">已下课</span>
                   </div>
