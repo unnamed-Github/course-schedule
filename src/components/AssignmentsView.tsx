@@ -3,17 +3,21 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment } from '@/lib/types'
-import { getCourses, getAssignments, updateAssignment } from '@/lib/data'
+import { getCourses, getAssignments, createAssignment, updateAssignment, deleteAssignment } from '@/lib/data'
 import { Modal } from './Modal'
+import { useToast } from './ToastProvider'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
 
 export function AssignmentsView() {
+  const { showToast } = useToast()
   const [courses, setCourses] = useState<Course[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [filter, setFilter] = useState<FilterType>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
+  const [addForm, setAddForm] = useState({ course_id: '', title: '', description: '', due_date: '' })
 
   useEffect(() => {
     Promise.all([getCourses(), getAssignments()]).then(([c, a]) => {
@@ -50,17 +54,48 @@ export function AssignmentsView() {
     }
   }
 
+  const handleAdd = async () => {
+    if (!addForm.course_id || !addForm.title || !addForm.due_date) return
+    const a = await createAssignment({
+      course_id: addForm.course_id,
+      title: addForm.title,
+      description: addForm.description,
+      due_date: new Date(addForm.due_date).toISOString(),
+      status: 'pending',
+    })
+    if (a) {
+      setAssignments(prev => [...prev, a])
+      setShowAdd(false)
+      setAddForm({ course_id: '', title: '', description: '', due_date: '' })
+      showToast('作业已添加', 'success')
+    } else {
+      showToast('添加失败', 'error')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const ok = await deleteAssignment(id)
+    if (ok) {
+      setAssignments(prev => prev.filter(a => a.id !== id))
+      setExpandedId(null)
+      showToast('作业已删除', 'success')
+    }
+  }
+
   if (!loaded) return null
 
   return (
     <div className="space-y-4">
-      {/* 四宫格统计 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
-        <StatCard label="待提交" value={stats.pending} color="var(--accent-warm)" />
-        <StatCard label="已提交" value={stats.submitted} color="var(--accent-success)" />
-        <StatCard label="已过期" value={stats.overdue} color="var(--accent-danger)" />
+      {/* 添加按钮 + 四宫格统计 */}
+      <div className="flex items-center justify-between">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1">
+          <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
+          <StatCard label="待提交" value={stats.pending} color="var(--accent-warm)" />
+          <StatCard label="已提交" value={stats.submitted} color="var(--accent-success)" />
+          <StatCard label="已过期" value={stats.overdue} color="var(--accent-danger)" />
+        </div>
       </div>
+      <button onClick={() => setShowAdd(true)} className="w-full py-2.5 rounded-xl text-sm font-medium transition-colors" style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}>+ 添加作业</button>
 
       {/* 筛选标签 */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -173,8 +208,11 @@ export function AssignmentsView() {
                             <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{assignment.description}</p>
                           </div>
                         )}
-                        <div className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-                          创建于: {assignment.created_at.replace('T', ' ')}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+                            创建于: {assignment.created_at.replace('T', ' ')}
+                          </div>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(assignment.id) }} className="text-xs px-3 py-1 rounded-lg" style={{ color: 'var(--accent-danger)', backgroundColor: 'var(--bg-primary)' }}>删除</button>
                         </div>
                       </div>
                     </motion.div>
@@ -185,6 +223,31 @@ export function AssignmentsView() {
           })
         )}
       </div>
+
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="添加作业">
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>课程 *</label>
+            <select value={addForm.course_id} onChange={(e) => setAddForm({ ...addForm, course_id: e.target.value })} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}>
+              <option value="">选择课程</option>
+              {courses.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>标题 *</label>
+            <input value={addForm.title} onChange={(e) => setAddForm({ ...addForm, title: e.target.value })} placeholder="作业标题" className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>描述</label>
+            <textarea value={addForm.description} onChange={(e) => setAddForm({ ...addForm, description: e.target.value })} placeholder="作业描述（可选）" rows={2} className="w-full rounded-xl px-3 py-2 text-sm resize-none" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} />
+          </div>
+          <div>
+            <label className="text-xs font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>截止日期 *</label>
+            <input type="datetime-local" value={addForm.due_date} onChange={(e) => setAddForm({ ...addForm, due_date: e.target.value })} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} />
+          </div>
+          <button onClick={handleAdd} disabled={!addForm.course_id || !addForm.title || !addForm.due_date} className="w-full py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40" style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}>添加</button>
+        </div>
+      </Modal>
     </div>
   )
 }

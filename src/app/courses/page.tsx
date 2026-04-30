@@ -43,7 +43,12 @@ export default function CoursesPage() {
   }, [])
 
   const scheduleCountMap = new Map<string, number>()
-  schedules.forEach((s) => { scheduleCountMap.set(s.course_id, (scheduleCountMap.get(s.course_id) ?? 0) + 1) })
+  const currentWeekOdd = weekNum % 2 === 1
+  schedules.forEach((s) => {
+    if (s.week_type === 'all' || (s.week_type === 'odd' && currentWeekOdd) || (s.week_type === 'even' && !currentWeekOdd)) {
+      scheduleCountMap.set(s.course_id, (scheduleCountMap.get(s.course_id) ?? 0) + 1)
+    }
+  })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -394,66 +399,75 @@ export default function CoursesPage() {
               {/* 时间列表 */}
               <div className="space-y-2">
                 {schedules.filter((s) => s.course_id === editingCard.id).map((schedule) => (
-                  <div key={schedule.id} className="flex items-center justify-between p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                  <div key={schedule.id} className="p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
                     {editingScheduleId === schedule.id ? (
-                      <div className="flex-1 flex items-center gap-2">
-                        <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                          {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
-                        </select>
-                        <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
-                        </select>
-                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
-                        <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
-                        </select>
-                        <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
-                        <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                          <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{DAY_MAP[schedule.day_of_week]} {schedule.start_period}-{schedule.end_period}节</span>
-                        {schedule.location && schedule.location !== '—' && <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>· {schedule.location}</span>}
-                        {schedule.week_type !== 'all' && <span className="chip text-[10px]" style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}>{schedule.week_type === 'odd' ? '单周' : '双周'}</span>}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-1">
-                      {editingScheduleId === schedule.id ? (
-                        <>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs flex-1" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                            {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
+                          </select>
+                          <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                          </select>
+                          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
+                          <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                            {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                          <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                            <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+                          </select>
+                        </div>
+                        <div className="flex items-center gap-1 justify-end">
                           <button onClick={handleSaveSchedule} className="btn-ghost text-xs" style={{ color: 'var(--accent-info)' }}>保存</button>
                           <button onClick={() => setEditingScheduleId(null)} className="btn-ghost text-xs">取消</button>
-                        </>
-                      ) : (
-                        <>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{DAY_MAP[schedule.day_of_week]} {schedule.start_period}-{schedule.end_period}节</span>
+                          {schedule.location && schedule.location !== '—' && <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>· {schedule.location}</span>}
+                          {schedule.week_type !== 'all' && <span className="chip text-[10px]" style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}>{schedule.week_type === 'odd' ? '单周' : '双周'}</span>}
+                        </div>
+                        <div className="flex items-center gap-1">
                           <button onClick={() => handleEditSchedule(schedule)} className="btn-ghost text-xs" style={{ color: 'var(--accent-info)' }}>编辑</button>
                           <button onClick={() => handleDeleteSchedule(schedule.id)} className="btn-ghost text-xs" style={{ color: 'var(--accent-danger)' }}>删除</button>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
                 
                 {/* 新增时间 */}
                 {editingScheduleId === 'new' && (
-                  <div className="flex items-center gap-2 p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                      {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
-                    </select>
-                    <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
-                    </select>
-                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
-                    <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                      {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
-                    </select>
-                    <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
-                    <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
-                      <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
-                    </select>
-                    <button onClick={handleAddSchedule} className="btn-primary text-xs" style={{ backgroundColor: 'var(--accent-info)' }}>添加</button>
-                    <button onClick={() => setEditingScheduleId(null)} className="btn-ghost text-xs">取消</button>
+                  <div className="p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs flex-1" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                          {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
+                        </select>
+                        <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                        </select>
+                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
+                        <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                        <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}>
+                          <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={handleAddSchedule} className="btn-primary text-xs" style={{ backgroundColor: 'var(--accent-info)' }}>添加</button>
+                        <button onClick={() => setEditingScheduleId(null)} className="btn-ghost text-xs">取消</button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

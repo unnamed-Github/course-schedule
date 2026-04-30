@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo } from '@/lib/data'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
 import { PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
@@ -37,6 +37,14 @@ export function WeekView() {
   const [expandedSchedule, setExpandedSchedule] = useState<CourseSchedule | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
+  const [highlightEnabled, setHighlightEnabled] = useState(true)
+
+  useEffect(() => {
+    setHighlightEnabled(localStorage.getItem('highlight_enabled') !== 'false')
+    const onStorage = () => setHighlightEnabled(localStorage.getItem('highlight_enabled') !== 'false')
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   const loadData = () => {
     setLoadError(false)
@@ -176,7 +184,7 @@ export function WeekView() {
                       daySchedules.map((schedule) => {
                         const course = courseMap.get(schedule.course_id)
                         if (!course) return null
-                        const active = isCurrentCourse(schedule)
+                        const active = highlightEnabled && isCurrentCourse(schedule)
                         const isExpanded = expandedSchedule?.id === schedule.id
                         const assignmentCount = getCourseAssignmentCount(course.id)
 
@@ -214,11 +222,38 @@ export function WeekView() {
                                   exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="pt-2 border-t border-white/20">
+                                  <div className="pt-2 border-t border-white/20 space-y-1.5">
                                     {course.teacher !== '—' && (
-                                      <p className="text-xs opacity-80 mb-1">👨‍🏫 {course.teacher}</p>
+                                      <p className="text-xs opacity-80">👨‍🏫 {course.teacher}</p>
                                     )}
                                     <p className="text-xs opacity-80">📅 第{schedule.start_period}-{schedule.end_period}节</p>
+                                    {assignments.filter((a) => a.course_id === course.id).length > 0 && (
+                                      <div className="space-y-0.5">
+                                        <p className="text-xs opacity-70 font-medium">📝 作业</p>
+                                        {assignments.filter((a) => a.course_id === course.id).map((a) => (
+                                          <div key={a.id} className="flex items-center gap-1 text-xs opacity-80">
+                                            <span>{a.status === 'submitted' ? '✅' : '⏳'}</span>
+                                            <span className="truncate">{a.title}</span>
+                                            {a.due_date && <span className="opacity-60 whitespace-nowrap">{new Date(a.due_date).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })}</span>}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    {memos.filter((m) => m.course_id === course.id).length > 0 && (
+                                      <div className="space-y-0.5">
+                                        <p className="text-xs opacity-70 font-medium">📋 备忘</p>
+                                        {memos.filter((m) => m.course_id === course.id).slice(0, 3).map((m) => (
+                                          <div key={m.id} className="flex items-center gap-1 text-xs opacity-80">
+                                            <span>{m.mood_emoji || '📌'}</span>
+                                            <span className="truncate">{m.content}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                    <div className="flex gap-2 pt-1">
+                                      <button onClick={async (e) => { e.stopPropagation(); const title = prompt('作业标题：'); if (!title) return; const a = await createAssignment({ course_id: course.id, title, description: '', due_date: new Date().toISOString(), status: 'pending' }); if (a) { setAssignments((prev) => [...prev, a]); showToast('作业已添加', 'success') } }} className="text-xs opacity-70 hover:opacity-100 transition-opacity">+ 作业</button>
+                                      <button onClick={async (e) => { e.stopPropagation(); const content = prompt('备忘内容：'); if (!content) return; const m = await createMemo({ course_id: course.id, content, mood_emoji: '📌', mood_tags: [] }); if (m) { setMemos((prev) => [m, ...prev]); showToast('备忘已添加', 'success') } }} className="text-xs opacity-70 hover:opacity-100 transition-opacity">+ 备忘</button>
+                                    </div>
                                   </div>
                                 </motion.div>
                               )}

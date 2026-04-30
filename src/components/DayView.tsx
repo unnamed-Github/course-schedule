@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, createMemo } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo } from '@/lib/data'
 import { getTodayCourses, getCurrentPeriod } from '@/lib/schedule'
 import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
@@ -26,6 +26,14 @@ export function DayView() {
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
+  const [highlightEnabled, setHighlightEnabled] = useState(true)
+
+  useEffect(() => {
+    setHighlightEnabled(localStorage.getItem('highlight_enabled') !== 'false')
+    const onStorage = () => setHighlightEnabled(localStorage.getItem('highlight_enabled') !== 'false')
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   const loadData = () => {
     setLoadError(false)
@@ -121,7 +129,7 @@ export function DayView() {
             if (!course) return null
             const startTime = getPeriodTime(schedule.start_period)
             const endTime = getPeriodTime(schedule.end_period)
-            const isCurrent = isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+            const isCurrent = highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
             const progress = getCourseProgress(schedule)
             const isExpanded = expandedCourse === schedule.id
 
@@ -194,21 +202,57 @@ export function DayView() {
                       className="overflow-hidden border-t"
                       style={{ borderColor: 'var(--border-light)' }}
                     >
-                      <div className="p-4">
-                        <h5 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>课程信息</h5>
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>教师</span>
-                            <p style={{ color: 'var(--text-primary)' }}>{course.teacher}</p>
+                      <div className="p-4 space-y-3">
+                        <div>
+                          <h5 className="text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>课程信息</h5>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>教师</span>
+                              <p style={{ color: 'var(--text-primary)' }}>{course.teacher}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>教室</span>
+                              <p style={{ color: 'var(--text-primary)' }}>{course.classroom}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>单双周</span>
+                              <p style={{ color: 'var(--text-primary)' }}>{course.week_type === 'all' ? '每周' : course.week_type === 'odd' ? '单周' : '双周'}</p>
+                            </div>
                           </div>
+                        </div>
+
+                        {assignments.filter((a) => a.course_id === course.id).length > 0 && (
                           <div>
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>教室</span>
-                            <p style={{ color: 'var(--text-primary)' }}>{course.classroom}</p>
+                            <h5 className="text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>📝 作业</h5>
+                            <div className="space-y-1">
+                              {assignments.filter((a) => a.course_id === course.id).map((a) => (
+                                <div key={a.id} className="flex items-center gap-2 text-sm py-1 px-2 rounded-lg" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                                  <span>{a.status === 'submitted' ? '✅' : '⏳'}</span>
+                                  <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{a.title}</span>
+                                  {a.due_date && <span className="text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{new Date(a.due_date).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })}</span>}
+                                </div>
+                              ))}
+                            </div>
                           </div>
+                        )}
+
+                        {memos.filter((m) => m.course_id === course.id).length > 0 && (
                           <div>
-                            <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>单双周</span>
-                            <p style={{ color: 'var(--text-primary)' }}>{course.week_type === 'all' ? '每周' : course.week_type === 'odd' ? '单周' : '双周'}</p>
+                            <h5 className="text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>📋 备忘</h5>
+                            <div className="space-y-1">
+                              {memos.filter((m) => m.course_id === course.id).slice(0, 5).map((m) => (
+                                <div key={m.id} className="flex items-center gap-2 text-sm py-1 px-2 rounded-lg" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                                  <span>{m.mood_emoji || '📌'}</span>
+                                  <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{m.content}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
+                        )}
+
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={async (e) => { e.stopPropagation(); const title = prompt('作业标题：'); if (!title) return; const a = await createAssignment({ course_id: course.id, title, description: '', due_date: new Date().toISOString(), status: 'pending' }); if (a) { setAssignments((prev) => [...prev, a]); showToast('作业已添加', 'success') } }} className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--accent-info)' }}>+ 添加作业</button>
+                          <button onClick={async (e) => { e.stopPropagation(); const content = prompt('备忘内容：'); if (!content) return; const m = await createMemo({ course_id: course.id, content, mood_emoji: '📌', mood_tags: [] }); if (m) { setMemos((prev) => [m, ...prev]); showToast('备忘已添加', 'success') } }} className="text-xs px-3 py-1.5 rounded-lg transition-colors" style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--accent-info)' }}>+ 添加备忘</button>
                         </div>
                       </div>
                     </motion.div>

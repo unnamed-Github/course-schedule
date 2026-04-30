@@ -20,7 +20,7 @@ export interface MakeupDay {
   weekType: 'all' | 'odd' | 'even'
 }
 
-const SEMESTER: SemesterConfig = {
+const DEFAULT_SEMESTER: SemesterConfig = {
   semesterStart: '2026-02-25',
   teachingWeeks: 15,
   examWeeks: 2,
@@ -33,6 +33,29 @@ const SEMESTER: SemesterConfig = {
     { date: '2026-02-28', replacesDayOfWeek: 1, weekType: 'all' },
     { date: '2026-05-09', replacesDayOfWeek: 2, weekType: 'odd' },
   ],
+}
+
+function loadSemesterConfig(): SemesterConfig {
+  if (typeof window === 'undefined') return DEFAULT_SEMESTER
+  try {
+    const stored = localStorage.getItem('semester_config')
+    if (stored) return JSON.parse(stored)
+  } catch {}
+  return DEFAULT_SEMESTER
+}
+
+let _cachedSemester: SemesterConfig | null = null
+
+function getSEMESTER(): SemesterConfig {
+  if (!_cachedSemester) _cachedSemester = loadSemesterConfig()
+  return _cachedSemester
+}
+
+export function updateSemesterConfig(config: SemesterConfig) {
+  _cachedSemester = config
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('semester_config', JSON.stringify(config))
+  }
 }
 
 export const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
@@ -62,7 +85,7 @@ export function getPeriodTime(period: number) {
 }
 
 export function getWeekNumber(date: Date = new Date()): number {
-  const start = new Date(SEMESTER.semesterStart)
+  const start = new Date(getSEMESTER().semesterStart)
   const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
   const diffMs = date.getTime() - startDay.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -74,7 +97,7 @@ export function isOddWeek(date: Date = new Date()): boolean {
 }
 
 export function getWeekDateRange(weekNumber: number): { start: Date; end: Date } {
-  const base = new Date(SEMESTER.semesterStart)
+  const base = new Date(getSEMESTER().semesterStart)
   const dayOfWeek = base.getDay()
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
 
@@ -100,12 +123,12 @@ function toDateStr(d: Date): string {
 
 export function isHoliday(date: Date): Holiday | null {
   const d = toDateStr(date)
-  return SEMESTER.holidays.find((h) => d >= h.start && d <= h.end) ?? null
+  return getSEMESTER().holidays.find((h) => d >= h.start && d <= h.end) ?? null
 }
 
 export function getMakeupInfo(date: Date): MakeupDay | null {
   const d = toDateStr(date)
-  return SEMESTER.makeupDays.find((m) => m.date === d) ?? null
+  return getSEMESTER().makeupDays.find((m) => m.date === d) ?? null
 }
 
 export function getCurrentPeriod(now: Date = new Date()): number | null {
@@ -119,5 +142,5 @@ export function getCurrentPeriod(now: Date = new Date()): number | null {
 }
 
 export function getSemesterConfig(): SemesterConfig {
-  return SEMESTER
+  return getSEMESTER()
 }
