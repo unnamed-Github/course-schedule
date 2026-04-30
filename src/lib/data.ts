@@ -97,6 +97,14 @@ export async function getSchedules(courseId?: string): Promise<CourseSchedule[]>
   return result
 }
 
+export async function createSchedule(input: Omit<CourseSchedule, 'id'>): Promise<CourseSchedule | null> {
+  const record = { ...input, id: genId() }
+  const { data, error } = await supabase.from('course_schedules').insert(record).select().single()
+  if (error) { console.error('createSchedule error:', error); return null }
+  invalidateCache('schedules')
+  return data
+}
+
 // ---------- Assignments ----------
 
 export async function getAssignments(courseId?: string): Promise<Assignment[]> {

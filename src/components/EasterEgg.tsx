@@ -20,7 +20,8 @@ export function EasterEgg() {
 
   useEffect(() => {
     const check = () => {
-      const lastShown = localStorage.getItem('easter_egg_last')
+      let lastShown: string | null = null
+      try { lastShown = localStorage.getItem('easter_egg_last') } catch {}
       const now = Date.now()
       if (lastShown && now - parseInt(lastShown) < COOLDOWN_MS) return
       if (Math.random() > 0.2) return
@@ -28,7 +29,7 @@ export function EasterEgg() {
       const w = GENTLE_WORDS[Math.floor(Math.random() * GENTLE_WORDS.length)]
       setWord(w)
       setVisible(true)
-      localStorage.setItem('easter_egg_last', now.toString())
+      try { localStorage.setItem('easter_egg_last', now.toString()) } catch {}
       setTimeout(() => setVisible(false), 5000)
     }
     const timer = setTimeout(check, 10000)

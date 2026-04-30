@@ -28,11 +28,7 @@ export function WarmthBanner() {
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
-    const hiddenDate = localStorage.getItem('warmth_banner_hidden')
-    if (hiddenDate === today) {
-      setVisible(false)
-      return
-    }
+    try { const hiddenDate = localStorage.getItem('warmth_banner_hidden'); if (hiddenDate === today) { setVisible(false); return } } catch {}
 
     Promise.all([getCourses(), getSchedules()]).then(([, schedules]) => {
       const todayCourses = getTodayCourses(schedules)
@@ -55,7 +51,7 @@ export function WarmthBanner() {
 
   const handleClose = () => {
     const today = new Date().toISOString().slice(0, 10)
-    localStorage.setItem('warmth_banner_hidden', today)
+    try { localStorage.setItem('warmth_banner_hidden', today) } catch {}
     setVisible(false)
   }
 

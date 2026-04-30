@@ -24,7 +24,8 @@ export function WeeklySummary() {
     if (!isWeekend) return
 
     const currentWeek = getWeekNumber(now)
-    const lastShown = localStorage.getItem('summary_last_week')
+    let lastShown: string | null = null
+    try { lastShown = localStorage.getItem('summary_last_week') } catch {}
     if (lastShown === String(currentWeek)) return
 
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()]).then(([, schedules, assignments, memos]) => {
@@ -37,7 +38,7 @@ export function WeeklySummary() {
       const submitted = assignments.filter((a) => a.status === 'submitted')
       setStats({ courses: weekSchedules.length, submitted: submitted.length, total: assignments.length, memos: memos.length, week: weekNum })
       setVisible(true)
-      localStorage.setItem('summary_last_week', String(weekNum))
+      try { localStorage.setItem('summary_last_week', String(weekNum)) } catch {}
     })
   }, [])
 

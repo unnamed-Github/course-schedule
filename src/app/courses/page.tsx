@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
@@ -74,6 +74,43 @@ export default function CoursesPage() {
     }
   }
 
+  const handleImport = async () => {
+    if (importPreview.length === 0) { setShowImport(false); return }
+    setImporting(true)
+    let count = 0
+    for (const row of importPreview as Record<string, string>[]) {
+      const name = row['课程名']
+      const dayStr = row['星期']
+      const startPeriod = parseInt(row['开始节次']) || 0
+      const endPeriod = parseInt(row['结束节次']) || 0
+      if (!name || startPeriod < 1 || startPeriod > 11 || endPeriod < 1 || endPeriod > 11) continue
+      const dayMap: Record<string, number> = { '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5 }
+      const dow = dayMap[dayStr] || 0
+      if (dow === 0) continue
+
+      const existing = courses.find((c) => c.name === name)
+      if (existing) { count++; continue }
+
+      const created = await createCourse({
+        name,
+        teacher: row['教师'] || '—',
+        classroom: row['教室'] || '—',
+        color: row['颜色'] || '#6366F1',
+        week_type: (row['单双周'] as 'all' | 'odd' | 'even') || 'all',
+      })
+      if (created && startPeriod > 0) {
+        await createSchedule({ course_id: created.id, day_of_week: dow, start_period: startPeriod, end_period: endPeriod, location: row['教室'] || '—', week_type: created.week_type })
+        count++
+      }
+    }
+    setImporting(false)
+    setShowImport(false)
+    setImportPreview([])
+    getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))))
+    getSchedules().then(setSchedules)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const totalWeeks = getSemesterConfig().teachingWeeks
 
   return (
@@ -101,7 +138,7 @@ export default function CoursesPage() {
             </table>
           </div>
           <div className="flex gap-2 mt-3">
-            <button disabled={importing} className="rounded-xl px-4 py-1.5 text-xs text-white font-medium bg-[var(--accent-info)] hover:opacity-90 disabled:opacity-50">{importing ? '导入中...' : '确认导入'}</button>
+            <button onClick={handleImport} disabled={importing} className="rounded-xl px-4 py-1.5 text-xs text-white font-medium bg-[var(--accent-info)] hover:opacity-90 disabled:opacity-50">{importing ? '导入中...' : '确认导入'}</button>
             <button onClick={() => { setShowImport(false); setImportPreview([]); if (fileInputRef.current) fileInputRef.current.value = '' }} className="btn-ghost text-xs">取消</button>
           </div>
         </div>
