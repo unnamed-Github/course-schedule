@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
-import { getLocalSetting } from '@/lib/user-settings'
+import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
-import { PERIOD_TIMES } from '@/lib/semester'
+import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
 
@@ -72,14 +72,30 @@ export function WeekView() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
+  const totalWeeks = getSemesterConfig().teachingWeeks
+
   const changeWeek = useCallback((delta: number) => {
-    const newWeek = weekNum + delta
+    const newWeek = Math.max(1, Math.min(totalWeeks, weekNum + delta))
     setWeekNum(newWeek)
     setWeekRange(getWeekDateRange(newWeek))
     setCurrentDay(0)
     setCurrentPeriod(null)
     setExpandedSchedule(null)
-  }, [weekNum])
+  }, [weekNum, totalWeeks])
+
+  const selectWeek = useCallback((w: number) => {
+    setWeekNum(w)
+    setWeekRange(getWeekDateRange(w))
+    setCurrentDay(0)
+    setCurrentPeriod(null)
+    setExpandedSchedule(null)
+  }, [])
+
+  const toggleHighlight = useCallback(() => {
+    const next = !highlightEnabled
+    setHighlightEnabled(next)
+    setSettingBoth('highlight_enabled', String(next))
+  }, [highlightEnabled])
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
 
@@ -127,10 +143,35 @@ export function WeekView() {
   return (
     <div className="space-y-4">
       {/* 周切换 */}
-      <div className="flex items-center justify-center gap-4">
-        <button onClick={() => changeWeek(-1)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
-        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>第{weekNum}/15周 · {weekRange ? `${weekRange.start.getMonth() + 1}月${weekRange.start.getDate()}日-${weekRange.end.getMonth() + 1}月${weekRange.end.getDate()}日` : ''}</span>
-        <button onClick={() => changeWeek(1)} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
+          <select
+            value={weekNum}
+            onChange={(e) => selectWeek(parseInt(e.target.value))}
+            className="rounded-lg px-2 py-1 text-sm font-medium"
+            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+          >
+            {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((w) => (
+              <option key={w} value={w}>第 {w} 周</option>
+            ))}
+          </select>
+          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            第{weekNum}/{totalWeeks}周 · {weekRange ? `${weekRange.start.getMonth() + 1}/${weekRange.start.getDate()}—${weekRange.end.getMonth() + 1}/${weekRange.end.getDate()}` : ''}
+          </span>
+        </div>
+        <button
+          onClick={toggleHighlight}
+          className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+          style={{
+            backgroundColor: highlightEnabled ? 'var(--accent-warm)' : 'var(--bg-card)',
+            color: highlightEnabled ? 'white' : 'var(--text-secondary)',
+            border: `1px solid ${highlightEnabled ? 'var(--accent-warm)' : 'var(--border-light)'}`,
+          }}
+        >
+          {highlightEnabled ? '高亮开启' : '高亮关闭'}
+        </button>
       </div>
 
       {/* 课表网格 */}

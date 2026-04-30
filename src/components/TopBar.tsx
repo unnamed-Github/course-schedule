@@ -11,7 +11,6 @@ const TABS: { id: ViewType; label: string }[] = [
   { id: 'courses', label: '课程' },
   { id: 'assignments', label: '作业' },
   { id: 'memos', label: '备忘' },
-  { id: 'settings', label: '设置' },
 ]
 
 export function TopBar() {
@@ -63,7 +62,6 @@ export function TopBar() {
         </button>
       </div>
 
-      {/* Tab导航栏 */}
       <div className="flex items-center justify-center gap-1 px-2 pb-2 overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = currentView === tab.id
@@ -71,15 +69,19 @@ export function TopBar() {
             <button
               key={tab.id}
               onClick={() => setCurrentView(tab.id)}
-              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
-                isActive ? 'shadow-sm' : ''
-              }`}
+              className="px-4 py-1.5 text-sm font-medium transition-all whitespace-nowrap relative"
               style={{
-                backgroundColor: isActive ? 'var(--accent-info)' : 'transparent',
-                color: isActive ? 'white' : 'var(--text-secondary)',
+                color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)',
+                fontWeight: isActive ? 600 : 400,
               }}
             >
               {tab.label}
+              {isActive && (
+                <span
+                  className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
+                  style={{ backgroundColor: 'var(--accent-info)' }}
+                />
+              )}
             </button>
           )
         })}

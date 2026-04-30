@@ -6,6 +6,7 @@ import { TopBar } from "@/components/TopBar"
 import { PageTransition } from "@/components/PageTransition"
 import { ToastProvider } from "@/components/ToastProvider"
 import { ViewProvider } from "@/components/ViewContext"
+import { FloatingSettingsButton } from "@/components/FloatingSettingsButton"
 
 export const metadata: Metadata = {
   title: "课表 · 竹",
@@ -30,6 +31,7 @@ export default function RootLayout({
                     {children}
                   </PageTransition>
                 </main>
+                <FloatingSettingsButton />
               </ViewProvider>
             </WarmthBannerProvider>
           </ToastProvider>

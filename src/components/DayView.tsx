@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo } from '@/lib/data'
@@ -28,6 +28,7 @@ export function DayView() {
   const [loadError, setLoadError] = useState(false)
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
+  const dateInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = () => {
     setLoadError(false)
@@ -104,9 +105,16 @@ export function DayView() {
       {/* 日期导航 */}
       <div className="flex items-center justify-center gap-4">
         <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
-        <div className="text-center">
+        <div className="text-center cursor-pointer" onClick={() => dateInputRef.current?.showPicker()}>
           <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{viewDate.getMonth() + 1}月{viewDate.getDate()}日</p>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>周{dayNames[viewDate.getDay()]}</p>
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={viewDate.toISOString().split('T')[0]}
+            onChange={(e) => { if (e.target.value) setViewDate(new Date(e.target.value + 'T00:00:00')) }}
+            className="invisible absolute w-0 h-0"
+          />
         </div>
         <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
       </div>

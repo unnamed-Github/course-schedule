@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment } from '@/lib/types'
-import { getCourses, getAssignments, updateAssignment } from '@/lib/data'
+import { getCourses, getAssignments, updateAssignment, createAssignment } from '@/lib/data'
 import { Modal } from './Modal'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
@@ -14,6 +14,11 @@ export function AssignmentsView() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newCourseId, setNewCourseId] = useState('')
+  const [newDueDate, setNewDueDate] = useState('')
+  const [newDesc, setNewDesc] = useState('')
 
   useEffect(() => {
     Promise.all([getCourses(), getAssignments()]).then(([c, a]) => {
@@ -50,10 +55,34 @@ export function AssignmentsView() {
     }
   }
 
+  const handleAddAssignment = async () => {
+    if (!newTitle.trim() || !newCourseId || !newDueDate) return
+    const created = await createAssignment({
+      title: newTitle.trim(),
+      course_id: newCourseId,
+      due_date: newDueDate,
+      description: newDesc.trim() || '',
+      status: 'pending',
+    })
+    if (created) {
+      setAssignments(prev => [...prev, created])
+      setNewTitle('')
+      setNewCourseId('')
+      setNewDueDate('')
+      setNewDesc('')
+      setShowAddModal(false)
+    }
+  }
+
   if (!loaded) return null
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>作业</h2>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs">快速添加作业</button>
+      </div>
+
       {/* 四宫格统计 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
@@ -185,6 +214,61 @@ export function AssignmentsView() {
           })
         )}
       </div>
+
+      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="快速添加作业">
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>作业标题</label>
+            <input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="输入作业标题"
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>所属课程</label>
+            <select
+              value={newCourseId}
+              onChange={(e) => setNewCourseId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              <option value="">选择课程</option>
+              {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>截止日期</label>
+            <input
+              type="datetime-local"
+              value={newDueDate}
+              onChange={(e) => setNewDueDate(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>描述（可选）</label>
+            <textarea
+              value={newDesc}
+              onChange={(e) => setNewDesc(e.target.value)}
+              placeholder="输入作业描述"
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg text-sm resize-none"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            />
+          </div>
+          <button
+            onClick={handleAddAssignment}
+            disabled={!newTitle.trim() || !newCourseId || !newDueDate}
+            className="btn-primary w-full text-sm disabled:opacity-50"
+          >
+            添加作业
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

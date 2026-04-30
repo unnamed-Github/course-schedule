@@ -195,7 +195,7 @@ export default function CoursesPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          📚 我的课程 <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>({courses.length}门)</span>
+          课程管理 <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>共 {courses.length} 门课程</span>
         </h2>
         <div className="flex items-center gap-2">
           <label className="btn-ghost text-xs cursor-pointer">导入
@@ -203,6 +203,7 @@ export default function CoursesPage() {
           </label>
           <button onClick={() => exportToCSV(courses, schedules)} className="btn-ghost text-xs">CSV</button>
           <button onClick={() => exportToExcel(courses, schedules)} className="btn-ghost text-xs">Excel</button>
+          <button onClick={() => setAddingCourse(true)} className="btn-primary text-xs">添加课程</button>
         </div>
       </div>
 
@@ -330,9 +331,17 @@ export default function CoursesPage() {
                     </div>
                   )}
 
-                  <div className="flex justify-between mt-3 text-[10px]" style={{ color: 'var(--text-secondary)' }}>
-                    <span>已上 {completedClasses}</span>
-                    <span style={{ color: 'var(--accent-success)' }}>剩 {totalClasses - completedClasses}</span>
+                  <div className="mt-2">
+                    <div className="flex justify-between text-[10px] mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      <span>进度 {completedClasses}/{totalClasses} 节</span>
+                      <span style={{ color: 'var(--accent-success)' }}>{Math.round((completedClasses / totalClasses) * 100)}%</span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: `${course.color}26` }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{ width: `${(completedClasses / totalClasses) * 100}%`, backgroundColor: course.color }}
+                      />
+                    </div>
                   </div>
 
                   {courseAssignments.length > 0 && (

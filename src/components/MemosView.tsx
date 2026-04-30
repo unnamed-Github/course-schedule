@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Course, Memo } from '@/lib/types'
 import { getCourses, getMemos, createMemo, deleteMemo } from '@/lib/data'
+import { Modal } from './Modal'
 
 const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
@@ -14,6 +15,7 @@ export function MemosView() {
   const [newMemo, setNewMemo] = useState('')
   const [selectedEmoji, setSelectedEmoji] = useState('📝')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
+  const [showAddModal, setShowAddModal] = useState(false)
 
   useEffect(() => {
     Promise.all([getCourses(), getMemos()]).then(([c, m]) => {
@@ -58,57 +60,9 @@ export function MemosView() {
 
   return (
     <div className="space-y-4">
-      {/* 副标题 */}
-      <div className="text-center py-2">
-        <p className="text-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
-          记录每堂课的心情与收获
-        </p>
-      </div>
-
-      {/* 新建备忘 */}
-      <div className="p-4 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
-        <div className="flex gap-2 mb-3">
-          <select
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="flex-1 rounded-xl px-3 py-2 text-sm"
-            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
-          >
-            {courses.map(course => (
-              <option key={course.id} value={course.id}>
-                {course.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedEmoji}
-            onChange={(e) => setSelectedEmoji(e.target.value)}
-            className="rounded-xl px-3 py-2 text-sm"
-            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
-          >
-            {EMOJI_OPTIONS.map(emoji => (
-              <option key={emoji} value={emoji}>{emoji}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex gap-2">
-          <input
-            value={newMemo}
-            onChange={(e) => setNewMemo(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddMemo()}
-            placeholder="写下你的备忘..."
-            className="flex-1 rounded-xl px-3 py-2 text-sm"
-            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
-          />
-          <button
-            onClick={handleAddMemo}
-            disabled={!newMemo.trim()}
-            className="px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
-            style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}
-          >
-            添加
-          </button>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>课堂备忘</h2>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs">新增备忘</button>
       </div>
 
       {/* 备忘列表 */}
@@ -199,6 +153,48 @@ export function MemosView() {
           </div>
         </div>
       )}
+
+      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="新增备忘">
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <select
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+              className="flex-1 rounded-xl px-3 py-2 text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>{course.name}</option>
+              ))}
+            </select>
+            <select
+              value={selectedEmoji}
+              onChange={(e) => setSelectedEmoji(e.target.value)}
+              className="rounded-xl px-3 py-2 text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              {EMOJI_OPTIONS.map(emoji => (
+                <option key={emoji} value={emoji}>{emoji}</option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            value={newMemo}
+            onChange={(e) => setNewMemo(e.target.value)}
+            placeholder="写下你的备忘..."
+            rows={3}
+            className="w-full rounded-xl px-3 py-2 text-sm resize-none"
+            style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+          />
+          <button
+            onClick={() => { handleAddMemo(); if (newMemo.trim()) setShowAddModal(false) }}
+            disabled={!newMemo.trim()}
+            className="btn-primary w-full text-sm disabled:opacity-50"
+          >
+            添加备忘
+          </button>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -122,21 +122,20 @@ export function WarmthBanner() {
           {message && (
             <div className="relative flex items-center px-4 py-3 rounded-2xl overflow-hidden"
               style={{
-                backgroundColor: '#F0FDF4',
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-light)',
+                borderLeft: '4px solid var(--accent-warm)',
               }}
             >
               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="text-base font-medium truncate" style={{ color: '#166534' }}>
+                <p className="text-base font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {message}
-                </p>
-                <p className="text-xs italic truncate" style={{ color: '#166534', opacity: 0.7 }}>
-                  {encouragement}
                 </p>
               </div>
               <button
                 onClick={handleClose}
                 className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
-                style={{ color: '#166534' }}
+                style={{ color: 'var(--text-secondary)' }}
                 aria-label="关闭问候"
               >
                 ✕

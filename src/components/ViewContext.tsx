@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 
-export type ViewType = 'week' | 'day' | 'courses' | 'assignments' | 'memos' | 'settings'
+export type ViewType = 'week' | 'day' | 'courses' | 'assignments' | 'memos'
 
 interface ViewContextType {
   currentView: ViewType

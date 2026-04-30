@@ -7,7 +7,6 @@ import { DayView } from './DayView'
 import CoursesPage from '@/app/courses/page'
 import { AssignmentsView } from './AssignmentsView'
 import { MemosView } from './MemosView'
-import SettingsPage from '@/app/settings/page'
 import { WarmthBanner } from './WarmthBanner'
 
 export function MainView() {
@@ -15,10 +14,8 @@ export function MainView() {
 
   return (
     <div className="space-y-4">
-      {/* 三层情境信息 */}
-      {currentView !== 'settings' && <WarmthBanner />}
+      <WarmthBanner />
 
-      {/* 视图切换 */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentView}
@@ -32,7 +29,6 @@ export function MainView() {
           {currentView === 'courses' && <CoursesPage />}
           {currentView === 'assignments' && <AssignmentsView />}
           {currentView === 'memos' && <MemosView />}
-          {currentView === 'settings' && <SettingsPage />}
         </motion.div>
       </AnimatePresence>
     </div>
