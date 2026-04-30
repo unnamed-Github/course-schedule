@@ -11,8 +11,7 @@ import { SkeletonCard } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
 import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
-
-const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
+import { EMOJI_OPTIONS, DAY_NAMES } from '@/lib/constants'
 
 function addDays(d: Date, days: number) { const r = new Date(d); r.setDate(r.getDate() + days); return r }
 function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate() }
@@ -24,7 +23,6 @@ export function DayView() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
-  const [nowMinutes, setNowMinutes] = useState(0)
   const [viewDate, setViewDate] = useState(new Date())
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
@@ -65,7 +63,7 @@ export function DayView() {
   useEffect(() => { loadOverrides() }, [viewDate])
 
   useEffect(() => {
-    const tick = () => { const n = new Date(); setCurrentPeriod(getCurrentPeriod(n)); setNowMinutes(n.getHours() * 60 + n.getMinutes()) }
+    const tick = () => { setCurrentPeriod(getCurrentPeriod(new Date())) }
     tick(); const timer = setInterval(tick, 60000); return () => clearInterval(timer)
   }, [])
 
@@ -84,7 +82,7 @@ export function DayView() {
     }
     return map
   }, [overrides])
-  const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+  const dayNames = DAY_NAMES
   const sortedSchedules = getTodayCourses(schedules, viewDate).sort((a, b) => a.start_period - b.start_period)
   const isToday = isSameDay(viewDate, new Date())
 

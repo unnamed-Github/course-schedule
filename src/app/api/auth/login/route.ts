@@ -4,18 +4,6 @@ import { createClient } from '@supabase/supabase-js'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-const DEFAULT_PASSWORD = 'zhubamboo'
-
-function simpleHash(s: string): string {
-  let hash = 0
-  for (let i = 0; i < s.length; i++) {
-    const chr = s.charCodeAt(i)
-    hash = ((hash << 5) - hash) + chr
-    hash |= 0
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0')
-}
-
 async function sha256(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)
@@ -28,18 +16,6 @@ export async function POST(request: NextRequest) {
     const { password } = await request.json()
     if (!password || typeof password !== 'string') {
       return NextResponse.json({ error: '请输入密码' }, { status: 400 })
-    }
-
-    if (password === DEFAULT_PASSWORD) {
-      const response = NextResponse.json({ ok: true })
-      response.cookies.set('auth_token', simpleHash(password), {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
-      })
-      return response
     }
 
     const inputHash = await sha256(password)
@@ -62,8 +38,9 @@ export async function POST(request: NextRequest) {
 
     const envPass = process.env.SITE_PASSWORD
     if (envPass && password === envPass) {
+      const inputHash = await sha256(password)
       const response = NextResponse.json({ ok: true })
-      response.cookies.set('auth_token', simpleHash(password), {
+      response.cookies.set('auth_token', inputHash, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

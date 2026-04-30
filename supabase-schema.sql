@@ -67,8 +67,9 @@ CREATE TABLE IF NOT EXISTS user_settings (
 );
 
 -- 启用 Row Level Security
--- 注: 本项目为个人应用，RLS 对 anon key 开放完整读写权限。
--- 部署前可在 Supabase Dashboard 中收紧策略或启用 JWT 验证。
+-- 注: 本项目为个人应用，使用 anon key 进行完整读写。
+-- site_config 表包含敏感数据(密码哈希)，仅允许 SELECT，不允许通过 anon key 写入。
+-- 生产环境建议: 启用 JWT 验证或使用 service_role key 访问 site_config。
 ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE course_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
@@ -82,5 +83,5 @@ CREATE POLICY "Allow all on course_schedules" ON course_schedules FOR ALL USING 
 CREATE POLICY "Allow all on assignments" ON assignments FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on memos" ON memos FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on semester_config" ON semester_config FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all on site_config" ON site_config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Restrict site_config" ON site_config FOR SELECT USING (true);
 CREATE POLICY "Allow all on user_settings" ON user_settings FOR ALL USING (true) WITH CHECK (true);

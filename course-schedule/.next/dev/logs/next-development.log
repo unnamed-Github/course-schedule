@@ -1,0 +1,8 @@
+{"timestamp":"00:23:40.512","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:23:40.515","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:23:46.355","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:23:46.356","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:29:01.835","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:29:01.837","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:29:15.793","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}
+{"timestamp":"00:29:15.794","source":"Server","level":"ERROR","message":"Error: ENOENT: no such file or directory, scandir '/Users/jack/Documents/trae_projects/Timer/course-schedule/src/app'"}

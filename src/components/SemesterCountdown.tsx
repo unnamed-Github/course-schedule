@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSemesterConfig, getWeekNumber } from '@/lib/semester'
 import { Target } from 'lucide-react'
@@ -24,7 +24,14 @@ function getCountdownStyle(days: number) {
 
 export function SemesterCountdown() {
   const [expanded, setExpanded] = useState(false)
-  const days = useMemo(() => getDaysRemaining(), [])
+  const [days, setDays] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setDays(getDaysRemaining())
+    setMounted(true)
+  }, [])
+
   const style = getCountdownStyle(days)
   const config = getSemesterConfig()
   const weekNum = getWeekNumber()
@@ -39,7 +46,7 @@ export function SemesterCountdown() {
         style={{ backgroundColor: style.bg, color: style.color }}
       >
         <Target size={12} strokeWidth={2} />
-        <span>还有{days}天</span>
+        <span suppressHydrationWarning>{mounted ? `还有${days}天` : '学期中'}</span>
       </button>
 
       <AnimatePresence>

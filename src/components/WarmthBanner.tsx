@@ -29,39 +29,6 @@ const ENCOURAGEMENTS = [
   '保持呼吸，你做得很好',
 ]
 
-function getCurrentCourseProgress(
-  currentPeriod: number | null,
-  schedules: CourseSchedule[],
-  courses: Course[]
-): { course: Course; schedule: CourseSchedule; progress: number } | null {
-  if (!currentPeriod) return null
-
-  const now = new Date()
-  const currentMs = now.getHours() * 3600000 + now.getMinutes() * 60000
-
-  for (const schedule of schedules) {
-    if (currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period) {
-      const course = courses.find(c => c.id === schedule.course_id)
-      if (!course) continue
-
-      const startTime = getPeriodTime(schedule.start_period)
-      const endTime = getPeriodTime(schedule.end_period)
-      if (!startTime || !endTime) continue
-
-      const [sh, sm] = startTime.start.split(':').map(Number)
-      const [eh, em] = endTime.end.split(':').map(Number)
-      const startMs = sh * 3600000 + sm * 60000
-      const endMs = eh * 3600000 + em * 60000
-      const totalDuration = endMs - startMs
-      const elapsed = currentMs - startMs
-      const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100))
-
-      return { course, schedule, progress }
-    }
-  }
-  return null
-}
-
 export function WarmthBanner() {
   const { isEnabled, isHiddenToday, hideToday } = useWarmthBanner()
   const { greeting: festivalGreeting, subGreeting: festivalSubGreeting } = useFestivalGreeting()

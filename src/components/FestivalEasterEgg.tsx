@@ -1,12 +1,16 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { getTodayFestival } from '@/lib/festivals'
+import { getTodayFestival, type Festival } from '@/lib/festivals'
 import { PartyPopper } from 'lucide-react'
 
 export function FestivalEasterEgg() {
-  const festival = useMemo(() => getTodayFestival(), [])
+  const [festival, setFestival] = useState<Festival | null>(null)
+
+  useEffect(() => {
+    setFestival(getTodayFestival())
+  }, [])
 
   if (!festival) return null
 
@@ -28,7 +32,12 @@ export function FestivalEasterEgg() {
 }
 
 export function useFestivalGreeting(): { greeting: string | null; subGreeting: string | null } {
-  const festival = getTodayFestival()
+  const [festival, setFestival] = useState<Festival | null>(null)
+
+  useEffect(() => {
+    setFestival(getTodayFestival())
+  }, [])
+
   if (!festival) return { greeting: null, subGreeting: null }
   return { greeting: festival.greeting, subGreeting: festival.subGreeting }
 }

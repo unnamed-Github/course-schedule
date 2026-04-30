@@ -1,18 +1,35 @@
 import { supabase } from './supabase'
 import type { Holiday, MakeupDay } from './semester'
+import { getSemesterConfig } from './semester'
 
-const DEFAULT_SEMESTER_START = '2026-02-25'
-const DEFAULT_TEACHING_WEEKS = 15
-const DEFAULT_EXAM_WEEKS = 2
-const DEFAULT_HOLIDAYS: Holiday[] = [
-  { name: '清明节', start: '2026-04-05', end: '2026-04-05' },
-  { name: '劳动节', start: '2026-05-01', end: '2026-05-05' },
-  { name: '端午节', start: '2026-06-19', end: '2026-06-19' },
-]
-const DEFAULT_MAKEUP_DAYS: MakeupDay[] = [
-  { date: '2026-02-28', replacesDayOfWeek: 1, weekType: 'all' },
-  { date: '2026-05-09', replacesDayOfWeek: 2, weekType: 'odd' },
-]
+let supabaseAvailable = true
+let supabaseCheckDone = false
+
+async function checkSupabaseAvailability(): Promise<boolean> {
+  if (supabaseCheckDone) return supabaseAvailable
+  try {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 3000)
+    const { error } = await supabase.from('semester_config').select('count', { count: 'exact', head: true }).abortSignal(controller.signal)
+    clearTimeout(timeout)
+    supabaseAvailable = !error
+  } catch {
+    supabaseAvailable = false
+  }
+  supabaseCheckDone = true
+  return supabaseAvailable
+}
+
+function getDefaults() {
+  const config = getSemesterConfig()
+  return {
+    semesterStart: config.semesterStart,
+    teachingWeeks: config.teachingWeeks,
+    examWeeks: config.examWeeks,
+    holidays: config.holidays,
+    makeupDays: config.makeupDays,
+  }
+}
 
 export async function getSemesterConfigFromDB(): Promise<{
   semesterStart: string
@@ -22,36 +39,26 @@ export async function getSemesterConfigFromDB(): Promise<{
   makeupDays: MakeupDay[]
 }> {
   try {
+    if (!await checkSupabaseAvailability()) return getDefaults()
+
     const { data } = await supabase.from('semester_config').select('key, value')
 
     if (!data || data.length === 0) {
-      return {
-        semesterStart: DEFAULT_SEMESTER_START,
-        teachingWeeks: DEFAULT_TEACHING_WEEKS,
-        examWeeks: DEFAULT_EXAM_WEEKS,
-        holidays: DEFAULT_HOLIDAYS,
-        makeupDays: DEFAULT_MAKEUP_DAYS,
-      }
+      return getDefaults()
     }
 
     const map = new Map(data.map((r: { key: string; value: string }) => [r.key, r.value]))
+    const defaults = getDefaults()
 
     return {
-      semesterStart: map.get('semester_start') ?? DEFAULT_SEMESTER_START,
-      teachingWeeks: parseInt(map.get('teaching_weeks') ?? String(DEFAULT_TEACHING_WEEKS)),
-      examWeeks: parseInt(map.get('exam_weeks') ?? String(DEFAULT_EXAM_WEEKS)),
-      holidays: JSON.parse(map.get('holidays') ?? JSON.stringify(DEFAULT_HOLIDAYS)),
-      makeupDays: JSON.parse(map.get('makeup_days') ?? JSON.stringify(DEFAULT_MAKEUP_DAYS)),
+      semesterStart: map.get('semester_start') ?? defaults.semesterStart,
+      teachingWeeks: parseInt(map.get('teaching_weeks') ?? String(defaults.teachingWeeks)),
+      examWeeks: parseInt(map.get('exam_weeks') ?? String(defaults.examWeeks)),
+      holidays: JSON.parse(map.get('holidays') ?? JSON.stringify(defaults.holidays)),
+      makeupDays: JSON.parse(map.get('makeup_days') ?? JSON.stringify(defaults.makeupDays)),
     }
   } catch (e) {
-    console.warn('Using default semester config (Supabase unavailable)')
-    return {
-      semesterStart: DEFAULT_SEMESTER_START,
-      teachingWeeks: DEFAULT_TEACHING_WEEKS,
-      examWeeks: DEFAULT_EXAM_WEEKS,
-      holidays: DEFAULT_HOLIDAYS,
-      makeupDays: DEFAULT_MAKEUP_DAYS,
-    }
+    return getDefaults()
   }
 }
 
@@ -63,6 +70,7 @@ export async function updateSemesterConfigToDB(config: {
   makeupDays?: MakeupDay[]
 }): Promise<boolean> {
   try {
+    if (!await checkSupabaseAvailability()) return false
     const current = await getSemesterConfigFromDB()
     const merged = { ...current, ...config }
 

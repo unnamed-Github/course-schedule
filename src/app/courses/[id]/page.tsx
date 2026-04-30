@@ -8,9 +8,8 @@ import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment
 import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
 import { useToast } from '@/components/ToastProvider'
+import { EMOJI_OPTIONS } from '@/lib/constants'
 import { ClipboardList, Pin, Check, Square, X, ChevronLeft, Plus } from 'lucide-react'
-
-const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
 export const dynamic = 'auto'
 
