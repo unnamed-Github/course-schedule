@@ -42,6 +42,9 @@ async function ensureSeedData() {
         { date: '2026-05-09', replacesDayOfWeek: 2, weekType: 'odd' },
       ]) },
     ])
+    await supabase.from('site_config').insert([
+      { key: 'password_hash', value: 'f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816c757' },
+    ])
   }
 }
 
