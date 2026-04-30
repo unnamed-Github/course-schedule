@@ -20,9 +20,19 @@ export function setLocalSetting(key: string, value: string) {
   try { localStorage.setItem(key, value) } catch {}
 }
 
+export async function deleteUserSetting(key: string) {
+  const { error } = await supabase.from('user_settings').delete().eq('key', key)
+  if (error) console.error('deleteUserSetting error:', error)
+}
+
 export function setSettingBoth(key: string, value: string) {
   setLocalSetting(key, value)
   setUserSetting(key, value).catch(() => {})
+}
+
+export function removeSettingBoth(key: string) {
+  try { localStorage.removeItem(key) } catch {}
+  deleteUserSetting(key).catch(() => {})
 }
 
 export async function syncSettingsFromDB() {

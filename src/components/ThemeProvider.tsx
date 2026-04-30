@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react"
-import { setSettingBoth, syncSettingsFromDB } from "@/lib/user-settings"
+import { createContext, useContext, useEffect, useState, useCallback } from "react"
+import { setSettingBoth, removeSettingBoth, syncSettingsFromDB } from "@/lib/user-settings"
 
 type Theme = "light" | "dark"
 
@@ -22,29 +22,23 @@ function getSystemTheme(): Theme {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [mounted, setMounted] = useState(false)
-  const userToggledRef = useRef(false)
 
   useEffect(() => {
     const stored = safeGet("theme") as Theme | null
     const initial = stored ?? getSystemTheme()
     setTheme(initial)
-    userToggledRef.current = !!stored
     setMounted(true)
     syncSettingsFromDB().then(() => {
       const synced = safeGet("theme") as Theme | null
-      if (synced && synced !== initial) {
-        setTheme(synced)
-        userToggledRef.current = true
-      }
+      if (synced && synced !== initial) setTheme(synced)
     })
   }, [])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
     const handleChange = () => {
-      if (!userToggledRef.current) {
-        setTheme(mediaQuery.matches ? "dark" : "light")
-      }
+      removeSettingBoth("theme")
+      setTheme(mediaQuery.matches ? "dark" : "light")
     }
     mediaQuery.addEventListener("change", handleChange)
     return () => mediaQuery.removeEventListener("change", handleChange)
@@ -57,15 +51,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove("dark")
     }
-    if (userToggledRef.current) {
-      setSettingBoth("theme", theme)
-    }
   }, [theme, mounted])
 
   const toggle = useCallback(() => {
     setTheme((t) => {
       const next = t === "light" ? "dark" : "light"
-      userToggledRef.current = true
       setSettingBoth("theme", next)
       return next
     })
