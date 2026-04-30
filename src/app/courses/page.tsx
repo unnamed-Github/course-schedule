@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
-import { getWeekNumber, getSemesterConfig, getDayDate, getCurrentPeriod, PERIOD_TIMES } from '@/lib/semester'
+import { getWeekNumber, getSemesterConfig, getDayDate, getCurrentPeriod, PERIOD_TIMES, isHoliday } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/ToastProvider'
@@ -232,7 +232,11 @@ export default function CoursesPage() {
             const wOdd = w % 2 === 1
             for (const s of allCourseSchedules) {
               if (s.week_type === 'all' || (s.week_type === 'odd' && wOdd) || (s.week_type === 'even' && !wOdd)) {
-                dots.push({ week: w, schedule: s })
+                const dotDate = getDayDate(w, s.day_of_week)
+                const holiday = isHoliday(dotDate)
+                if (!holiday) {
+                  dots.push({ week: w, schedule: s })
+                }
               }
             }
           }
@@ -242,9 +246,9 @@ export default function CoursesPage() {
           if (weekNum > 0 && currentDayOfWeek > 0) {
             for (let di = 0; di < dots.length; di++) {
               const d = dots[di]
-              if (d.week !== weekNum) continue
+              if (d.week < weekNum) continue
               const s = d.schedule
-              if (s.day_of_week > currentDayOfWeek) {
+              if (d.week > weekNum || s.day_of_week > currentDayOfWeek) {
                 nextDotIndex = di
                 break
               }
