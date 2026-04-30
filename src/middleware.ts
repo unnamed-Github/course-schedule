@@ -11,7 +11,7 @@ function isPublic(pathname: string) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (process.env.DISABLE_AUTH === 'true') return NextResponse.next()
+  if (process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') return NextResponse.next()
 
   if (isPublic(pathname)) return NextResponse.next()
 
