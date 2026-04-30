@@ -10,7 +10,7 @@ import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
-import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw, ClipboardList, Pin, Check, Square } from 'lucide-react'
 
 const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
 const PERIOD_GROUP_DEFS = [
@@ -26,6 +26,16 @@ const PERIOD_GROUPS = PERIOD_GROUP_DEFS.map((g) => ({
   ...g,
   time: `${PERIOD_TIMES[g.start].start}-${PERIOD_TIMES[g.end].end}`,
 }))
+
+function countdown(dueDate: string): string {
+  const diff = new Date(dueDate).getTime() - Date.now()
+  if (diff < 0) return '已逾期'
+  const days = Math.floor(diff / 86400000)
+  if (days > 0) return `${days}天后`
+  const hours = Math.floor(diff / 3600000)
+  if (hours > 0) return `${hours}小时后`
+  return '即将截止'
+}
 
 export function WeekView() {
   const { showToast } = useToast()
@@ -363,6 +373,57 @@ export function WeekView() {
                                     )}
                                     <p className="text-xs opacity-80 flex items-center gap-1"><Clock size={12} strokeWidth={2} />第{schedule.start_period}-{schedule.end_period}节</p>
                                   </div>
+
+                                  {(() => {
+                                    const courseAssignments = assignments.filter(a => a.course_id === course.id)
+                                    const courseMemos = memos.filter(m => m.course_id === course.id).slice(0, 3)
+                                    const hasContent = courseAssignments.length > 0 || courseMemos.length > 0
+
+                                    if (!hasContent) {
+                                      return (
+                                        <div className="mt-2 pt-2 border-t border-white/20">
+                                          <p className="text-[10px] opacity-50">暂无作业和备忘</p>
+                                        </div>
+                                      )
+                                    }
+
+                                    return (
+                                      <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                                        {courseAssignments.length > 0 && (
+                                          <div>
+                                            <p className="text-[10px] opacity-70 font-medium flex items-center gap-1 mb-1"><ClipboardList size={10} strokeWidth={2} />作业 ({courseAssignments.length})</p>
+                                            <div className="space-y-0.5">
+                                              {courseAssignments.map(a => {
+                                                const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+                                                return (
+                                                  <div key={a.id} className="flex items-center gap-1.5 text-[10px]" style={{ opacity: a.status === 'submitted' ? 0.45 : 1 }}>
+                                                    {a.status === 'submitted' ? <Check size={10} strokeWidth={2.5} style={{ color: '#6EE7B7' }} /> : <Square size={10} strokeWidth={1.5} style={{ opacity: 0.5 }} />}
+                                                    <span className="truncate flex-1">{a.title}</span>
+                                                    {a.status === 'pending' && (
+                                                      <span style={{ color: isOverdue ? '#FCA5A5' : 'rgba(255,255,255,0.6)' }}>{countdown(a.due_date)}</span>
+                                                    )}
+                                                  </div>
+                                                )
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {courseMemos.length > 0 && (
+                                          <div>
+                                            <p className="text-[10px] opacity-70 font-medium flex items-center gap-1 mb-1"><Pin size={10} strokeWidth={2} />备忘 ({courseMemos.length})</p>
+                                            <div className="space-y-0.5">
+                                              {courseMemos.map(m => (
+                                                <div key={m.id} className="flex items-start gap-1.5 text-[10px]">
+                                                  <span className="flex-shrink-0">{m.mood_emoji}</span>
+                                                  <span className="truncate opacity-80">{m.content}</span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })()}
 
                                   {/* 操作按钮 */}
                                   <div className="mt-3 pt-2 border-t border-white/20">
