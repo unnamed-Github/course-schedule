@@ -50,8 +50,3 @@ export interface Memo {
   created_at: string
 }
 
-export interface CourseWithSchedules extends Course {
-  schedules: CourseSchedule[]
-  assignments: Assignment[]
-  memos: Memo[]
-}

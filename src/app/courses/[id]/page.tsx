@@ -131,10 +131,14 @@ export default function CourseDetailPage() {
     try {
       if (!assignmentForm.title || !assignmentForm.due_date) return
       const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending' })
-      setAssignments((prev) => [...prev, a])
-      setAssignmentForm({ title: '', description: '', due_date: '' })
-      setShowAssignmentForm(false)
-      showToast('作业已添加', 'success')
+      if (a) {
+        setAssignments((prev) => [...prev, a])
+        setAssignmentForm({ title: '', description: '', due_date: '' })
+        setShowAssignmentForm(false)
+        showToast('作业已添加', 'success')
+      } else {
+        showToast('添加作业失败', 'error')
+      }
     } catch (e) {
       showToast('添加作业失败', 'error')
     }
@@ -163,10 +167,14 @@ export default function CourseDetailPage() {
     try {
       if (!memoForm.content) return
       const m = await createMemo({ course_id: courseId, content: memoForm.content, mood_emoji: memoForm.mood_emoji, mood_tags: memoForm.mood_tags })
-      setMemos((prev) => [m, ...prev])
-      setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] })
-      setShowMemoForm(false)
-      showToast('备忘已添加', 'success')
+      if (m) {
+        setMemos((prev) => [m, ...prev])
+        setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] })
+        setShowMemoForm(false)
+        showToast('备忘已添加', 'success')
+      } else {
+        showToast('添加备忘失败', 'error')
+      }
     } catch (e) {
       showToast('添加备忘失败', 'error')
     }

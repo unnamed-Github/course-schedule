@@ -123,44 +123,61 @@ export async function deleteSchedule(id: string): Promise<boolean> {
 // ---------- Assignments ----------
 
 export async function getAssignments(courseId?: string): Promise<Assignment[]> {
+  const cacheKey = courseId ? `assignments_${courseId}` : 'assignments_all'
+  const cached = getCached<Assignment[]>(cacheKey)
+  if (cached) return cached
   let query = supabase.from('assignments').select('*').order('due_date', { ascending: true })
   if (courseId) query = query.eq('course_id', courseId)
   const { data } = await query
-  return data ?? []
+  const result = data ?? []
+  setCache(cacheKey, result)
+  return result
 }
 
-export async function createAssignment(input: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>): Promise<Assignment> {
+export async function createAssignment(input: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>): Promise<Assignment | null> {
   const record = { ...input, id: genId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-  const { data } = await supabase.from('assignments').insert(record).select().single()
-  return data!
+  const { data, error } = await supabase.from('assignments').insert(record).select().single()
+  if (error) { console.error('createAssignment error:', error); return null }
+  invalidateCache('assignments')
+  return data
 }
 
 export async function updateAssignment(id: string, updates: Partial<Assignment>): Promise<Assignment | null> {
   const { data } = await supabase.from('assignments').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+  if (data) invalidateCache('assignments')
   return data
 }
 
 export async function deleteAssignment(id: string): Promise<boolean> {
   const { error } = await supabase.from('assignments').delete().eq('id', id)
+  if (!error) invalidateCache('assignments')
   return !error
 }
 
 // ---------- Memos ----------
 
 export async function getMemos(courseId?: string): Promise<Memo[]> {
+  const cacheKey = courseId ? `memos_${courseId}` : 'memos_all'
+  const cached = getCached<Memo[]>(cacheKey)
+  if (cached) return cached
   let query = supabase.from('memos').select('*').order('created_at', { ascending: false })
   if (courseId) query = query.eq('course_id', courseId)
   const { data } = await query
-  return data ?? []
+  const result = data ?? []
+  setCache(cacheKey, result)
+  return result
 }
 
-export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promise<Memo> {
+export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promise<Memo | null> {
   const record = { ...input, id: genId(), created_at: new Date().toISOString() }
-  const { data } = await supabase.from('memos').insert(record).select().single()
-  return data!
+  const { data, error } = await supabase.from('memos').insert(record).select().single()
+  if (error) { console.error('createMemo error:', error); return null }
+  invalidateCache('memos')
+  return data
 }
 
 export async function deleteMemo(id: string): Promise<boolean> {
   const { error } = await supabase.from('memos').delete().eq('id', id)
+  if (!error) invalidateCache('memos')
   return !error
 }

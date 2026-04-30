@@ -2,16 +2,20 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useView, ViewType } from './ViewContext'
 
-const TABS = [
+const TABS: { href?: string; view?: ViewType; icon: string; label: string }[] = [
   { href: "/", icon: "📅", label: "周视图" },
   { href: "/day", icon: "📆", label: "日视图" },
   { href: "/courses", icon: "📚", label: "课程" },
+  { view: "assignments", icon: "📝", label: "作业" },
+  { view: "memos", icon: "📋", label: "备忘" },
   { href: "/settings", icon: "⚙️", label: "设置" },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
+  const { currentView, setCurrentView } = useView()
 
   return (
     <nav
@@ -23,11 +27,30 @@ export function BottomNav() {
     >
       <div className="flex items-center justify-around h-16 px-2 max-w-6xl mx-auto">
         {TABS.map((tab) => {
-          const isActive = pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href + '/'))
+          const isRouteActive = tab.href ? (pathname === tab.href || (tab.href !== '/' && pathname.startsWith(tab.href + '/'))) : false
+          const isViewActive = tab.view ? currentView === tab.view : false
+          const isActive = isRouteActive || isViewActive
+
+          if (tab.view) {
+            return (
+              <button
+                key={tab.view}
+                onClick={() => setCurrentView(tab.view!)}
+                className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors"
+                style={{ color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)' }}
+              >
+                <span className="text-lg">{tab.icon}</span>
+                <span className={`text-[10px] whitespace-nowrap hidden md:block ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                  {tab.label}
+                </span>
+              </button>
+            )
+          }
+
           return (
             <Link
               key={tab.href}
-              href={tab.href}
+              href={tab.href!}
               className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors"
               style={{ color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)' }}
             >

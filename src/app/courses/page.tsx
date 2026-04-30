@@ -8,10 +8,12 @@ import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, delet
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
+import { useToast } from '@/components/ToastProvider'
 
 const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
 
 export default function CoursesPage() {
+  const { showToast } = useToast()
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -132,19 +134,21 @@ export default function CoursesPage() {
   const handleImport = async () => {
     if (importPreview.length === 0) { setShowImport(false); return }
     setImporting(true)
-    let count = 0
+    let successCount = 0
+    let skipCount = 0
+    let failCount = 0
     for (const row of importPreview as Record<string, string>[]) {
       const name = row['课程名']
       const dayStr = row['星期']
       const startPeriod = parseInt(row['开始节次']) || 0
       const endPeriod = parseInt(row['结束节次']) || 0
-      if (!name || startPeriod < 1 || startPeriod > 11 || endPeriod < 1 || endPeriod > 11) continue
+      if (!name || startPeriod < 1 || startPeriod > 11 || endPeriod < 1 || endPeriod > 11) { failCount++; continue }
       const dayMap: Record<string, number> = { '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5 }
       const dow = dayMap[dayStr] || 0
-      if (dow === 0) continue
+      if (dow === 0) { failCount++; continue }
 
       const existing = courses.find((c) => c.name === name)
-      if (existing) { count++; continue }
+      if (existing) { skipCount++; continue }
 
       const created = await createCourse({
         name,
@@ -155,14 +159,21 @@ export default function CoursesPage() {
       })
       if (created && startPeriod > 0) {
         await createSchedule({ course_id: created.id, day_of_week: dow, start_period: startPeriod, end_period: endPeriod, location: row['教室'] || '—', week_type: created.week_type })
-        count++
+        successCount++
+      } else {
+        failCount++
       }
     }
     setImporting(false)
     setShowImport(false)
     setImportPreview([])
-    getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))))
-    getSchedules().then(setSchedules)
+    const parts: string[] = []
+    if (successCount > 0) parts.push(`成功 ${successCount} 条`)
+    if (skipCount > 0) parts.push(`跳过 ${skipCount} 条`)
+    if (failCount > 0) parts.push(`失败 ${failCount} 条`)
+    if (parts.length > 0) showToast(`导入完成：${parts.join('，')}`, successCount > 0 ? 'success' : 'error')
+    getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99)))).catch(() => {})
+    getSchedules().then(setSchedules).catch(() => {})
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 

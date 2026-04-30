@@ -64,15 +64,13 @@ export function WeekView() {
   }, [])
 
   const changeWeek = useCallback((delta: number) => {
-    setWeekNum((prev) => {
-      const newWeek = prev + delta
-      setWeekRange(getWeekDateRange(newWeek))
-      return newWeek
-    })
+    const newWeek = weekNum + delta
+    setWeekNum(newWeek)
+    setWeekRange(getWeekDateRange(newWeek))
     setCurrentDay(0)
     setCurrentPeriod(null)
     setExpandedSchedule(null)
-  }, [])
+  }, [weekNum])
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
 

@@ -19,7 +19,7 @@ export function getTodayCourses<T extends { day_of_week: number; week_type: Week
   const holiday = isHoliday(date)
   const makeup = getMakeupInfo(date)
 
-  if (holiday) return []
+  if (holiday && !makeup) return []
 
   return courses.filter((course) => {
     const targetDow = makeup ? makeup.replacesDayOfWeek : dayOfWeek

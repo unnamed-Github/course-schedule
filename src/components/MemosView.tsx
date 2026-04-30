@@ -43,8 +43,10 @@ export function MemosView() {
       mood_tags: [],
     })
     
-    setMemos(prev => [memo, ...prev])
-    setNewMemo('')
+    if (memo) {
+      setMemos(prev => [memo, ...prev])
+      setNewMemo('')
+    }
   }
 
   const handleDeleteMemo = async (id: string) => {
