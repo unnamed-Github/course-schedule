@@ -3,12 +3,13 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides, createScheduleOverride, deleteScheduleOverride } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides } from '@/lib/data'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
+import { useScheduleOverride } from '@/hooks/useScheduleOverride'
 import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw } from 'lucide-react'
 
 const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
@@ -41,7 +42,6 @@ export function WeekView() {
   const [loadError, setLoadError] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const [weekOverrides, setWeekOverrides] = useState<ScheduleOverride[]>([])
-  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
 
   const loadData = () => {
     setLoadError(false)
@@ -54,6 +54,31 @@ export function WeekView() {
         showToast('加载失败，请检查网络', 'error')
       })
   }
+
+  const loadOverrides = () => {
+    if (!weekRange) return
+    const dateStrs: string[] = []
+    const d = new Date(weekRange.start)
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(d)
+      current.setDate(d.getDate() + i)
+      dateStrs.push(current.toISOString().split('T')[0])
+    }
+    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
+      .then(results => setWeekOverrides(results.flat()))
+      .catch(() => setWeekOverrides([]))
+  }
+
+  const {
+    confirmCancelId,
+    handleOverrideAction,
+    handleConfirmCancel,
+    handleRevertOverride,
+    cancelConfirmation,
+  } = useScheduleOverride({
+    onLoadOverrides: loadOverrides,
+    onCloseDetail: () => setExpandedSchedule(null),
+  })
 
   useEffect(() => {
     loadData()
@@ -126,57 +151,6 @@ export function WeekView() {
 
   const getDayOverride = (scheduleId: string, dateStr: string) => {
     return weekOverrideMap.get(`${scheduleId}_${dateStr}`) ?? null
-  }
-
-  const loadOverrides = () => {
-    if (!weekRange) return
-    const dateStrs: string[] = []
-    const d = new Date(weekRange.start)
-    for (let i = 0; i < 7; i++) {
-      const current = new Date(d)
-      current.setDate(d.getDate() + i)
-      dateStrs.push(current.toISOString().split('T')[0])
-    }
-    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
-      .then(results => setWeekOverrides(results.flat()))
-      .catch(() => setWeekOverrides([]))
-  }
-
-  const handleOverrideAction = async (scheduleId: string, dateStr: string, type: 'cancelled' | 'ended_early') => {
-    if (type === 'cancelled') {
-      setConfirmCancelId(scheduleId)
-      return
-    }
-    const result = await createScheduleOverride({ schedule_id: scheduleId, date: dateStr, type })
-    if (result) {
-      showToast('已标记提前下课', 'success')
-      loadOverrides()
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
-  }
-
-  const handleConfirmCancel = async (dateStr: string) => {
-    if (!confirmCancelId) return
-    const result = await createScheduleOverride({ schedule_id: confirmCancelId, date: dateStr, type: 'cancelled' })
-    setConfirmCancelId(null)
-    if (result) {
-      showToast('已取消本课', 'success')
-      loadOverrides()
-      setExpandedSchedule(null)
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
-  }
-
-  const handleRevertOverride = async (scheduleId: string, dateStr: string) => {
-    const ok = await deleteScheduleOverride(scheduleId, dateStr)
-    if (ok) {
-      showToast('已恢复', 'success')
-      loadOverrides()
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
   }
 
   const weekHolidays = useMemo(() => {
@@ -414,7 +388,7 @@ export function WeekView() {
                                               确认
                                             </button>
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); setConfirmCancelId(null) }}
+                                              onClick={(e) => { e.stopPropagation(); cancelConfirmation() }}
                                               className="px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
                                               style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
                                             >

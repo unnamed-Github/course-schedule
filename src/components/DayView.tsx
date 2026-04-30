@@ -3,12 +3,13 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo, getScheduleOverrides, createScheduleOverride, deleteScheduleOverride } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo, getScheduleOverrides } from '@/lib/data'
 import { getLocalSetting } from '@/lib/user-settings'
 import { getTodayCourses, getCurrentPeriod } from '@/lib/schedule'
 import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
 import { useToast } from './ToastProvider'
+import { useScheduleOverride } from '@/hooks/useScheduleOverride'
 import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
@@ -30,7 +31,6 @@ export function DayView() {
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const [overrides, setOverrides] = useState<ScheduleOverride[]>([])
-  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = () => {
@@ -49,6 +49,17 @@ export function DayView() {
     const dateStr = viewDate.toISOString().split('T')[0]
     getScheduleOverrides(dateStr).then(setOverrides).catch(() => setOverrides([]))
   }
+
+  const {
+    confirmCancelId,
+    handleOverrideAction,
+    handleConfirmCancel,
+    handleRevertOverride,
+    cancelConfirmation,
+  } = useScheduleOverride({
+    onLoadOverrides: loadOverrides,
+    onCloseDetail: () => setExpandedCourse(null),
+  })
 
   useEffect(() => { loadData() }, [])
   useEffect(() => { loadOverrides() }, [viewDate])
@@ -94,45 +105,7 @@ export function DayView() {
     return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100))
   }
 
-  const handleOverrideAction = async (scheduleId: string, type: 'cancelled' | 'ended_early') => {
-    const dateStr = viewDate.toISOString().split('T')[0]
-    if (type === 'cancelled') {
-      setConfirmCancelId(scheduleId)
-      return
-    }
-    const result = await createScheduleOverride({ schedule_id: scheduleId, date: dateStr, type })
-    if (result) {
-      showToast('已标记提前下课', 'success')
-      loadOverrides()
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
-  }
 
-  const handleConfirmCancel = async () => {
-    if (!confirmCancelId) return
-    const dateStr = viewDate.toISOString().split('T')[0]
-    const result = await createScheduleOverride({ schedule_id: confirmCancelId, date: dateStr, type: 'cancelled' })
-    setConfirmCancelId(null)
-    if (result) {
-      showToast('已取消本课', 'success')
-      loadOverrides()
-      setExpandedCourse(null)
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
-  }
-
-  const handleRevertOverride = async (scheduleId: string) => {
-    const dateStr = viewDate.toISOString().split('T')[0]
-    const ok = await deleteScheduleOverride(scheduleId, dateStr)
-    if (ok) {
-      showToast('已恢复', 'success')
-      loadOverrides()
-    } else {
-      showToast('操作失败，请稍后重试', 'error')
-    }
-  }
 
   if (!loaded) {
     return (
@@ -192,6 +165,7 @@ export function DayView() {
           {sortedSchedules.map((schedule) => {
             const course = courseMap.get(schedule.course_id)
             if (!course) return null
+            const dateStr = viewDate.toISOString().split('T')[0]
             const overrideEntry = overrideMap.get(schedule.id)
             const isCancelled = overrideEntry?.type === 'cancelled'
             const isEndedEarly = overrideEntry?.type === 'ended_early'
@@ -298,7 +272,7 @@ export function DayView() {
                         <div className="mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
                           {overrideEntry ? (
                             <button
-                              onClick={() => handleRevertOverride(schedule.id)}
+                              onClick={() => handleRevertOverride(schedule.id, dateStr)}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                               style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
                             >
@@ -311,14 +285,14 @@ export function DayView() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>确认取消本课？</span>
                                   <button
-                                    onClick={handleConfirmCancel}
+                                    onClick={() => handleConfirmCancel(dateStr)}
                                     className="px-3 py-1.5 rounded-lg text-xs font-medium text-white cursor-pointer"
                                     style={{ backgroundColor: '#EF4444' }}
                                   >
                                     确认
                                   </button>
                                   <button
-                                    onClick={() => setConfirmCancelId(null)}
+                                    onClick={() => cancelConfirmation()}
                                     className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
                                     style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
                                   >
@@ -327,7 +301,7 @@ export function DayView() {
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => handleOverrideAction(schedule.id, 'cancelled')}
+                                  onClick={() => handleOverrideAction(schedule.id, dateStr, 'cancelled')}
                                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
                                   style={{ border: '1px solid #EF4444', color: '#EF4444' }}
                                 >
