@@ -5,6 +5,7 @@ import { Sun, Moon, GraduationCap } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { useView, ViewType } from './ViewContext'
+import { SemesterCountdown } from './SemesterCountdown'
 
 const TABS: { id: ViewType; label: string }[] = [
   { id: 'week', label: '周视图' },
@@ -54,7 +55,9 @@ export function TopBar() {
           </span>
         )}
 
-        <button
+        <div className="flex items-center gap-2">
+          <SemesterCountdown />
+          <button
           onClick={toggle}
           className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer hover:bg-cyan-100 dark:hover:bg-cyan-900"
           aria-label="切换主题"
@@ -62,6 +65,7 @@ export function TopBar() {
         >
           {theme === "light" ? <Moon size={18} strokeWidth={1.8} /> : <Sun size={18} strokeWidth={1.8} />}
         </button>
+        </div>
       </div>
 
       {/* 标签栏 */}

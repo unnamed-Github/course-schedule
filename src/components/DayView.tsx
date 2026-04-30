@@ -197,7 +197,7 @@ export function DayView() {
             const isEndedEarly = overrideEntry?.type === 'ended_early'
             const startTime = getPeriodTime(schedule.start_period)
             const endTime = getPeriodTime(schedule.end_period)
-            const isCurrent = !isCancelled && highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+            const isCurrent = !isCancelled && !isEndedEarly && highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
             const progress = getCourseProgress(schedule)
             const isExpanded = !isCancelled && expandedCourse === schedule.id
 
@@ -209,12 +209,12 @@ export function DayView() {
                 className="rounded-2xl overflow-hidden"
                 style={{
                   backgroundColor: 'var(--bg-card)',
-                  border: `2px solid ${isCurrent ? course.color : 'var(--border-light)'}`,
+                  border: `2px solid ${isEndedEarly ? '#10B981' : isCurrent ? course.color : 'var(--border-light)'}`,
                   boxShadow: isCurrent ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                   opacity: isCancelled ? 0.45 : 1,
                 }}
               >
-                {isCurrent && !isEndedEarly && (
+                {isCurrent && (
                   <div
                     onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, 'ended_early') }}
                     className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:opacity-80 transition-opacity"
@@ -226,7 +226,7 @@ export function DayView() {
                     <span className="text-[10px] text-white font-medium whitespace-nowrap">提前下课</span>
                   </div>
                 )}
-                {isCurrent && isEndedEarly && (
+                {isEndedEarly && (
                   <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: '#10B981' }}>
                     <span className="text-[10px] text-white font-medium">已下课</span>
                   </div>
@@ -263,13 +263,10 @@ export function DayView() {
                         {isEndedEarly && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#10B981', color: 'white' }}>已下课</span>
                         )}
-                        {isCurrent && !isEndedEarly && (
+                        {isCurrent && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: course.color }}>
                             进行中 {Math.round(progress)}%
                           </span>
-                        )}
-                        {isCurrent && isEndedEarly && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#10B981', color: 'white' }}>已下课</span>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
