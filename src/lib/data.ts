@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { Course, CourseSchedule, Assignment, Memo } from './types'
+import { Course, CourseSchedule, Assignment, Memo, ScheduleOverride } from './types'
 import { COURSES, SCHEDULES } from './seed-data'
 import { setSemesterCache } from './semester'
 import type { Holiday, MakeupDay } from './semester'
@@ -195,5 +195,33 @@ export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promis
 export async function deleteMemo(id: string): Promise<boolean> {
   const { error } = await supabase.from('memos').delete().eq('id', id)
   if (!error) invalidateCache('memos')
+  return !error
+}
+
+// ---------- Schedule Overrides ----------
+
+export async function getScheduleOverrides(date: string): Promise<ScheduleOverride[]> {
+  const cacheKey = `overrides_${date}`
+  const cached = getCached<ScheduleOverride[]>(cacheKey)
+  if (cached) return cached
+  const { data } = await supabase.from('schedule_overrides').select('*').eq('date', date)
+  const result = data ?? []
+  setCache(cacheKey, result)
+  return result
+}
+
+export async function createScheduleOverride(input: { schedule_id: string; date: string; type: 'cancelled' | 'ended_early' }): Promise<ScheduleOverride | null> {
+  const { data, error } = await supabase.from('schedule_overrides').upsert(
+    { ...input, id: genId(), created_at: new Date().toISOString() },
+    { onConflict: 'schedule_id,date' }
+  ).select().single()
+  if (error) { console.error('createScheduleOverride error:', error); return null }
+  invalidateCache('overrides')
+  return data
+}
+
+export async function deleteScheduleOverride(scheduleId: string, date: string): Promise<boolean> {
+  const { error } = await supabase.from('schedule_overrides').delete().eq('schedule_id', scheduleId).eq('date', date)
+  if (!error) invalidateCache('overrides')
   return !error
 }

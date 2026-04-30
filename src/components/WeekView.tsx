@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CourseSchedule, Course, Assignment, Memo } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
+import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
+import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides, createScheduleOverride, deleteScheduleOverride } from '@/lib/data'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
-import { ChevronLeft, ChevronRight, User, Clock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Clock, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
 
 const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
 const PERIOD_GROUP_DEFS = [
@@ -40,6 +40,8 @@ export function WeekView() {
   const [loaded, setLoaded] = useState(false)
   const [loadError, setLoadError] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
+  const [weekOverrides, setWeekOverrides] = useState<ScheduleOverride[]>([])
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null)
 
   const loadData = () => {
     setLoadError(false)
@@ -65,6 +67,20 @@ export function WeekView() {
     const timer = setInterval(() => setCurrentPeriod(getCurrentPeriod()), 60000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!weekRange) return
+    const dateStrs: string[] = []
+    const d = new Date(weekRange.start)
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(d)
+      current.setDate(d.getDate() + i)
+      dateStrs.push(current.toISOString().split('T')[0])
+    }
+    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
+      .then(results => setWeekOverrides(results.flat()))
+      .catch(() => setWeekOverrides([]))
+  }, [weekRange])
 
   useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
@@ -100,10 +116,74 @@ export function WeekView() {
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
 
+  const weekOverrideMap = useMemo(() => {
+    const map = new Map<string, ScheduleOverride>()
+    for (const o of weekOverrides) {
+      map.set(`${o.schedule_id}_${o.date}`, o)
+    }
+    return map
+  }, [weekOverrides])
+
+  const getDayOverride = (scheduleId: string, dateStr: string) => {
+    return weekOverrideMap.get(`${scheduleId}_${dateStr}`) ?? null
+  }
+
+  const loadOverrides = () => {
+    if (!weekRange) return
+    const dateStrs: string[] = []
+    const d = new Date(weekRange.start)
+    for (let i = 0; i < 7; i++) {
+      const current = new Date(d)
+      current.setDate(d.getDate() + i)
+      dateStrs.push(current.toISOString().split('T')[0])
+    }
+    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
+      .then(results => setWeekOverrides(results.flat()))
+      .catch(() => setWeekOverrides([]))
+  }
+
+  const handleOverrideAction = async (scheduleId: string, dateStr: string, type: 'cancelled' | 'ended_early') => {
+    if (type === 'cancelled') {
+      setConfirmCancelId(scheduleId)
+      return
+    }
+    const result = await createScheduleOverride({ schedule_id: scheduleId, date: dateStr, type })
+    if (result) {
+      showToast('已标记提前下课', 'success')
+      loadOverrides()
+    } else {
+      showToast('操作失败，请稍后重试', 'error')
+    }
+  }
+
+  const handleConfirmCancel = async (dateStr: string) => {
+    if (!confirmCancelId) return
+    const result = await createScheduleOverride({ schedule_id: confirmCancelId, date: dateStr, type: 'cancelled' })
+    setConfirmCancelId(null)
+    if (result) {
+      showToast('已取消本课', 'success')
+      loadOverrides()
+      setExpandedSchedule(null)
+    } else {
+      showToast('操作失败，请稍后重试', 'error')
+    }
+  }
+
+  const handleRevertOverride = async (scheduleId: string, dateStr: string) => {
+    const ok = await deleteScheduleOverride(scheduleId, dateStr)
+    if (ok) {
+      showToast('已恢复', 'success')
+      loadOverrides()
+    } else {
+      showToast('操作失败，请稍后重试', 'error')
+    }
+  }
+
   const weekHolidays = useMemo(() => {
     const holidays = new Map<number, ReturnType<typeof isHoliday>>()
     const makeups = new Map<number, ReturnType<typeof getMakeupInfo>>()
-    if (!weekRange) return { holidays, makeups }
+    const dayDateMap = new Map<number, string>()
+    if (!weekRange) return { holidays, makeups, dayDateMap }
     const d = new Date(weekRange.start)
     for (let i = 0; i < 7; i++) {
       const current = new Date(d)
@@ -111,8 +191,9 @@ export function WeekView() {
       const dow = current.getDay() || 7
       holidays.set(dow, isHoliday(current))
       makeups.set(dow, getMakeupInfo(current))
+      dayDateMap.set(dow, current.toISOString().split('T')[0])
     }
-    return { holidays, makeups }
+    return { holidays, makeups, dayDateMap }
   }, [weekRange])
 
   const showDays = useMemo(() => {
@@ -243,29 +324,43 @@ export function WeekView() {
                       daySchedules.map((schedule) => {
                         const course = courseMap.get(schedule.course_id)
                         if (!course) return null
-                        const active = highlightEnabled && isCurrentCourse(schedule)
-                        const isExpanded = expandedSchedule?.id === schedule.id
+                        const dateStr = weekHolidays.dayDateMap.get(day) ?? ''
+                        const overrideEntry = getDayOverride(schedule.id, dateStr)
+                        const isCancelled = overrideEntry?.type === 'cancelled'
+                        const isEndedEarly = overrideEntry?.type === 'ended_early'
+                        const active = !isCancelled && highlightEnabled && isCurrentCourse(schedule)
+                        const isExpanded = !isCancelled && expandedSchedule?.id === schedule.id
                         const assignmentCount = getCourseAssignmentCount(course.id)
+                        const isViewingTodayOrFuture = dateStr >= new Date().toISOString().split('T')[0]
+                        const canOperate = isViewingTodayOrFuture && !isCancelled
 
                         return (
                           <motion.div
                             key={schedule.id}
-                            onClick={() => setExpandedSchedule(isExpanded ? null : schedule)}
-                            className="rounded-2xl p-3 cursor-pointer relative overflow-hidden"
+                            onClick={() => { if (!isCancelled) setExpandedSchedule(isExpanded ? null : schedule) }}
+                            className="rounded-2xl p-3 relative overflow-hidden"
                             style={{
                               backgroundColor: course.color,
                               color: 'white',
+                              opacity: isCancelled ? 0.45 : 1,
+                              cursor: isCancelled ? 'default' : 'pointer',
                               ...(active ? { boxShadow: '0 0 0 3px var(--accent-warm)' } : {}),
                             }}
-                            whileHover={{ scale: 1.02, boxShadow: active ? '0 0 0 3px var(--accent-warm)' : 'var(--shadow-md)' }}
+                            whileHover={isCancelled ? {} : { scale: 1.02, boxShadow: active ? '0 0 0 3px var(--accent-warm)' : 'var(--shadow-md)' }}
                             transition={{ duration: 0.15 }}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 flex-1">
-                                <div className="text-sm font-semibold truncate">{course.name}</div>
-                                <div className="text-xs opacity-80 truncate mt-0.5">{schedule.location !== '—' ? schedule.location : ''}</div>
+                                <div className="text-sm font-semibold truncate" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{course.name}</div>
+                                <div className="text-xs opacity-80 truncate mt-0.5" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{schedule.location !== '—' ? schedule.location : ''}</div>
+                                {isCancelled && (
+                                  <div className="text-[10px] opacity-90 mt-1 font-medium">已取消</div>
+                                )}
+                                {isEndedEarly && (
+                                  <div className="text-[10px] opacity-90 mt-1 font-medium" style={{ color: '#D1FAE5' }}>已下课</div>
+                                )}
                               </div>
-                              {assignmentCount > 0 && (
+                              {assignmentCount > 0 && !isCancelled && (
                                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-white flex items-center justify-center">
                                   <span className="text-xs font-bold" style={{ color: course.color }}>{assignmentCount}</span>
                                 </div>
@@ -286,6 +381,65 @@ export function WeekView() {
                                       <p className="text-xs opacity-80 mb-1 flex items-center gap-1"><User size={12} strokeWidth={2} />{course.teacher}</p>
                                     )}
                                     <p className="text-xs opacity-80 flex items-center gap-1"><Clock size={12} strokeWidth={2} />第{schedule.start_period}-{schedule.end_period}节</p>
+                                  </div>
+
+                                  {/* 操作按钮 */}
+                                  <div className="mt-3 pt-2 border-t border-white/20">
+                                    {overrideEntry ? (
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); handleRevertOverride(schedule.id, dateStr) }}
+                                        className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                        style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                                      >
+                                        <RotateCcw size={12} strokeWidth={2} />
+                                        {overrideEntry.type === 'cancelled' ? '恢复本课' : '撤销下课'}
+                                      </button>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {confirmCancelId === schedule.id ? (
+                                          <div className="flex items-center gap-1">
+                                            <span className="text-[10px] opacity-80">确认取消？</span>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); handleConfirmCancel(dateStr) }}
+                                              className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
+                                            >
+                                              确认
+                                            </button>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setConfirmCancelId(null) }}
+                                              className="px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                                            >
+                                              取消
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {canOperate && (
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'cancelled') }}
+                                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                                              >
+                                                <Trash2 size={12} strokeWidth={2} />
+                                                取消本课
+                                              </button>
+                                            )}
+                                            {canOperate && !isEndedEarly && (
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'ended_early') }}
+                                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                                              >
+                                                <CheckCircle2 size={12} strokeWidth={2} />
+                                                提前下课
+                                              </button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 </motion.div>
                               )}

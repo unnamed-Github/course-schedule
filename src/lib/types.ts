@@ -50,3 +50,11 @@ export interface Memo {
   created_at: string
 }
 
+export interface ScheduleOverride {
+  id: string
+  schedule_id: string
+  date: string
+  type: 'cancelled' | 'ended_early'
+  created_at?: string
+}
+
