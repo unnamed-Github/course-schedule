@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
-import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
+import { getWeekNumber, getSemesterConfig, getWeekDateRange, getCurrentPeriod, PERIOD_TIMES } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/ToastProvider'
@@ -19,6 +19,8 @@ export default function CoursesPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
   const [weekNum, setWeekNum] = useState(0)
+  const [currentDayOfWeek, setCurrentDayOfWeek] = useState(0)
+  const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [importPreview, setImportPreview] = useState<unknown[]>([])
   const [importing, setImporting] = useState(false)
@@ -40,6 +42,17 @@ export default function CoursesPage() {
     getAssignments().then(setAssignments)
     getMemos().then(setMemos)
     setWeekNum(getWeekNumber())
+    const now = new Date()
+    const dow = now.getDay()
+    setCurrentDayOfWeek(dow === 0 ? 7 : dow)
+    setCurrentPeriod(getCurrentPeriod(now))
+    const timer = setInterval(() => {
+      const n = new Date()
+      const d = n.getDay()
+      setCurrentDayOfWeek(d === 0 ? 7 : d)
+      setCurrentPeriod(getCurrentPeriod(n))
+    }, 60000)
+    return () => clearInterval(timer)
   }, [])
 
   const scheduleCountMap = new Map<string, number>()
@@ -222,6 +235,32 @@ export default function CoursesPage() {
           const perWeek = scheduleCountMap.get(course.id) ?? 0
           const totalClasses = perWeek * totalWeeks
           const completedClasses = Math.min(perWeek * (weekNum - 1), totalClasses)
+          const courseSchedules = schedules
+            .filter((s) => s.course_id === course.id)
+            .filter((s) => {
+              if (s.week_type === 'all') return true
+              if (s.week_type === 'odd' && currentWeekOdd) return true
+              if (s.week_type === 'even' && !currentWeekOdd) return true
+              return false
+            })
+            .sort((a, b) => a.day_of_week - b.day_of_week || a.start_period - b.start_period)
+          let nextScheduleIndex = -1
+          if (weekNum > 0 && currentDayOfWeek > 0) {
+            for (let si = 0; si < courseSchedules.length; si++) {
+              const s = courseSchedules[si]
+              if (s.day_of_week > currentDayOfWeek) {
+                nextScheduleIndex = si
+                break
+              }
+              if (s.day_of_week === currentDayOfWeek) {
+                if (currentPeriod === null || currentPeriod <= s.end_period) {
+                  nextScheduleIndex = si
+                  break
+                }
+              }
+            }
+          }
+          const nextDotIndex = nextScheduleIndex >= 0 ? completedClasses + nextScheduleIndex : -1
           const courseMemos = memos.filter((m) => m.course_id === course.id)
           const courseAssignments = assignments.filter((a) => a.course_id === course.id)
           const tagCounts: Record<string, number> = {}
@@ -250,10 +289,16 @@ export default function CoursesPage() {
                   <div className="flex gap-[2px] mt-3 flex-wrap">
                     {Array.from({ length: totalClasses }, (_, i) => {
                       const isCompleted = i < completedClasses
-                      const isCurrent = i >= completedClasses && i < completedClasses + perWeek
+                      const isCurrent = i === nextDotIndex
                       const weekForDot = Math.floor(i / perWeek) + 1
+                      const scheduleIndex = i % perWeek
+                      const dotSchedule = courseSchedules[scheduleIndex]
                       const range = getWeekDateRange(weekForDot)
-                      const label = range ? `第${weekForDot}周 · ${range.start.getMonth() + 1}月${range.start.getDate()}日` : `第${weekForDot}周`
+                      const dayLabel = dotSchedule ? DAY_MAP[dotSchedule.day_of_week] : ''
+                      const periodLabel = dotSchedule ? `${dotSchedule.start_period}-${dotSchedule.end_period}节` : ''
+                      const timeLabel = dotSchedule ? `${PERIOD_TIMES[dotSchedule.start_period].start}-${PERIOD_TIMES[dotSchedule.end_period].end}` : ''
+                      const scheduleInfo = dotSchedule ? `${dayLabel} ${periodLabel} ${timeLabel}` : ''
+                      const label = range ? `第${weekForDot}周 · ${range.start.getMonth() + 1}月${range.start.getDate()}日\n${scheduleInfo}` : `第${weekForDot}周\n${scheduleInfo}`
                       const dotAssignments = assignments.filter((a) => {
                         const dueWeek = getWeekNumber(new Date(a.due_date))
                         return a.course_id === course.id && dueWeek === weekForDot
