@@ -9,6 +9,7 @@ import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeup
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
+import { ChevronLeft, ChevronRight, User, Clock } from 'lucide-react'
 
 const DAYS = ['一', '二', '三', '四', '五']
 const PERIOD_GROUP_DEFS = [
@@ -145,25 +146,25 @@ export function WeekView() {
       {/* 周切换 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
+          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={18} strokeWidth={1.8} /></button>
           <select
             value={weekNum}
             onChange={(e) => selectWeek(parseInt(e.target.value))}
-            className="rounded-lg px-2 py-1 text-sm font-medium"
+            className="rounded-lg px-2 py-1 text-sm font-medium cursor-pointer"
             style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
           >
             {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((w) => (
               <option key={w} value={w}>第 {w} 周</option>
             ))}
           </select>
-          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
+          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={18} strokeWidth={1.8} /></button>
           <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             第{weekNum}/{totalWeeks}周 · {weekRange ? `${weekRange.start.getMonth() + 1}/${weekRange.start.getDate()}—${weekRange.end.getMonth() + 1}/${weekRange.end.getDate()}` : ''}
           </span>
         </div>
         <button
           onClick={toggleHighlight}
-          className="px-3 py-1 rounded-lg text-xs font-medium transition-colors"
+          className="px-3 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer"
           style={{
             backgroundColor: highlightEnabled ? 'var(--accent-warm)' : 'var(--bg-card)',
             color: highlightEnabled ? 'white' : 'var(--text-secondary)',
@@ -266,9 +267,9 @@ export function WeekView() {
                                 >
                                   <div className="pt-2 border-t border-white/20">
                                     {course.teacher !== '—' && (
-                                      <p className="text-xs opacity-80 mb-1">👨‍🏫 {course.teacher}</p>
+                                      <p className="text-xs opacity-80 mb-1 flex items-center gap-1"><User size={12} strokeWidth={2} />{course.teacher}</p>
                                     )}
-                                    <p className="text-xs opacity-80">📅 第{schedule.start_period}-{schedule.end_period}节</p>
+                                    <p className="text-xs opacity-80 flex items-center gap-1"><Clock size={12} strokeWidth={2} />第{schedule.start_period}-{schedule.end_period}节</p>
                                   </div>
                                 </motion.div>
                               )}

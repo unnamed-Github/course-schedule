@@ -11,6 +11,7 @@ import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { useToast } from '@/components/ToastProvider'
 import { useWarmthBanner } from '@/components/WarmthBannerContext'
 import { Modal } from './Modal'
+import { Sun, Moon, FileUp, Plus, Upload, CalendarDays } from 'lucide-react'
 
 type SettingsTab = 'display' | 'data'
 
@@ -121,7 +122,7 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
         <div className="space-y-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{theme === 'light' ? '☀️ 亮色模式' : '🌙 暗色模式'}</span>
+              <span className="text-sm flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>{theme === 'light' ? <><Sun size={16} strokeWidth={1.8} />亮色模式</> : <><Moon size={16} strokeWidth={1.8} />暗色模式</>}</span>
               <button onClick={toggle} className="w-11 h-6 rounded-full relative transition-colors" style={{ backgroundColor: theme === 'dark' ? 'var(--accent-info)' : 'var(--border-light)' }}>
                 <div className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm" style={{ left: theme === 'dark' ? 'calc(100% - 22px)' : '2px' }} />
               </button>
@@ -160,8 +161,8 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
 
           <div className="border-t pt-3" style={{ borderColor: 'var(--border-light)' }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>📅 节假日</h3>
-              <button onClick={() => { setHolidayForm({ name: '', start: '', end: '' }); setEditingHolidayIdx(-1) }} className="btn-ghost text-xs">+ 添加</button>
+              <h3 className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}><CalendarDays size={15} strokeWidth={1.8} />节假日</h3>
+              <button onClick={() => { setHolidayForm({ name: '', start: '', end: '' }); setEditingHolidayIdx(-1) }} className="btn-ghost text-xs flex items-center gap-1"><Plus size={12} strokeWidth={2} />添加</button>
             </div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {holidays.map((h, i) => (
@@ -215,7 +216,7 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
             <div className="border-t pt-3 mt-3" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center justify-between mb-2">
                 <h4 className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>调休日</h4>
-                <button onClick={() => { setMakeupForm({ date: '', replacesDayOfWeek: 1, weekType: 'all' }); setEditingMakeupIdx(-1) }} className="btn-ghost text-xs">+ 添加</button>
+                <button onClick={() => { setMakeupForm({ date: '', replacesDayOfWeek: 1, weekType: 'all' }); setEditingMakeupIdx(-1) }} className="btn-ghost text-xs flex items-center gap-1"><Plus size={12} strokeWidth={2} />添加</button>
               </div>
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {makeupDays.map((m, i) => (
@@ -297,14 +298,14 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
               className="rounded-xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors mb-3"
               style={{ borderColor: dragOver ? 'var(--accent-info)' : 'var(--border-light)', backgroundColor: dragOver ? 'var(--drop-highlight)' : 'transparent' }}
             >
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>📁 拖拽 CSV/Excel 到此处</p>
+              <p className="text-sm flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}><Upload size={16} strokeWidth={1.8} />拖拽 CSV/Excel 到此处</p>
               <p className="text-[10px] mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>或点击选择文件</p>
               <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await processFile(f) }} className="hidden" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <button onClick={handleExportCSV} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 CSV</button>
-              <button onClick={handleExportExcel} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 Excel</button>
-              <button onClick={handleExportJSON} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 JSON</button>
+              <button onClick={handleExportCSV} className="btn-primary text-sm flex-1 flex items-center justify-center gap-1"><FileUp size={14} strokeWidth={2} />CSV</button>
+              <button onClick={handleExportExcel} className="btn-primary text-sm flex-1 flex items-center justify-center gap-1"><FileUp size={14} strokeWidth={2} />Excel</button>
+              <button onClick={handleExportJSON} className="btn-primary text-sm flex-1 flex items-center justify-center gap-1"><FileUp size={14} strokeWidth={2} />JSON</button>
             </div>
             {showImport && importPreview.length > 0 && (
               <div className="mt-3 p-3 rounded-2xl" style={{ backgroundColor: 'var(--bg-primary)' }}>

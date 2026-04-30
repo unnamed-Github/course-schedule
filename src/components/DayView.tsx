@@ -9,6 +9,7 @@ import { getTodayCourses, getCurrentPeriod } from '@/lib/schedule'
 import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
 import { useToast } from './ToastProvider'
+import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
@@ -104,7 +105,7 @@ export function DayView() {
     <div className="max-w-4xl mx-auto space-y-4">
       {/* 日期导航 */}
       <div className="flex items-center justify-center gap-4">
-        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
+        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={20} strokeWidth={1.8} /></button>
         <div className="text-center cursor-pointer" onClick={() => dateInputRef.current?.showPicker()}>
           <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{viewDate.getMonth() + 1}月{viewDate.getDate()}日</p>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>周{dayNames[viewDate.getDay()]}</p>
@@ -116,7 +117,7 @@ export function DayView() {
             className="invisible absolute w-0 h-0"
           />
         </div>
-        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
+        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={20} strokeWidth={1.8} /></button>
       </div>
 
       {!isToday && (
@@ -128,7 +129,7 @@ export function DayView() {
       {/* 课程卡片 */}
       {sortedSchedules.length === 0 ? (
         <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
-          <p className="text-lg mb-2">🎉</p>
+          <Sparkles size={28} strokeWidth={1.5} style={{ margin: '0 auto', marginBottom: '0.5rem', color: 'var(--text-secondary)', opacity: 0.5 }} />
           <p style={{ color: 'var(--text-secondary)' }}>今天没有课～好好休息吧</p>
         </div>
       ) : (
@@ -188,15 +189,15 @@ export function DayView() {
                         )}
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        {course.teacher !== '—' && <span>👨‍🏫 {course.teacher}</span>}
-                        {schedule.location !== '—' && <span>📍 {schedule.location}</span>}
+                        {course.teacher !== '—' && <span className="flex items-center gap-1"><User size={13} strokeWidth={1.8} />{course.teacher}</span>}
+                        {schedule.location !== '—' && <span className="flex items-center gap-1"><MapPin size={13} strokeWidth={1.8} />{schedule.location}</span>}
                         <span>第{schedule.start_period}-{schedule.end_period}节</span>
                       </div>
                     </div>
 
                     {/* 展开箭头 */}
-                    <div className="text-lg" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>
-                      {isExpanded ? '▼' : '▶'}
+                    <div className="text-lg flex-shrink-0" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>
+                      {isExpanded ? <ChevronDown size={18} strokeWidth={1.8} /> : <ChevronRightIcon size={18} strokeWidth={1.8} />}
                     </div>
                   </div>
                 </div>

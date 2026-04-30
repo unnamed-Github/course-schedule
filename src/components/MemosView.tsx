@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Course, Memo } from '@/lib/types'
 import { getCourses, getMemos, createMemo, deleteMemo } from '@/lib/data'
 import { Modal } from './Modal'
+import { Plus, StickyNote, X } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
@@ -62,14 +63,14 @@ export function MemosView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>课堂备忘</h2>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs">新增备忘</button>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />新增备忘</button>
       </div>
 
       {/* 备忘列表 */}
       <div className="space-y-3">
         {memos.length === 0 ? (
           <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
-            <p className="text-2xl mb-2">📝</p>
+            <div className="flex justify-center mb-2"><StickyNote size={32} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.4 }} /></div>
             <p style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>还没有备忘，快来记录吧！</p>
           </div>
         ) : (
@@ -100,10 +101,10 @@ export function MemosView() {
                     </div>
                     <button
                       onClick={() => handleDeleteMemo(memo.id)}
-                      className="text-sm opacity-30 hover:opacity-60 transition-opacity flex-shrink-0"
+                      className="opacity-30 hover:opacity-60 transition-opacity flex-shrink-0 cursor-pointer"
                       style={{ color: 'var(--text-secondary)' }}
                     >
-                      ✕
+                      <X size={14} strokeWidth={1.8} />
                     </button>
                   </div>
                   <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{memo.content}</p>

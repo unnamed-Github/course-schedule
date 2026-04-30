@@ -9,6 +9,7 @@ import { getWeekNumber, getSemesterConfig, getDayDate, getCurrentPeriod, PERIOD_
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/ToastProvider'
+import { ChevronDown, ChevronRight, Check, Square, Pencil, Trash2, Plus } from 'lucide-react'
 
 const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
 
@@ -346,8 +347,8 @@ export default function CoursesPage() {
 
                   {courseAssignments.length > 0 && (
                     <div className="mt-3 pt-2 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                      <button onClick={() => setExpandedCard(isExpanded ? null : course.id)} className="flex items-center gap-1 text-[10px] w-full" style={{ color: 'var(--text-secondary)' }}>
-                        <span>{isExpanded ? '▼' : '▶'}</span> 📝 作业 ({courseAssignments.length})
+                      <button onClick={() => setExpandedCard(isExpanded ? null : course.id)} className="flex items-center gap-1 text-[10px] w-full cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                        {isExpanded ? <ChevronDown size={12} strokeWidth={2} /> : <ChevronRight size={12} strokeWidth={2} />} 作业 ({courseAssignments.length})
                       </button>
                       <AnimatePresence initial={false}>
                         {isExpanded && (
@@ -358,7 +359,7 @@ export default function CoursesPage() {
                               const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
                               return (
                                 <div key={a.id} className="flex items-center gap-1.5 text-[10px]">
-                                  <span>{a.status === 'submitted' ? '✅' : '⬜'}</span>
+                                  {a.status === 'submitted' ? <Check size={12} strokeWidth={2.5} style={{ color: 'var(--accent-success)' }} /> : <Square size={12} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />}
                                   <span className="truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{a.title}</span>
                                 </div>
                               )
@@ -370,8 +371,8 @@ export default function CoursesPage() {
                   )}
 
                   <div className="flex justify-end gap-3 mt-3">
-                    <button onClick={() => handleOpenEdit(course)} className="text-sm" style={{ color: 'var(--accent-info)' }}>✏️ 编辑</button>
-                    <button onClick={() => setDeleteConfirm(course)} className="text-sm" style={{ color: 'var(--accent-danger)' }}>🗑️ 删除</button>
+                    <button onClick={() => handleOpenEdit(course)} className="text-sm flex items-center gap-1 cursor-pointer" style={{ color: 'var(--accent-info)' }}><Pencil size={13} strokeWidth={1.8} />编辑</button>
+                    <button onClick={() => setDeleteConfirm(course)} className="text-sm flex items-center gap-1 cursor-pointer" style={{ color: 'var(--accent-danger)' }}><Trash2 size={13} strokeWidth={1.8} />删除</button>
                   </div>
                 </div>
               </motion.div>
@@ -380,11 +381,11 @@ export default function CoursesPage() {
         })}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: courses.length * 0.1 }}>
-          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-950 transition-colors"
             style={{ border: '2px dashed var(--border-light)' }}
             onClick={() => setAddingCourse(true)}
           >
-            <span className="text-2xl" style={{ color: 'var(--text-secondary)' }}>+</span>
+            <Plus size={28} strokeWidth={1.5} style={{ color: 'var(--text-secondary)' }} />
           </div>
         </motion.div>
       </div>
@@ -443,7 +444,7 @@ export default function CoursesPage() {
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>上课时间</p>
                 {editingScheduleId === null && (
-                  <button onClick={() => setEditingScheduleId('new')} className="btn-ghost text-xs">+ 添加</button>
+                    <button onClick={() => setEditingScheduleId('new')} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
                 )}
               </div>
               

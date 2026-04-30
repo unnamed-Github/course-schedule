@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { Sun, Moon, GraduationCap } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { useView, ViewType } from './ViewContext'
@@ -33,52 +34,55 @@ export function TopBar() {
 
   return (
     <header
-      className="sticky top-0 z-50 flex flex-col"
-      style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)' }}
+      className="sticky top-0 z-50 flex flex-col backdrop-blur-xl"
+      style={{ backgroundColor: 'var(--nav-glass-bg)', borderBottom: '1px solid var(--border-light)' }}
     >
       {/* 顶部信息栏 */}
       <div className="h-12 flex items-center justify-between px-4">
         <button
           onClick={() => setCurrentView('week')}
-          className="font-semibold text-lg transition-colors hover:opacity-70"
+          className="flex items-center gap-1.5 font-semibold text-lg transition-colors hover:opacity-70 cursor-pointer"
           style={{ color: 'var(--accent-info)' }}
         >
+          <GraduationCap size={22} strokeWidth={1.8} />
           课表
         </button>
 
         {weekNum !== null && (
-          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
             第{weekNum}/{totalWeeks}周 · {dateLabel}
           </span>
         )}
 
         <button
           onClick={toggle}
-          className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors cursor-pointer hover:bg-cyan-100 dark:hover:bg-cyan-900"
           aria-label="切换主题"
           style={{ color: 'var(--text-secondary)' }}
         >
-          {theme === "light" ? "🌙" : "🌞"}
+          {theme === "light" ? <Moon size={18} strokeWidth={1.8} /> : <Sun size={18} strokeWidth={1.8} />}
         </button>
       </div>
 
-      <div className="flex items-center justify-center gap-1 px-2 pb-2 overflow-x-auto">
+      {/* 标签栏 */}
+      <div className="flex items-center justify-center gap-0.5 px-2 pb-2 overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = currentView === tab.id
           return (
             <button
               key={tab.id}
               onClick={() => setCurrentView(tab.id)}
-              className="px-4 py-1.5 text-sm font-medium transition-all whitespace-nowrap relative"
+              className="px-4 py-1.5 text-sm font-medium transition-all duration-200 whitespace-nowrap relative cursor-pointer rounded-lg"
               style={{
                 color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)',
                 fontWeight: isActive ? 600 : 400,
+                backgroundColor: isActive ? 'rgba(8, 145, 178, 0.08)' : 'transparent',
               }}
             >
               {tab.label}
               {isActive && (
                 <span
-                  className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full"
+                  className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full"
                   style={{ backgroundColor: 'var(--accent-info)' }}
                 />
               )}

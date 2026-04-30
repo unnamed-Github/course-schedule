@@ -8,6 +8,7 @@ import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment
 import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
 import { useToast } from '@/components/ToastProvider'
+import { ClipboardList, Pin, Check, Square, X, ChevronLeft, Plus } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
@@ -211,7 +212,7 @@ export default function CourseDetailPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <button onClick={() => router.back()} className="btn-ghost text-xs">← 返回课程列表</button>
+      <button onClick={() => router.back()} className="btn-ghost text-xs flex items-center gap-1"><ChevronLeft size={14} strokeWidth={1.8} />返回课程列表</button>
 
       {/* ======== HEADER CARD ======== */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -256,7 +257,7 @@ export default function CourseDetailPage() {
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>上课时间</p>
                   {!editingScheduleId && (
-                    <button onClick={() => setEditingScheduleId('new')} className="btn-ghost text-xs">+ 添加</button>
+                    <button onClick={() => setEditingScheduleId('new')} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
                   )}
                 </div>
 
@@ -385,8 +386,8 @@ export default function CourseDetailPage() {
       {/* ======== ASSIGNMENTS ======== */}
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>📝 作业 ({assignments.length})</h3>
-          <button onClick={() => setShowAssignmentForm(!showAssignmentForm)} className="btn-ghost text-xs">+ 添加</button>
+          <h3 className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}><ClipboardList size={14} strokeWidth={1.8} />作业 ({assignments.length})</h3>
+          <button onClick={() => setShowAssignmentForm(!showAssignmentForm)} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
         </div>
 
         {showAssignmentForm && (
@@ -410,18 +411,18 @@ export default function CourseDetailPage() {
               const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
               return (
                 <div key={a.id} className="flex items-center gap-3 py-2.5 px-3 rounded-xl group hover:bg-[var(--border-light)]/30 transition-colors">
-                  <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0">{a.status === 'submitted' ? '✅' : '⬜'}</button>
+                  <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0 cursor-pointer">{a.status === 'submitted' ? <Check size={16} strokeWidth={2.5} style={{ color: 'var(--accent-success)' }} /> : <Square size={16} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />}</button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="w-0.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : course.color, minHeight: '16px', width: 2 }} />
-                      <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <span className="ml-1.5 text-[10px]" style={{ color: 'var(--accent-success)' }}>✓</span>}</p>
+                      <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <Check size={12} strokeWidth={2.5} style={{ color: 'var(--accent-success)', display: 'inline', marginLeft: '4px', verticalAlign: '-2px' }} />}</p>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
                       <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
                       <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{a.due_date.slice(0, 16).replace('T', ' ')}</span>
                     </div>
                   </div>
-                  <button onClick={() => handleDeleteAssignment(a.id)} className="text-xs opacity-0 group-hover:opacity-30 transition-opacity">✕</button>
+                  <button onClick={() => handleDeleteAssignment(a.id)} className="cursor-pointer opacity-0 group-hover:opacity-30 transition-opacity"><X size={14} strokeWidth={1.8} /></button>
                 </div>
               )
             })}
@@ -432,8 +433,8 @@ export default function CourseDetailPage() {
       {/* ======== MEMOS ======== */}
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>📌 课堂备忘 ({memos.length})</h3>
-          <button onClick={() => setShowMemoForm(!showMemoForm)} className="btn-ghost text-xs">+ 添加</button>
+          <h3 className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}><Pin size={14} strokeWidth={1.8} />课堂备忘 ({memos.length})</h3>
+          <button onClick={() => setShowMemoForm(!showMemoForm)} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
         </div>
 
         {showMemoForm && (
@@ -473,7 +474,7 @@ export default function CourseDetailPage() {
                   )}
                   <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)', opacity: 0.4 }}>{m.created_at.slice(5, 16).replace('T', ' ')}</p>
                 </div>
-                <button onClick={() => handleDeleteMemo(m.id)} className="text-xs opacity-0 group-hover:opacity-30 transition-opacity mt-1">✕</button>
+                <button onClick={() => handleDeleteMemo(m.id)} className="cursor-pointer opacity-0 group-hover:opacity-30 transition-opacity mt-1"><X size={14} strokeWidth={1.8} /></button>
               </div>
             ))}
           </div>

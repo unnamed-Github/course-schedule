@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment } from '@/lib/types'
 import { getCourses, getAssignments, updateAssignment, createAssignment } from '@/lib/data'
 import { Modal } from './Modal'
+import { Bell, AlertTriangle, Check, Plus } from 'lucide-react'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
 
@@ -80,7 +81,7 @@ export function AssignmentsView() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>作业</h2>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs">快速添加作业</button>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />快速添加作业</button>
       </div>
 
       {/* 四宫格统计 */}
@@ -154,12 +155,12 @@ export function AssignmentsView() {
                           )}
                           {isNear && (
                             <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: 'var(--accent-warm)26', color: 'var(--accent-warm)' }}>
-                              🔔 即将截止
+                              <Bell size={11} strokeWidth={2} />即将截止
                             </span>
                           )}
                           {isOverdue && (
                             <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1" style={{ backgroundColor: 'var(--accent-danger)26', color: 'var(--accent-danger)' }}>
-                              ⚠️ 已过期
+                              <AlertTriangle size={11} strokeWidth={2} />已过期
                             </span>
                           )}
                         </div>
@@ -181,7 +182,7 @@ export function AssignmentsView() {
                         border: `2px solid ${assignment.status === 'submitted' ? 'var(--accent-success)' : 'var(--border-light)'}`,
                       }}
                     >
-                      {assignment.status === 'submitted' && <span className="text-white text-xs">✓</span>}
+                      {assignment.status === 'submitted' && <Check size={12} strokeWidth={3} style={{ color: 'white' }} />}
                     </button>
                   </div>
                 </div>

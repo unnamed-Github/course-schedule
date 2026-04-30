@@ -7,6 +7,7 @@ import { getTodayCourses } from '@/lib/schedule'
 import { getCurrentPeriod, PERIOD_TIMES, getPeriodTime } from '@/lib/semester'
 import { Course, CourseSchedule } from '@/lib/types'
 import { useWarmthBanner } from './WarmthBannerContext'
+import { Clock, X } from 'lucide-react'
 
 const MORNING_GREETINGS = ['早上好', '上午好']
 const AFTERNOON_GREETINGS = ['下午好', '午后好']
@@ -134,11 +135,11 @@ export function WarmthBanner() {
               </div>
               <button
                 onClick={handleClose}
-                className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
+                className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity flex-shrink-0 cursor-pointer"
                 style={{ color: 'var(--text-secondary)' }}
                 aria-label="关闭问候"
               >
-                ✕
+                <X size={14} strokeWidth={1.8} />
               </button>
             </div>
           )}
@@ -153,7 +154,7 @@ export function WarmthBanner() {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>🕐 正在上</span>
+                  <span className="text-sm flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}><Clock size={14} strokeWidth={1.8} />正在上</span>
                   <span className="font-semibold" style={{ color: currentCourseInfo.course.color }}>
                     {currentCourseInfo.course.name}
                   </span>

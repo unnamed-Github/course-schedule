@@ -9,57 +9,57 @@
 }
 
 :root {
-  --bg-primary: #FFFBF5;
+  --bg-primary: #ECFEFF;
   --bg-card: #FFFFFF;
-  --text-primary: #1A1A2E;
-  --text-secondary: #6B7280;
-  --border-light: #E5E7EB;
-  --accent-warm: #F59E0B;
+  --text-primary: #164E63;
+  --text-secondary: #0E7490;
+  --border-light: #A5F3FC;
+  --accent-warm: #06B6D4;
   --accent-danger: #EF4444;
   --accent-success: #10B981;
-  --accent-info: #3B82F6;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
-  --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+  --accent-info: #0891B2;
+  --shadow-sm: 0 1px 2px rgba(8, 145, 178, 0.06);
+  --shadow-md: 0 4px 12px rgba(8, 145, 178, 0.08);
+  --shadow-lg: 0 10px 25px rgba(8, 145, 178, 0.1);
+  --shadow-xl: 0 20px 40px rgba(8, 145, 178, 0.12);
 
   --bg: var(--bg-primary);
   --fg: var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --card-bg: var(--bg-card);
   --border: var(--border-light);
-  --nav-glass-bg: rgba(255, 251, 245, 0.8);
-  --tab-glass-bg: rgba(255, 255, 255, 0.82);
-  --holiday-cell: rgba(229, 231, 235, 0.5);
-  --makeup-badge: rgba(245, 158, 11, 0.08);
-  --drop-highlight: rgba(59, 130, 246, 0.04);
+  --nav-glass-bg: rgba(236, 254, 255, 0.85);
+  --tab-glass-bg: rgba(255, 255, 255, 0.9);
+  --holiday-cell: rgba(165, 243, 252, 0.35);
+  --makeup-badge: rgba(6, 182, 212, 0.08);
+  --drop-highlight: rgba(8, 145, 178, 0.06);
 }
 
 .dark {
-  --bg-primary: #0F172A;
-  --bg-card: #1E293B;
-  --text-primary: #E2E8F0;
-  --text-secondary: #94A3B8;
-  --border-light: #334155;
-  --accent-warm: #FBBF24;
+  --bg-primary: #042F2E;
+  --bg-card: #134E4A;
+  --text-primary: #CFFAFE;
+  --text-secondary: #67E8F9;
+  --border-light: #115E59;
+  --accent-warm: #22D3EE;
   --accent-danger: #F87171;
   --accent-success: #34D399;
-  --accent-info: #60A5FA;
+  --accent-info: #06B6D4;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
-  --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
-  --shadow-xl: 0 20px 25px rgba(0,0,0,0.6);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+  --shadow-xl: 0 20px 40px rgba(0,0,0,0.6);
 
   --bg: var(--bg-primary);
   --fg: var(--text-primary);
   --fg-secondary: var(--text-secondary);
   --card-bg: var(--bg-card);
   --border: var(--border-light);
-  --nav-glass-bg: rgba(15, 23, 42, 0.8);
-  --tab-glass-bg: rgba(30, 41, 59, 0.82);
-  --holiday-cell: rgba(255, 255, 255, 0.03);
-  --makeup-badge: rgba(251, 191, 36, 0.08);
-  --drop-highlight: rgba(96, 165, 250, 0.06);
+  --nav-glass-bg: rgba(4, 47, 46, 0.85);
+  --tab-glass-bg: rgba(19, 78, 74, 0.9);
+  --holiday-cell: rgba(255, 255, 255, 0.04);
+  --makeup-badge: rgba(34, 211, 238, 0.1);
+  --drop-highlight: rgba(6, 182, 212, 0.08);
 }
 
 @keyframes breathe-danger {
@@ -70,6 +70,11 @@
 @keyframes breathe-warm {
   0%, 100% { opacity: 0.85; }
   50% { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 body {
@@ -84,9 +89,10 @@ body {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0.375rem 0.75rem; border-radius: 0.75rem; font-size: 0.8125rem;
   background: transparent; border: none; cursor: pointer;
-  color: var(--text-secondary); transition: background 0.15s, transform 0.15s;
+  color: var(--text-secondary); transition: background 0.15s, color 0.15s;
 }
-.btn-ghost:hover { background: var(--border-light); transform: scale(1.02); }
+.btn-ghost:hover { background: var(--border-light); color: var(--text-primary); }
+.btn-ghost:focus-visible { outline: 2px solid var(--accent-info); outline-offset: 2px; }
 
 .chip {
   display: inline-flex; align-items: center; gap: 0.25rem;
@@ -99,9 +105,11 @@ body {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0.5rem 1.5rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500;
   background: var(--accent-info); color: #fff; border: none; cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
-.btn-primary:hover { opacity: 0.9; }
+.btn-primary:hover { background: #0E7490; box-shadow: var(--shadow-md); }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:focus-visible { outline: 2px solid var(--accent-info); outline-offset: 2px; }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
