@@ -25,14 +25,19 @@ export function DayView() {
   const [nowMinutes, setNowMinutes] = useState(0)
   const [viewDate, setViewDate] = useState(new Date())
   const [loaded, setLoaded] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [quickMemo, setQuickMemo] = useState('')
   const [quickEmoji, setQuickEmoji] = useState('😊')
   const dateInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoadError(false)
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
       .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
-  }, [])
+      .catch((e) => { console.error('DayView load failed:', e); setLoadError(true); setLoaded(true) })
+  }
+
+  useEffect(() => { loadData() }, [])
 
   useEffect(() => {
     const tick = () => { const n = new Date(); setCurrentPeriod(getCurrentPeriod(n)); setNowMinutes(n.getHours() * 60 + n.getMinutes()) }
@@ -76,6 +81,15 @@ export function DayView() {
           <div className="w-8 h-8 rounded-full" style={{ backgroundColor: 'var(--border-light)', opacity: 0.3 }} />
         </div>
         {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto pt-12 text-center space-y-4">
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>加载失败，请检查网络连接</p>
+        <button onClick={loadData} className="btn-primary text-sm">重试</button>
       </div>
     )
   }

@@ -39,11 +39,18 @@ export function WeekView() {
   const [currentDay, setCurrentDay] = useState<number>(0)
   const [selectedSlot, setSelectedSlot] = useState<{ courseId: string; scheduleId: string } | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
+  const loadData = () => {
+    setLoadError(false)
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
       .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
+      .catch((e) => { console.error('WeekView load failed:', e); setLoadError(true); setLoaded(true) })
+  }
+
+  useEffect(() => {
+    loadData()
 
     const wn = getWeekNumber()
     setWeekNum(wn)
@@ -112,6 +119,11 @@ export function WeekView() {
         <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
           {!loaded ? (
             <SkeletonGrid />
+          ) : loadError ? (
+            <div className="py-16 text-center space-y-4">
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>加载失败，请检查网络连接</p>
+              <button onClick={loadData} className="btn-primary text-sm">重试</button>
+            </div>
           ) : (
             <>
           <div className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)' }}>
