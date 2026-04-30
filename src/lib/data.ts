@@ -108,6 +108,18 @@ export async function createSchedule(input: Omit<CourseSchedule, 'id'>): Promise
   return data
 }
 
+export async function updateSchedule(id: string, updates: Partial<CourseSchedule>): Promise<CourseSchedule | null> {
+  const { data } = await supabase.from('course_schedules').update(updates).eq('id', id).select().single()
+  if (data) invalidateCache('schedules')
+  return data
+}
+
+export async function deleteSchedule(id: string): Promise<boolean> {
+  const { error } = await supabase.from('course_schedules').delete().eq('id', id)
+  if (!error) invalidateCache('schedules')
+  return !error
+}
+
 // ---------- Assignments ----------
 
 export async function getAssignments(courseId?: string): Promise<Assignment[]> {

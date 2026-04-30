@@ -95,6 +95,11 @@ export function WeekView() {
 
   function isCurrentCourse(schedule: CourseSchedule) {
     if (currentDay === 0 || currentPeriod === null) return false
+    
+    // Check week_type
+    if (schedule.week_type === 'odd' && weekNum % 2 === 0) return false
+    if (schedule.week_type === 'even' && weekNum % 2 !== 0) return false
+    
     return schedule.day_of_week === currentDay && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
   }
 

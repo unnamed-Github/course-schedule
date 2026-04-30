@@ -86,7 +86,7 @@ export function WarmthBanner() {
     Promise.all([getCourses(), getSchedules()]).then(([c, s]) => {
       setCourses(c)
       setSchedules(s)
-      
+
       const todayCourses = getTodayCourses(s)
       const count = todayCourses.length
 
@@ -118,26 +118,25 @@ export function WarmthBanner() {
           exit={{ opacity: 0, y: -8, height: 0 }}
           className="mb-4 space-y-3"
         >
-          {/* 第一层：问候横幅 */}
+          {/* 第一层：问候横幅 - 薄荷绿背景，清爽 */}
           {message && (
             <div className="relative flex items-center px-4 py-3 rounded-2xl overflow-hidden"
               style={{
-                backgroundColor: 'var(--bg-card)',
-                borderLeft: '4px solid var(--accent-warm)',
+                backgroundColor: '#F0FDF4',
               }}
             >
               <div className="flex-1 min-w-0 flex flex-col justify-center">
-                <p className="text-base font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-base font-medium truncate" style={{ color: '#166534' }}>
                   {message}
                 </p>
-                <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+                <p className="text-xs italic truncate" style={{ color: '#166534', opacity: 0.7 }}>
                   {encouragement}
                 </p>
               </div>
               <button
                 onClick={handleClose}
                 className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
-                style={{ color: 'var(--text-secondary)' }}
+                style={{ color: '#166534' }}
                 aria-label="关闭问候"
               >
                 ✕
@@ -170,9 +169,9 @@ export function WarmthBanner() {
               <div className="h-2 rounded-full overflow-hidden"
                 style={{ backgroundColor: `${currentCourseInfo.course.color}26` }}
               >
-                <div 
+                <div
                   className="h-full rounded-full transition-all duration-1000"
-                  style={{ 
+                  style={{
                     width: `${currentCourseInfo.progress}%`,
                     backgroundColor: currentCourseInfo.course.color,
                   }}

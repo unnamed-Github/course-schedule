@@ -11,6 +11,7 @@ const TABS: { id: ViewType; label: string }[] = [
   { id: 'courses', label: '课程' },
   { id: 'assignments', label: '作业' },
   { id: 'memos', label: '备忘' },
+  { id: 'settings', label: '设置' },
 ]
 
 export function TopBar() {
@@ -58,7 +59,7 @@ export function TopBar() {
           aria-label="切换主题"
           style={{ color: 'var(--text-secondary)' }}
         >
-          {theme === "light" ? "🌞" : "🌙"}
+          {theme === "light" ? "🌙" : "🌞"}
         </button>
       </div>
 
