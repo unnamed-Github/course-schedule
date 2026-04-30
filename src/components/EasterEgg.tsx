@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { isHoliday } from '@/lib/semester'
 
 const GENTLE_WORDS = [
   '你已经做得很好了。',
@@ -20,6 +21,7 @@ export function EasterEgg() {
 
   useEffect(() => {
     const check = () => {
+      if (isHoliday(new Date())) return
       let lastShown: string | null = null
       try { lastShown = localStorage.getItem('easter_egg_last') } catch {}
       const now = Date.now()

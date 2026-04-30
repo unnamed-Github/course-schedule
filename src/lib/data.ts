@@ -30,7 +30,7 @@ function markSupabaseUnavailable() {
   supabaseCheckDone = true
 }
 
-let localStorage: {
+const localStorage: {
   assignments: Assignment[]
   memos: Memo[]
   scheduleOverrides: ScheduleOverride[]
