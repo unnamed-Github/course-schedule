@@ -11,7 +11,7 @@ import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { ChevronLeft, ChevronRight, User, Clock } from 'lucide-react'
 
-const DAYS = ['一', '二', '三', '四', '五']
+const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
 const PERIOD_GROUP_DEFS = [
   { label: '1-2节', start: 1, end: 2 },
   { label: '3-4节', start: 3, end: 4 },
@@ -115,7 +115,16 @@ export function WeekView() {
     return { holidays, makeups }
   }, [weekRange])
 
-  const showDays = [1, 2, 3, 4, 5]
+  const showDays = useMemo(() => {
+    const days = [1, 2, 3, 4, 5]
+    for (const day of [6, 7]) {
+      if (weekHolidays.makeups.get(day)) {
+        days.push(day)
+      }
+    }
+    days.sort((a, b) => a - b)
+    return days
+  }, [weekHolidays])
 
   function isCurrentCourse(schedule: CourseSchedule) {
     if (currentDay === 0 || currentPeriod === null) return false
@@ -181,13 +190,19 @@ export function WeekView() {
           {/* 星期标题 */}
           <div className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', backgroundColor: 'var(--bg-card)' }}>
             <div className="p-3" />
-            {showDays.map((day) => (
-              <div key={day} className="p-3 text-center">
-                <span className="text-sm font-semibold" style={{ color: day === currentDay ? 'var(--accent-info)' : 'var(--text-secondary)' }}>
-                  周{DAYS[day - 1]}
-                </span>
-              </div>
-            ))}
+            {showDays.map((day) => {
+                const makeup = weekHolidays.makeups.get(day)
+                return (
+                  <div key={day} className="p-3 text-center">
+                    <span className="text-sm font-semibold" style={{ color: day === currentDay ? 'var(--accent-info)' : 'var(--text-secondary)' }}>
+                      周{DAY_LABELS[day]}
+                      {day >= 6 && makeup && (
+                        <span className="ml-1 text-[10px]" style={{ color: 'var(--accent-warm)' }}>(补周{DAY_LABELS[makeup.replacesDayOfWeek]})</span>
+                      )}
+                    </span>
+                  </div>
+                )
+              })}
           </div>
 
           {/* 时间段行 */}
@@ -201,8 +216,9 @@ export function WeekView() {
               {showDays.map((day) => {
                 const holiday = weekHolidays.holidays.get(day)
                 const makeup = weekHolidays.makeups.get(day)
+                const targetDay = (day >= 6 && makeup) ? makeup.replacesDayOfWeek : day
                 const daySchedules = schedules.filter((s) => {
-                  if (s.day_of_week !== day) return false
+                  if (s.day_of_week !== targetDay) return false
                   if (s.week_type === 'odd' && weekNum % 2 === 0) return false
                   if (s.week_type === 'even' && weekNum % 2 !== 0) return false
                   if (s.start_period > group.end || s.end_period < group.start) return false
