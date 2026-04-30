@@ -3,9 +3,9 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { WarmthBannerProvider } from "@/components/WarmthBannerContext"
 import { TopBar } from "@/components/TopBar"
-import { BottomNav } from "@/components/BottomNav"
 import { PageTransition } from "@/components/PageTransition"
 import { ToastProvider } from "@/components/ToastProvider"
+import { ViewProvider } from "@/components/ViewContext"
 
 export const metadata: Metadata = {
   title: "课表 · 竹",
@@ -23,13 +23,14 @@ export default function RootLayout({
         <ThemeProvider>
           <ToastProvider>
             <WarmthBannerProvider>
-              <TopBar />
-              <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-24">
-                <PageTransition>
-                  {children}
-                </PageTransition>
-              </main>
-              <BottomNav />
+              <ViewProvider>
+                <TopBar />
+                <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-8">
+                  <PageTransition>
+                    {children}
+                  </PageTransition>
+                </main>
+              </ViewProvider>
             </WarmthBannerProvider>
           </ToastProvider>
         </ThemeProvider>
