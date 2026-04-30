@@ -8,6 +8,7 @@ import { getCurrentPeriod, PERIOD_TIMES, getPeriodTime } from '@/lib/semester'
 import { Course, CourseSchedule } from '@/lib/types'
 import { useWarmthBanner } from './WarmthBannerContext'
 import { Clock, X } from 'lucide-react'
+import { useFestivalGreeting } from './FestivalEasterEgg'
 
 const MORNING_GREETINGS = ['早上好', '上午好']
 const AFTERNOON_GREETINGS = ['下午好', '午后好']
@@ -60,6 +61,7 @@ function getCurrentCourseProgress(
 
 export function WarmthBanner() {
   const { isEnabled, isHiddenToday, hideToday } = useWarmthBanner()
+  const { greeting: festivalGreeting, subGreeting: festivalSubGreeting } = useFestivalGreeting()
   const [message, setMessage] = useState('')
   const [encouragement, setEncouragement] = useState('')
   const [courses, setCourses] = useState<Course[]>([])
@@ -101,10 +103,14 @@ export function WarmthBanner() {
       else pool = LIGHT_WORDS
 
       const word = pool[Math.floor(Math.random() * pool.length)]
-      setMessage(`${timeGreet}，${count}节课。${word}`)
+      if (festivalGreeting) {
+        setMessage(`${festivalGreeting} ${festivalSubGreeting}`)
+      } else {
+        setMessage(`${timeGreet}，${count}节课。${word}`)
+      }
       setEncouragement(ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)])
     })
-  }, [isEnabled, isHiddenToday])
+  }, [isEnabled, isHiddenToday, festivalGreeting, festivalSubGreeting])
 
   const handleClose = () => {
     hideToday()

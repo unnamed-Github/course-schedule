@@ -6,6 +6,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { useView, ViewType } from './ViewContext'
 import { SemesterCountdown } from './SemesterCountdown'
+import { FestivalEasterEgg } from './FestivalEasterEgg'
 
 const TABS: { id: ViewType; label: string }[] = [
   { id: 'week', label: '周视图' },
@@ -47,6 +48,7 @@ export function TopBar() {
         >
           <GraduationCap size={22} strokeWidth={1.8} />
           课表
+          <FestivalEasterEgg />
         </button>
 
         {weekNum !== null && (
