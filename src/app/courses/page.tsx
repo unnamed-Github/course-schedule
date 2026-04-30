@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
-import { getWeekNumber, getSemesterConfig, getWeekDateRange, getCurrentPeriod, PERIOD_TIMES } from '@/lib/semester'
+import { getWeekNumber, getSemesterConfig, getDayDate, getCurrentPeriod, PERIOD_TIMES } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
 import { useToast } from '@/components/ToastProvider'
@@ -54,14 +54,6 @@ export default function CoursesPage() {
     }, 60000)
     return () => clearInterval(timer)
   }, [])
-
-  const scheduleCountMap = new Map<string, number>()
-  const currentWeekOdd = weekNum % 2 === 1
-  schedules.forEach((s) => {
-    if (s.week_type === 'all' || (s.week_type === 'odd' && currentWeekOdd) || (s.week_type === 'even' && !currentWeekOdd)) {
-      scheduleCountMap.set(s.course_id, (scheduleCountMap.get(s.course_id) ?? 0) + 1)
-    }
-  })
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -232,35 +224,38 @@ export default function CoursesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {courses.map((course, index) => {
-          const perWeek = scheduleCountMap.get(course.id) ?? 0
-          const totalClasses = perWeek * totalWeeks
-          const completedClasses = Math.min(perWeek * (weekNum - 1), totalClasses)
-          const courseSchedules = schedules
+          const allCourseSchedules = schedules
             .filter((s) => s.course_id === course.id)
-            .filter((s) => {
-              if (s.week_type === 'all') return true
-              if (s.week_type === 'odd' && currentWeekOdd) return true
-              if (s.week_type === 'even' && !currentWeekOdd) return true
-              return false
-            })
             .sort((a, b) => a.day_of_week - b.day_of_week || a.start_period - b.start_period)
-          let nextScheduleIndex = -1
+          const dots: { week: number; schedule: typeof allCourseSchedules[number] }[] = []
+          for (let w = 1; w <= totalWeeks; w++) {
+            const wOdd = w % 2 === 1
+            for (const s of allCourseSchedules) {
+              if (s.week_type === 'all' || (s.week_type === 'odd' && wOdd) || (s.week_type === 'even' && !wOdd)) {
+                dots.push({ week: w, schedule: s })
+              }
+            }
+          }
+          const totalClasses = dots.length
+          const completedClasses = Math.min(dots.filter((d) => d.week < weekNum).length, totalClasses)
+          let nextDotIndex = -1
           if (weekNum > 0 && currentDayOfWeek > 0) {
-            for (let si = 0; si < courseSchedules.length; si++) {
-              const s = courseSchedules[si]
+            for (let di = 0; di < dots.length; di++) {
+              const d = dots[di]
+              if (d.week !== weekNum) continue
+              const s = d.schedule
               if (s.day_of_week > currentDayOfWeek) {
-                nextScheduleIndex = si
+                nextDotIndex = di
                 break
               }
               if (s.day_of_week === currentDayOfWeek) {
                 if (currentPeriod === null || currentPeriod <= s.end_period) {
-                  nextScheduleIndex = si
+                  nextDotIndex = di
                   break
                 }
               }
             }
           }
-          const nextDotIndex = nextScheduleIndex >= 0 ? completedClasses + nextScheduleIndex : -1
           const courseMemos = memos.filter((m) => m.course_id === course.id)
           const courseAssignments = assignments.filter((a) => a.course_id === course.id)
           const tagCounts: Record<string, number> = {}
@@ -287,21 +282,19 @@ export default function CoursesPage() {
                   </div>
 
                   <div className="flex gap-[2px] mt-3 flex-wrap">
-                    {Array.from({ length: totalClasses }, (_, i) => {
-                      const isCompleted = i < completedClasses
+                    {dots.map((dot, i) => {
+                      const isCompleted = dot.week < weekNum
                       const isCurrent = i === nextDotIndex
-                      const weekForDot = Math.floor(i / perWeek) + 1
-                      const scheduleIndex = i % perWeek
-                      const dotSchedule = courseSchedules[scheduleIndex]
-                      const range = getWeekDateRange(weekForDot)
-                      const dayLabel = dotSchedule ? DAY_MAP[dotSchedule.day_of_week] : ''
-                      const periodLabel = dotSchedule ? `${dotSchedule.start_period}-${dotSchedule.end_period}节` : ''
-                      const timeLabel = dotSchedule ? `${PERIOD_TIMES[dotSchedule.start_period].start}-${PERIOD_TIMES[dotSchedule.end_period].end}` : ''
-                      const scheduleInfo = dotSchedule ? `${dayLabel} ${periodLabel} ${timeLabel}` : ''
-                      const label = range ? `第${weekForDot}周 · ${range.start.getMonth() + 1}月${range.start.getDate()}日\n${scheduleInfo}` : `第${weekForDot}周\n${scheduleInfo}`
+                      const dotSchedule = dot.schedule
+                      const dotDate = getDayDate(dot.week, dotSchedule.day_of_week)
+                      const dayLabel = DAY_MAP[dotSchedule.day_of_week] ?? ''
+                      const periodLabel = `${dotSchedule.start_period}-${dotSchedule.end_period}节`
+                      const timeLabel = `${PERIOD_TIMES[dotSchedule.start_period].start}-${PERIOD_TIMES[dotSchedule.end_period].end}`
+                      const scheduleInfo = `${dayLabel} ${periodLabel} ${timeLabel}`
+                      const label = `第${dot.week}周 · ${dotDate.getMonth() + 1}月${dotDate.getDate()}日\n${scheduleInfo}`
                       const dotAssignments = assignments.filter((a) => {
                         const dueWeek = getWeekNumber(new Date(a.due_date))
-                        return a.course_id === course.id && dueWeek === weekForDot
+                        return a.course_id === course.id && dueWeek === dot.week
                       })
                       const tooltip = dotAssignments.length > 0 ? `${label}\n📝 ${dotAssignments.map((a) => a.title).join(', ')}` : label
                       return (
@@ -309,7 +302,7 @@ export default function CoursesPage() {
                           style={{
                             backgroundColor: isCompleted ? course.color : 'transparent',
                             border: isCurrent && !isCompleted ? '1.5px solid var(--accent-warm)' : isCompleted ? 'none' : '1px dashed var(--border-light)',
-                            opacity: i >= totalWeeks * perWeek ? 0.3 : 1,
+                            opacity: dot.week > totalWeeks ? 0.3 : 1,
                           }}>
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 rounded-lg text-[10px] whitespace-pre-line text-center hidden group-hover/dot:block pointer-events-none z-30"
                             style={{ backgroundColor: '#1E293B', color: '#E2E8F0', minWidth: '80px' }}>
