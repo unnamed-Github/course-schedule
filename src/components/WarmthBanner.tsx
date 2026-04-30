@@ -184,6 +184,7 @@ export function WarmthBanner() {
   }
 
   const { shouldCelebrate, courseName } = useClassFinish(currentCourseInfo)
+  const dailyQuote = useMemo(() => getDailyQuote(), [])
 
   return (
     <>
@@ -209,14 +210,11 @@ export function WarmthBanner() {
                 <p className="text-base font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {message}
                 </p>
-                {(() => {
-                  const q = getDailyQuote()
-                  return (
-                    <p className="text-xs italic mt-1 truncate" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>
-                      「{q.text}」— {q.author}
-                    </p>
-                  )
-                })()}
+                {dailyQuote && (
+                  <p className="text-xs italic mt-1 truncate" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>
+                    「{dailyQuote.text}」— {dailyQuote.author}
+                  </p>
+                )}
               </div>
               <button
                 onClick={handleClose}

@@ -26,6 +26,7 @@ export interface Assignment {
   due_date: string
   status: 'pending' | 'submitted'
   created_at: string
+  updated_at?: string
 }
 
 export const MOOD_TAGS = [

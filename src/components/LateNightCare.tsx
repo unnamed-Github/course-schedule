@@ -60,19 +60,23 @@ export function LateNightCare() {
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {[...Array(8)].map((_, i) => (
-              <span
+              <svg
                 key={i}
-                className="absolute text-xs"
+                className="absolute"
                 style={{
                   left: `${10 + i * 12}%`,
                   top: `${15 + (i % 3) * 25}%`,
                   animation: `twinkle ${1.5 + (i % 3) * 0.5}s ease-in-out infinite`,
                   animationDelay: `${i * 0.3}s`,
                   opacity: 0.6,
+                  width: 10,
+                  height: 10,
                 }}
+                viewBox="0 0 24 24"
+                fill="currentColor"
               >
-                ✦
-              </span>
+                <path d="M12 2l2.09 6.26L20.18 9l-5.09 3.74L17.18 19 12 15.27 6.82 19l2.09-6.26L3.82 9l6.09-.74L12 2z" style={{ color: '#818cf8' }} />
+              </svg>
             ))}
           </div>
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule } from '@/lib/types'
 import { getWeekNumber, getSemesterConfig, isHoliday, getMakeupInfo } from '@/lib/semester'
+import { Trophy } from 'lucide-react'
 
 const CONFETTI_COLORS = ['#06B6D4', '#F59E0B', '#EF4444', '#10B981', '#8B5CF6', '#EC4899', '#F97316']
 
@@ -172,7 +173,9 @@ export function CourseCompletionCelebration({ courses, schedules }: { courses: C
               className="px-8 py-6 rounded-3xl text-center"
               style={{ backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-light)' }}
             >
-              <p className="text-4xl mb-2">🎉</p>
+              <p className="text-3xl mb-2" style={{ color: '#F59E0B' }}>
+                <Trophy size={36} strokeWidth={1.5} className="inline" />
+              </p>
               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 恭喜完成 {courseName}！
               </p>

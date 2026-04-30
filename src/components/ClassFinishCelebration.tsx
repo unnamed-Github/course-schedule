@@ -170,7 +170,7 @@ export function ClassFinishCelebration({ shouldCelebrate, courseName }: { should
                 border: '1px solid rgba(255, 215, 0, 0.4)',
               }}
             >
-              <p className="text-sm font-semibold" style={{ color: '#DAA520' }}>
+              <p className="text-sm font-semibold dark:text-yellow-300" style={{ color: '#B8860B' }}>
                 ✨ {courseName} 下课啦！
               </p>
             </div>

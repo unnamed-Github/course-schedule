@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { getTodayFestival } from '@/lib/festivals'
+import { PartyPopper } from 'lucide-react'
 
 export function FestivalEasterEgg() {
   const festival = useMemo(() => getTodayFestival(), [])
@@ -14,11 +15,14 @@ export function FestivalEasterEgg() {
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.3 }}
-      whileHover={{ scale: 1.3 }}
-      className="inline-block text-lg cursor-default"
+      whileHover={{ scale: 1.2 }}
+      className="inline-flex items-center gap-1 cursor-default"
       title={festival.greeting}
     >
-      {festival.emoji}
+      <PartyPopper size={18} strokeWidth={1.8} style={{ color: 'var(--accent-warm)' }} />
+      <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>
+        {festival.greeting}
+      </span>
     </motion.span>
   )
 }
