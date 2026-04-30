@@ -287,7 +287,7 @@ export default function CoursesPage() {
 
                   <div className="flex gap-[2px] mt-3 flex-wrap">
                     {dots.map((dot, i) => {
-                      const isCompleted = dot.week < weekNum
+                      const isCompleted = dot.week < weekNum || (dot.week === weekNum && (dot.schedule.day_of_week < currentDayOfWeek || (dot.schedule.day_of_week === currentDayOfWeek && currentPeriod !== null && currentPeriod > dot.schedule.end_period)))
                       const isCurrent = i === nextDotIndex
                       const dotSchedule = dot.schedule
                       const dotDate = getDayDate(dot.week, dotSchedule.day_of_week)
