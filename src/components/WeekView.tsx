@@ -8,6 +8,7 @@ import { getCourses, getSchedules, getAssignments, getMemos } from '@/lib/data'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, getMakeupInfo, isHoliday } from '@/lib/schedule'
 import { PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
+import { useToast } from './ToastProvider'
 
 const DAYS = ['一', '二', '三', '四', '五', '六', '日']
 const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
@@ -28,7 +29,145 @@ const PERIOD_GROUPS = PERIOD_GROUP_DEFS.map((g) => ({
 
 function formatDateTime(iso: string) { return iso.slice(0, 16).replace('T', ' ') }
 
+function AssignmentsList({ assignments, courseId }: { assignments: Assignment[], courseId: string }) {
+  return (
+    <div className="mb-4">
+      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业</p>
+      {assignments.length === 0 ? (
+        <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无作业</p>
+      ) : (
+        assignments.map((a) => {
+          const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+          const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
+          return (
+            <div key={a.id} className="flex items-center gap-2 text-xs py-1.5 border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
+              <span>{a.status === 'submitted' ? '✅' : '☐'}</span>
+              <span className="flex-1 truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{a.title}</span>
+              <span style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{formatDateTime(a.due_date).slice(5)}</span>
+            </div>
+          )
+        })
+      )}
+      <Link href={`/courses/${courseId}`} className="text-sm mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 添加作业</Link>
+    </div>
+  )
+}
+
+function MoodTagsSection({
+  memos,
+  selectedTags,
+  onToggleTag
+}: {
+  memos: Memo[],
+  selectedTags: Set<MoodTag>,
+  onToggleTag: (tag: MoodTag) => void
+}) {
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    memos.forEach((m) => { m.mood_tags?.forEach((t) => { counts[t] = (counts[t] ?? 0) + 1 }) })
+    return counts
+  }, [memos])
+
+  const tags: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待']
+
+  return (
+    <div className="mb-4">
+      <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>心情标签</p>
+      <div className="flex gap-2 flex-wrap">
+        {tags.map((tag) => {
+          const count = tagCounts[tag] ?? 0
+          const isSelected = selectedTags.has(tag)
+          return (
+            <motion.button
+              key={tag}
+              onClick={() => onToggleTag(tag)}
+              className="text-xs px-3 py-1 rounded-full cursor-pointer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ duration: 0.2 }}
+              style={{
+                backgroundColor: isSelected ? `${getMoodColor(tag)}33` : count > 0 ? `${getMoodColor(tag)}1A` : 'var(--bg-primary)',
+                color: isSelected || count > 0 ? getMoodColor(tag) : 'var(--text-secondary)',
+                border: `1px solid ${isSelected || count > 0 ? getMoodColor(tag) : 'var(--border-light)'}`,
+              }}
+            >
+              {tag}{count > 0 ? ` ${count}` : ''}
+            </motion.button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function MemosList({ memos, courseId }: { memos: Memo[], courseId: string }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📌 备忘</p>
+      {memos.length === 0 ? (
+        <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无备忘</p>
+      ) : (
+        memos.slice(0, 5).map((m) => (
+          <div key={m.id} className="flex items-start gap-2 rounded-lg px-2 py-1 mb-1" style={{ backgroundColor: 'var(--bg-primary)' }}>
+            <span className="text-sm">{m.mood_emoji}</span>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{m.content}</span>
+          </div>
+        ))
+      )}
+      <Link href={`/courses/${courseId}`} className="text-[10px] mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 写备忘</Link>
+    </div>
+  )
+}
+
+function SlidePanelContent({
+  course,
+  schedule,
+  assignments,
+  memos,
+  onClose,
+}: {
+  course: Course,
+  schedule: CourseSchedule,
+  assignments: Assignment[],
+  memos: Memo[],
+  onClose: () => void,
+}) {
+  const [selectedTags, setSelectedTags] = useState<Set<MoodTag>>(new Set())
+
+  const toggleTag = (tag: MoodTag) => {
+    const newTags = new Set(selectedTags)
+    if (newTags.has(tag)) {
+      newTags.delete(tag)
+    } else {
+      newTags.add(tag)
+    }
+    setSelectedTags(newTags)
+  }
+
+  return (
+    <div>
+      <div className="flex items-start justify-between mb-3">
+        <div style={{ borderLeft: `4px solid ${course.color}`, paddingLeft: '0.75rem' }}>
+          <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h3>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{course.teacher !== '—' ? course.teacher : ''} · {schedule.location !== '—' ? schedule.location : ''}</p>
+        </div>
+        <button onClick={onClose} className="text-lg opacity-40 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>✕</button>
+      </div>
+
+      <AssignmentsList assignments={assignments} courseId={course.id} />
+      <MoodTagsSection
+        memos={memos}
+        selectedTags={selectedTags}
+        onToggleTag={toggleTag}
+      />
+      <MemosList memos={memos} courseId={course.id} />
+    </div>
+  )
+}
+
 export function WeekView() {
+  const { showToast } = useToast()
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -46,7 +185,12 @@ export function WeekView() {
     setLoadError(false)
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
       .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
-      .catch((e) => { console.error('WeekView load failed:', e); setLoadError(true); setLoaded(true) })
+      .catch((e) => {
+        console.error('WeekView load failed:', e)
+        setLoadError(true)
+        setLoaded(true)
+        showToast('加载失败，请检查网络', 'error')
+      })
   }
 
   useEffect(() => {
@@ -271,105 +415,6 @@ export function WeekView() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-function SlidePanelContent({
-  course, schedule, assignments, memos, onClose,
-}: {
-  course: Course
-  schedule: CourseSchedule
-  assignments: Assignment[]
-  memos: Memo[]
-  onClose: () => void
-}) {
-  const [selectedTags, setSelectedTags] = useState<Set<MoodTag>>(new Set())
-  const tagCounts: Record<string, number> = {}
-  memos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
-
-  const toggleTag = (tag: MoodTag) => {
-    const newTags = new Set(selectedTags)
-    if (newTags.has(tag)) {
-      newTags.delete(tag)
-    } else {
-      newTags.add(tag)
-    }
-    setSelectedTags(newTags)
-  }
-
-  return (
-    <div>
-      <div className="flex items-start justify-between mb-3">
-        <div style={{ borderLeft: `4px solid ${course.color}`, paddingLeft: '0.75rem' }}>
-          <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h3>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{course.teacher !== '—' ? course.teacher : ''} · {schedule.location !== '—' ? schedule.location : ''}</p>
-        </div>
-        <button onClick={onClose} className="text-lg opacity-40 hover:opacity-70" style={{ color: 'var(--text-secondary)' }}>✕</button>
-      </div>
-
-      <div className="mb-4">
-        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业</p>
-        {assignments.length === 0 ? (
-          <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无作业</p>
-        ) : (
-          assignments.map((a) => {
-            const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
-            const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
-            return (
-              <div key={a.id} className="flex items-center gap-2 text-xs py-1.5 border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
-                <span>{a.status === 'submitted' ? '✅' : '☐'}</span>
-                <span className="flex-1 truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{a.title}</span>
-                <span style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{formatDateTime(a.due_date).slice(5)}</span>
-              </div>
-            )
-          })
-        )}
-        <Link href={`/courses/${course.id}`} className="text-sm mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 添加作业</Link>
-      </div>
-
-      <div className="mb-4">
-        <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>心情标签</p>
-        <div className="flex gap-2 flex-wrap">
-          {(['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待'] as MoodTag[]).map((tag) => {
-            const count = tagCounts[tag] ?? 0
-            const isSelected = selectedTags.has(tag)
-            return (
-              <motion.button
-                key={tag}
-                onClick={() => toggleTag(tag)}
-                className="text-xs px-3 py-1 rounded-full cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
-                transition={{ duration: 0.2 }}
-                style={{
-                  backgroundColor: isSelected ? `${getMoodColor(tag)}33` : count > 0 ? `${getMoodColor(tag)}1A` : 'var(--bg-primary)',
-                  color: isSelected || count > 0 ? getMoodColor(tag) : 'var(--text-secondary)',
-                  border: `1px solid ${isSelected || count > 0 ? getMoodColor(tag) : 'var(--border-light)'}`,
-                }}
-              >
-                {tag}{count > 0 ? ` ${count}` : ''}
-              </motion.button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📌 备忘</p>
-        {memos.length === 0 ? (
-          <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无备忘</p>
-        ) : (
-          memos.slice(0, 5).map((m) => (
-            <div key={m.id} className="flex items-start gap-2 rounded-lg px-2 py-1 mb-1" style={{ backgroundColor: 'var(--bg-primary)' }}>
-              <span className="text-sm">{m.mood_emoji}</span>
-              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{m.content}</span>
-            </div>
-          ))
-        )}
-        <Link href={`/courses/${course.id}`} className="text-[10px] mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 写备忘</Link>
-      </div>
     </div>
   )
 }

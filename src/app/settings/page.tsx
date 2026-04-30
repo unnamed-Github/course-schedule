@@ -113,7 +113,7 @@ export default function SettingsPage() {
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>学期信息</h3>
         <div className="space-y-2" style={{ color: 'var(--text-secondary)' }}>
           <div className="flex justify-between text-sm"><span>开学日期</span>
-            <input type="date" className="rounded-lg px-2 py-1 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} defaultValue="2026-02-25" />
+            <input type="date" className="rounded-lg px-2 py-1 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} defaultValue={getSemesterConfig().semesterStart} />
           </div>
           <div className="flex justify-between text-sm"><span>总周数（含考试）</span>
             <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{totalWeeks} 周</span>

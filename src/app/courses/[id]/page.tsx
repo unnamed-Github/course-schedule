@@ -1,12 +1,13 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
 import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment, updateAssignment, deleteAssignment, getMemos, createMemo, deleteMemo } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
+import { useToast } from '@/components/ToastProvider'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
@@ -26,6 +27,7 @@ export default function CourseDetailPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.id as string
+  const { showToast } = useToast()
 
   const [course, setCourse] = useState<Course | null>(null)
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
@@ -54,23 +56,71 @@ export default function CourseDetailPage() {
     setWeekNum(getWeekNumber())
   }, [courseId])
 
-  const handleSaveEdit = async () => { const u = await updateCourse(courseId, editForm); if (u) { setCourse(u); setEditing(false) } }
+  const handleSaveEdit = async () => {
+    try {
+      const u = await updateCourse(courseId, editForm)
+      if (u) {
+        setCourse(u)
+        setEditing(false)
+        showToast('课程已更新', 'success')
+      }
+    } catch (e) {
+      showToast('更新失败', 'error')
+    }
+  }
   const handleAddAssignment = async () => {
-    if (!assignmentForm.title || !assignmentForm.due_date) return
-    const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending' })
-    setAssignments((prev) => [...prev, a]); setAssignmentForm({ title: '', description: '', due_date: '' }); setShowAssignmentForm(false)
+    try {
+      if (!assignmentForm.title || !assignmentForm.due_date) return
+      const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending' })
+      setAssignments((prev) => [...prev, a])
+      setAssignmentForm({ title: '', description: '', due_date: '' })
+      setShowAssignmentForm(false)
+      showToast('作业已添加', 'success')
+    } catch (e) {
+      showToast('添加作业失败', 'error')
+    }
   }
   const handleToggleAssignment = async (id: string, s: string) => {
-    const u = await updateAssignment(id, { status: s === 'submitted' ? 'pending' : 'submitted' })
-    if (u) setAssignments((prev) => prev.map((a) => (a.id === id ? u : a)))
+    try {
+      const u = await updateAssignment(id, { status: s === 'submitted' ? 'pending' : 'submitted' })
+      if (u) {
+        setAssignments((prev) => prev.map((a) => (a.id === id ? u : a)))
+        showToast(u.status === 'submitted' ? '作业已完成' : '作业重新标记为待完成', 'success')
+      }
+    } catch (e) {
+      showToast('更新失败', 'error')
+    }
   }
-  const handleDeleteAssignment = async (id: string) => { await deleteAssignment(id); setAssignments((prev) => prev.filter((a) => a.id !== id)) }
+  const handleDeleteAssignment = async (id: string) => {
+    try {
+      await deleteAssignment(id)
+      setAssignments((prev) => prev.filter((a) => a.id !== id))
+      showToast('作业已删除', 'success')
+    } catch (e) {
+      showToast('删除失败', 'error')
+    }
+  }
   const handleAddMemo = async () => {
-    if (!memoForm.content) return
-    const m = await createMemo({ course_id: courseId, content: memoForm.content, mood_emoji: memoForm.mood_emoji, mood_tags: memoForm.mood_tags })
-    setMemos((prev) => [m, ...prev]); setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] }); setShowMemoForm(false)
+    try {
+      if (!memoForm.content) return
+      const m = await createMemo({ course_id: courseId, content: memoForm.content, mood_emoji: memoForm.mood_emoji, mood_tags: memoForm.mood_tags })
+      setMemos((prev) => [m, ...prev])
+      setMemoForm({ content: '', mood_emoji: '😊', mood_tags: [] })
+      setShowMemoForm(false)
+      showToast('备忘已添加', 'success')
+    } catch (e) {
+      showToast('添加备忘失败', 'error')
+    }
   }
-  const handleDeleteMemo = async (id: string) => { await deleteMemo(id); setMemos((prev) => prev.filter((m) => m.id !== id)) }
+  const handleDeleteMemo = async (id: string) => {
+    try {
+      await deleteMemo(id)
+      setMemos((prev) => prev.filter((m) => m.id !== id))
+      showToast('备忘已删除', 'success')
+    } catch (e) {
+      showToast('删除失败', 'error')
+    }
+  }
 
   if (!course) return <div className="max-w-2xl mx-auto text-center py-20"><p style={{ color: 'var(--text-secondary)' }}>课程未找到</p></div>
 
@@ -84,8 +134,11 @@ export default function CourseDetailPage() {
   const progressOffset = circumference - (progressRate / 100) * circumference
 
   const DAY_MAP: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五' }
-  const tagCounts: Record<string, number> = {}
-  memos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    memos.forEach((m) => { m.mood_tags?.forEach((t) => { counts[t] = (counts[t] ?? 0) + 1 }) })
+    return counts
+  }, [memos])
 
   const sortedAssignments = [...assignments].sort((a, b) => a.due_date.localeCompare(b.due_date))
 

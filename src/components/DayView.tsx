@@ -8,6 +8,7 @@ import { getCourses, getSchedules, getAssignments, getMemos, createMemo, deleteM
 import { getTodayCourses, getCurrentPeriod, getWeekNumber } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
+import { useToast } from './ToastProvider'
 
 const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
 
@@ -18,6 +19,7 @@ function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear(
 const START_MIN = 480; const END_MIN = 1350; const TOTAL_MIN = END_MIN - START_MIN
 
 export function DayView() {
+  const { showToast } = useToast()
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -36,7 +38,12 @@ export function DayView() {
     setLoadError(false)
     Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
       .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
-      .catch((e) => { console.error('DayView load failed:', e); setLoadError(true); setLoaded(true) })
+      .catch((e) => {
+        console.error('DayView load failed:', e)
+        setLoadError(true)
+        setLoaded(true)
+        showToast('加载失败，请检查网络', 'error')
+      })
   }
 
   useEffect(() => { loadData() }, [])
@@ -59,19 +66,24 @@ export function DayView() {
   const viewMemos = memos.filter((m) => m.created_at.slice(0, 10) === viewDateStr)
 
   const handleQuickMemo = async () => {
-    if (!quickMemo.trim()) return
-    // Find matching course for current time
-    let targetCourseId: string | null = null
-    if (currentPeriod !== null) {
-      const match = sortedSchedules.find((s) => currentPeriod >= s.start_period && currentPeriod <= s.end_period)
-      if (match) targetCourseId = match.course_id
-    }
-    if (!targetCourseId && sortedSchedules.length > 0) targetCourseId = sortedSchedules[0].course_id
-    if (!targetCourseId) return
+    try {
+      if (!quickMemo.trim()) return
+      // Find matching course for current time
+      let targetCourseId: string | null = null
+      if (currentPeriod !== null) {
+        const match = sortedSchedules.find((s) => currentPeriod >= s.start_period && currentPeriod <= s.end_period)
+        if (match) targetCourseId = match.course_id
+      }
+      if (!targetCourseId && sortedSchedules.length > 0) targetCourseId = sortedSchedules[0].course_id
+      if (!targetCourseId) return
 
-    const m = await createMemo({ course_id: targetCourseId, content: quickMemo, mood_emoji: quickEmoji, mood_tags: [] })
-    setMemos((prev) => [m, ...prev])
-    setQuickMemo('')
+      const m = await createMemo({ course_id: targetCourseId, content: quickMemo, mood_emoji: quickEmoji, mood_tags: [] })
+      setMemos((prev) => [m, ...prev])
+      setQuickMemo('')
+      showToast('备忘已添加', 'success')
+    } catch (e) {
+      showToast('添加备忘失败', 'error')
+    }
   }
 
   const toggleCourseExpansion = (courseId: string) => {
@@ -85,8 +97,13 @@ export function DayView() {
   }
 
   const handleDeleteMemo = async (memoId: string) => {
-    await deleteMemo(memoId)
-    setMemos((prev) => prev.filter((m) => m.id !== memoId))
+    try {
+      await deleteMemo(memoId)
+      setMemos((prev) => prev.filter((m) => m.id !== memoId))
+      showToast('备忘已删除', 'success')
+    } catch (e) {
+      showToast('删除备忘失败', 'error')
+    }
   }
 
   if (!loaded) {
