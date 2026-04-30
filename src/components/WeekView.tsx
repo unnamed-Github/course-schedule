@@ -3,16 +3,17 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides, createAssignment, createMemo } from '@/lib/data'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
-import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw, ClipboardList, Pin, Check, Square } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw, ClipboardList, Pin, Check, Square, StickyNote, Plus, Calendar } from 'lucide-react'
 
 const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
+const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 const PERIOD_GROUP_DEFS = [
   { label: '1-2节', start: 1, end: 2 },
   { label: '3-4节', start: 3, end: 4 },
@@ -52,6 +53,13 @@ export function WeekView() {
   const [loadError, setLoadError] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const [weekOverrides, setWeekOverrides] = useState<ScheduleOverride[]>([])
+
+  const [showQuickAssign, setShowQuickAssign] = useState(false)
+  const [quickAssignTitle, setQuickAssignTitle] = useState('')
+  const [quickAssignDueDate, setQuickAssignDueDate] = useState('')
+  const [showQuickMemo, setShowQuickMemo] = useState(false)
+  const [quickMemoContent, setQuickMemoContent] = useState('')
+  const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')
 
   const loadData = () => {
     setLoadError(false)
@@ -124,6 +132,11 @@ export function WeekView() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
+  useEffect(() => {
+    setShowQuickAssign(false)
+    setShowQuickMemo(false)
+  }, [expandedSchedule])
+
   const totalWeeks = getSemesterConfig().teachingWeeks
 
   const changeWeek = useCallback((delta: number) => {
@@ -148,6 +161,49 @@ export function WeekView() {
     setHighlightEnabled(next)
     setSettingBoth('highlight_enabled', String(next))
   }, [highlightEnabled])
+
+  const refreshAssignments = useCallback(() => {
+    getAssignments().then(setAssignments).catch(() => {})
+  }, [])
+
+  const refreshMemos = useCallback(() => {
+    getMemos().then(setMemos).catch(() => {})
+  }, [])
+
+  const handleQuickAddAssignment = async (courseId: string) => {
+    if (!quickAssignTitle.trim() || !quickAssignDueDate) return
+    const created = await createAssignment({
+      title: quickAssignTitle.trim(),
+      course_id: courseId,
+      due_date: quickAssignDueDate,
+      description: '',
+      status: 'pending',
+    })
+    if (created) {
+      setQuickAssignTitle('')
+      setQuickAssignDueDate('')
+      setShowQuickAssign(false)
+      refreshAssignments()
+      showToast('作业已添加 ✅', 'success')
+    }
+  }
+
+  const handleQuickAddMemo = async (courseId: string) => {
+    if (!quickMemoContent.trim()) return
+    const created = await createMemo({
+      course_id: courseId,
+      content: quickMemoContent.trim(),
+      mood_emoji: quickMemoEmoji,
+      mood_tags: [],
+    })
+    if (created) {
+      setQuickMemoContent('')
+      setQuickMemoEmoji('📝')
+      setShowQuickMemo(false)
+      refreshMemos()
+      showToast('备忘已添加 ✅', 'success')
+    }
+  }
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
 
@@ -437,38 +493,162 @@ export function WeekView() {
                                         {overrideEntry.type === 'cancelled' ? '恢复本课' : '撤销下课'}
                                       </button>
                                     ) : (
-                                      <div className="flex items-center gap-1.5 flex-wrap">
-                                        {confirmCancelId === schedule.id ? (
-                                          <div className="flex items-center gap-1">
-                                            <span className="text-[10px] opacity-80">确认取消？</span>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          {confirmCancelId === schedule.id ? (
+                                            <div className="flex items-center gap-1">
+                                              <span className="text-[10px] opacity-80">确认取消？</span>
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); handleConfirmCancel(dateStr) }}
+                                                className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
+                                                style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
+                                              >
+                                                确认
+                                              </button>
+                                              <button
+                                                onClick={(e) => { e.stopPropagation(); cancelConfirmation() }}
+                                                className="px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                                style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                                              >
+                                                取消
+                                              </button>
+                                            </div>
+                                          ) : (
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleConfirmCancel(dateStr) }}
+                                              onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'cancelled') }}
+                                              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                                            >
+                                              <Trash2 size={12} strokeWidth={2} />
+                                              取消本课
+                                            </button>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setShowQuickAssign(!showQuickAssign); setShowQuickMemo(false) }}
+                                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                                          >
+                                            <Plus size={12} strokeWidth={2} />
+                                            作业
+                                          </button>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setShowQuickMemo(!showQuickMemo); setShowQuickAssign(false) }}
+                                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                                          >
+                                            <StickyNote size={12} strokeWidth={2} />
+                                            备忘
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* 快捷添加作业表单 */}
+                                  <AnimatePresence>
+                                    {showQuickAssign && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                                          <input
+                                            value={quickAssignTitle}
+                                            onChange={(e) => setQuickAssignTitle(e.target.value)}
+                                            placeholder="作业标题"
+                                            className="w-full rounded-lg px-2 py-1 text-[10px] outline-none"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                          <div className="flex items-center gap-2">
+                                            <Calendar size={12} strokeWidth={2} style={{ opacity: 0.6 }} />
+                                            <input
+                                              type="date"
+                                              value={quickAssignDueDate}
+                                              onChange={(e) => setQuickAssignDueDate(e.target.value)}
+                                              className="flex-1 rounded-lg px-2 py-1 text-[10px] outline-none"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}
+                                              onClick={(e) => e.stopPropagation()}
+                                            />
+                                          </div>
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); handleQuickAddAssignment(course.id) }}
                                               className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
                                               style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
                                             >
-                                              确认
+                                              添加
                                             </button>
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); cancelConfirmation() }}
+                                              onClick={(e) => { e.stopPropagation(); setShowQuickAssign(false) }}
                                               className="px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
                                               style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
                                             >
                                               取消
                                             </button>
                                           </div>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'cancelled') }}
-                                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
-                                            style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                                          >
-                                            <Trash2 size={12} strokeWidth={2} />
-                                            取消本课
-                                          </button>
-                                        )}
-                                      </div>
+                                        </div>
+                                      </motion.div>
                                     )}
-                                  </div>
+                                  </AnimatePresence>
+
+                                  {/* 快捷添加备忘表单 */}
+                                  <AnimatePresence>
+                                    {showQuickMemo && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="mt-2 pt-2 border-t border-white/20 space-y-2">
+                                          <div className="flex flex-wrap gap-1">
+                                            {EMOJI_OPTIONS.map((emoji) => (
+                                              <button
+                                                key={emoji}
+                                                onClick={(e) => { e.stopPropagation(); setQuickMemoEmoji(emoji) }}
+                                                className="w-6 h-6 rounded flex items-center justify-center text-xs transition-all"
+                                                style={{
+                                                  backgroundColor: quickMemoEmoji === emoji ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)',
+                                                  border: quickMemoEmoji === emoji ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
+                                                }}
+                                              >
+                                                {emoji}
+                                              </button>
+                                            ))}
+                                          </div>
+                                          <input
+                                            value={quickMemoContent}
+                                            onChange={(e) => setQuickMemoContent(e.target.value)}
+                                            placeholder="备忘内容"
+                                            className="w-full rounded-lg px-2 py-1 text-[10px] outline-none"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                          <div className="flex gap-1 justify-end">
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); handleQuickAddMemo(course.id) }}
+                                              className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
+                                            >
+                                              添加
+                                            </button>
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setShowQuickMemo(false) }}
+                                              className="px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
+                                            >
+                                              取消
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
                                 </motion.div>
                               )}
                             </AnimatePresence>

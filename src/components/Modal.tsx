@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="w-full max-w-md rounded-2xl p-6"
+            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
             style={{ backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-light)' }}
           >
             {title && (
