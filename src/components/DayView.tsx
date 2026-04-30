@@ -197,7 +197,8 @@ export function DayView() {
             const isEndedEarly = overrideEntry?.type === 'ended_early'
             const startTime = getPeriodTime(schedule.start_period)
             const endTime = getPeriodTime(schedule.end_period)
-            const isCurrent = !isCancelled && !isEndedEarly && highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+            const isOngoing = !isCancelled && highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+            const isCurrent = isOngoing && !isEndedEarly
             const progress = getCourseProgress(schedule)
             const isExpanded = !isCancelled && expandedCourse === schedule.id
 
@@ -214,7 +215,7 @@ export function DayView() {
                   opacity: isCancelled ? 0.45 : 1,
                 }}
               >
-                {isCurrent && (
+                {isOngoing && !isEndedEarly && (
                   <div
                     onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, 'ended_early') }}
                     className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:opacity-80 transition-opacity"
@@ -226,9 +227,12 @@ export function DayView() {
                     <span className="text-[10px] text-white font-medium whitespace-nowrap">提前下课</span>
                   </div>
                 )}
-                {isEndedEarly && (
+                {isOngoing && isEndedEarly && (
                   <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: '#10B981' }}>
-                    <span className="text-[10px] text-white font-medium">已下课</span>
+                    <div className="flex-1 h-1 rounded-full bg-white/30">
+                      <div className="h-full rounded-full bg-white" style={{ width: `${progress}%` }} />
+                    </div>
+                    <span className="text-[10px] text-white font-medium whitespace-nowrap">已下课</span>
                   </div>
                 )}
 
