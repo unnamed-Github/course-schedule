@@ -57,13 +57,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove("dark")
     }
-    setSettingBoth("theme", theme)
+    if (userToggledRef.current) {
+      setSettingBoth("theme", theme)
+    }
   }, [theme, mounted])
 
   const toggle = useCallback(() => {
     setTheme((t) => {
       const next = t === "light" ? "dark" : "light"
       userToggledRef.current = true
+      setSettingBoth("theme", next)
       return next
     })
   }, [])
