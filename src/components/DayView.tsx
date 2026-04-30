@@ -130,7 +130,7 @@ export function DayView() {
             if (!course) return null
             const startTime = getPeriodTime(schedule.start_period)
             const endTime = getPeriodTime(schedule.end_period)
-            const isCurrent = isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+            const isCurrent = highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
             const progress = getCourseProgress(schedule)
             const isExpanded = expandedCourse === schedule.id
 

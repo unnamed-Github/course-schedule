@@ -185,7 +185,7 @@ export function WeekView() {
                       daySchedules.map((schedule) => {
                         const course = courseMap.get(schedule.course_id)
                         if (!course) return null
-                        const active = isCurrentCourse(schedule)
+                        const active = highlightEnabled && isCurrentCourse(schedule)
                         const isExpanded = expandedSchedule?.id === schedule.id
                         const assignmentCount = getCourseAssignmentCount(course.id)
 
