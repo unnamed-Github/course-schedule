@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 
 interface WarmthBannerContextType {
   isEnabled: boolean
@@ -17,13 +18,13 @@ export function WarmthBannerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      const savedEnabled = localStorage.getItem('warmthBannerEnabled')
+      const savedEnabled = getLocalSetting('warmthBannerEnabled', 'true')
       if (savedEnabled === 'false') {
         setIsEnabled(false)
       }
 
       const today = new Date().toISOString().slice(0, 10)
-      const hiddenDate = localStorage.getItem('warmthBannerHidden')
+      const hiddenDate = getLocalSetting('warmthBannerHidden', '')
       if (hiddenDate === today) {
         setIsHiddenToday(true)
       }
@@ -35,21 +36,13 @@ export function WarmthBannerProvider({ children }: { children: ReactNode }) {
   const toggleEnabled = () => {
     const newValue = !isEnabled
     setIsEnabled(newValue)
-    try {
-      localStorage.setItem('warmthBannerEnabled', newValue.toString())
-    } catch (e) {
-      console.error('Failed to save warmth banner setting:', e)
-    }
+    setSettingBoth('warmthBannerEnabled', newValue.toString())
   }
 
   const hideToday = () => {
     setIsHiddenToday(true)
-    try {
-      const today = new Date().toISOString().slice(0, 10)
-      localStorage.setItem('warmthBannerHidden', today)
-    } catch (e) {
-      console.error('Failed to save warmth banner hidden today:', e)
-    }
+    const today = new Date().toISOString().slice(0, 10)
+    setSettingBoth('warmthBannerHidden', today)
   }
 
   return (

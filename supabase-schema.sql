@@ -54,6 +54,18 @@ CREATE TABLE IF NOT EXISTS semester_config (
   value TEXT NOT NULL
 );
 
+-- 站点配置表（密码哈希等）
+CREATE TABLE IF NOT EXISTS site_config (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+-- 用户偏好设置表
+CREATE TABLE IF NOT EXISTS user_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 -- 启用 Row Level Security
 -- 注: 本项目为个人应用，RLS 对 anon key 开放完整读写权限。
 -- 部署前可在 Supabase Dashboard 中收紧策略或启用 JWT 验证。
@@ -62,9 +74,13 @@ ALTER TABLE course_schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE semester_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all on courses" ON courses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on course_schedules" ON course_schedules FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on assignments" ON assignments FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on memos" ON memos FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on semester_config" ON semester_config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on site_config" ON site_config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on user_settings" ON user_settings FOR ALL USING (true) WITH CHECK (true);

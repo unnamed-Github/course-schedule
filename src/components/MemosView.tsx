@@ -67,12 +67,11 @@ export function MemosView() {
 
       {/* 新建备忘 */}
       <div className="p-4 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl">{selectedEmoji}</span>
+        <div className="flex gap-2 mb-3">
           <select
             value={selectedCourseId}
             onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="flex-1 rounded-xl px-3 py-1.5 text-sm"
+            className="flex-1 rounded-xl px-3 py-2 text-sm"
             style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
           >
             {courses.map(course => (
@@ -81,35 +80,30 @@ export function MemosView() {
               </option>
             ))}
           </select>
-        </div>
-        <textarea
-          value={newMemo}
-          onChange={(e) => setNewMemo(e.target.value)}
-          placeholder="写下你的备忘..."
-          rows={2}
-          className="w-full rounded-xl px-3 py-2 text-sm resize-none mb-3"
-          style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
-        />
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1">
+          <select
+            value={selectedEmoji}
+            onChange={(e) => setSelectedEmoji(e.target.value)}
+            className="rounded-xl px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+          >
             {EMOJI_OPTIONS.map(emoji => (
-              <button
-                key={emoji}
-                onClick={() => setSelectedEmoji(emoji)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-sm transition-all"
-                style={{
-                  backgroundColor: selectedEmoji === emoji ? 'var(--accent-info)' : 'transparent',
-                  transform: selectedEmoji === emoji ? 'scale(1.15)' : 'scale(1)',
-                }}
-              >
-                {emoji}
-              </button>
+              <option key={emoji} value={emoji}>{emoji}</option>
             ))}
-          </div>
+          </select>
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={newMemo}
+            onChange={(e) => setNewMemo(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddMemo()}
+            placeholder="写下你的备忘..."
+            className="flex-1 rounded-xl px-3 py-2 text-sm"
+            style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+          />
           <button
             onClick={handleAddMemo}
             disabled={!newMemo.trim()}
-            className="px-4 py-1.5 rounded-xl text-sm font-medium transition-all disabled:opacity-40"
+            className="px-4 py-2 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
             style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}
           >
             添加

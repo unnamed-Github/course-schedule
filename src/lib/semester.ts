@@ -1,5 +1,3 @@
-// 南科大 2026 春季学期时间工具
-
 export interface SemesterConfig {
   semesterStart: string
   teachingWeeks: number
@@ -35,27 +33,18 @@ const DEFAULT_SEMESTER: SemesterConfig = {
   ],
 }
 
-function loadSemesterConfig(): SemesterConfig {
-  if (typeof window === 'undefined') return DEFAULT_SEMESTER
-  try {
-    const stored = localStorage.getItem('semester_config')
-    if (stored) return JSON.parse(stored)
-  } catch {}
-  return DEFAULT_SEMESTER
-}
-
 let _cachedSemester: SemesterConfig | null = null
 
-function getSEMESTER(): SemesterConfig {
-  if (!_cachedSemester) _cachedSemester = loadSemesterConfig()
-  return _cachedSemester
+export function setSemesterCache(config: SemesterConfig) {
+  _cachedSemester = config
 }
 
-export function updateSemesterConfig(config: SemesterConfig) {
-  _cachedSemester = config
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('semester_config', JSON.stringify(config))
-  }
+export function clearSemesterCache() {
+  _cachedSemester = null
+}
+
+export function getSemesterConfig(): SemesterConfig {
+  return _cachedSemester ?? DEFAULT_SEMESTER
 }
 
 export const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
@@ -85,7 +74,7 @@ export function getPeriodTime(period: number) {
 }
 
 export function getWeekNumber(date: Date = new Date()): number {
-  const start = new Date(getSEMESTER().semesterStart)
+  const start = new Date(getSemesterConfig().semesterStart)
   const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
   const diffMs = date.getTime() - startDay.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -97,7 +86,7 @@ export function isOddWeek(date: Date = new Date()): boolean {
 }
 
 export function getWeekDateRange(weekNumber: number): { start: Date; end: Date } {
-  const base = new Date(getSEMESTER().semesterStart)
+  const base = new Date(getSemesterConfig().semesterStart)
   const dayOfWeek = base.getDay()
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
 
@@ -123,12 +112,12 @@ function toDateStr(d: Date): string {
 
 export function isHoliday(date: Date): Holiday | null {
   const d = toDateStr(date)
-  return getSEMESTER().holidays.find((h) => d >= h.start && d <= h.end) ?? null
+  return getSemesterConfig().holidays.find((h) => d >= h.start && d <= h.end) ?? null
 }
 
 export function getMakeupInfo(date: Date): MakeupDay | null {
   const d = toDateStr(date)
-  return getSEMESTER().makeupDays.find((m) => m.date === d) ?? null
+  return getSemesterConfig().makeupDays.find((m) => m.date === d) ?? null
 }
 
 export function getCurrentPeriod(now: Date = new Date()): number | null {
@@ -139,8 +128,4 @@ export function getCurrentPeriod(now: Date = new Date()): number | null {
     }
   }
   return null
-}
-
-export function getSemesterConfig(): SemesterConfig {
-  return getSEMESTER()
 }

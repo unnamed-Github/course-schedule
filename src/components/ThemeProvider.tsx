@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react"
+import { getLocalSetting, setSettingBoth, syncSettingsFromDB } from "@/lib/user-settings"
 
 type Theme = "light" | "dark"
 
@@ -13,10 +14,6 @@ function safeGet(key: string): string | null {
   try { return localStorage.getItem(key) } catch { return null }
 }
 
-function safeSet(key: string, value: string) {
-  try { localStorage.setItem(key, value) } catch {}
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light")
   const [mounted, setMounted] = useState(false)
@@ -27,6 +24,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initial = stored ?? (prefersDark ? "dark" : "light")
     setTheme(initial)
     setMounted(true)
+    syncSettingsFromDB().then(() => {
+      const synced = safeGet("theme") as Theme | null
+      if (synced && synced !== initial) setTheme(synced)
+    })
   }, [])
 
   useEffect(() => {
@@ -36,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove("dark")
     }
-    safeSet("theme", theme)
+    setSettingBoth("theme", theme)
   }, [theme, mounted])
 
   const toggle = useCallback(() => setTheme((t) => (t === "light" ? "dark" : "light")), [])

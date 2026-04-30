@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import { getCourses, getSchedules } from '@/lib/data'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { useTheme } from '@/components/ThemeProvider'
-import { getSemesterConfig, updateSemesterConfig } from '@/lib/semester'
+import { getSemesterConfig, setSemesterCache, clearSemesterCache } from '@/lib/semester'
+import { getSemesterConfigFromDB, updateSemesterConfigToDB } from '@/lib/semester-db'
 import type { Holiday, MakeupDay } from '@/lib/semester'
+import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { useToast } from '@/components/ToastProvider'
 import { useWarmthBanner } from '@/components/WarmthBannerContext'
 
@@ -18,7 +20,7 @@ export default function SettingsPage() {
   const [dragOver, setDragOver] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(() => {
     if (typeof window === 'undefined') return true
-    return localStorage.getItem('highlight_enabled') !== 'false'
+    return getLocalSetting('highlight_enabled', 'true') !== 'false'
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [teachingWeeks, setTeachingWeeks] = useState(15)
@@ -32,11 +34,13 @@ export default function SettingsPage() {
   const [makeupForm, setMakeupForm] = useState<MakeupDay>({ date: '', replacesDayOfWeek: 1, weekType: 'all' })
 
   useEffect(() => {
-    const config = getSemesterConfig()
-    setTeachingWeeks(config.teachingWeeks)
-    setExamWeeks(config.examWeeks)
-    setHolidays([...config.holidays])
-    setMakeupDays([...config.makeupDays])
+    getSemesterConfigFromDB().then((config) => {
+      setSemesterCache(config)
+      setTeachingWeeks(config.teachingWeeks)
+      setExamWeeks(config.examWeeks)
+      setHolidays([...config.holidays])
+      setMakeupDays([...config.makeupDays])
+    })
   }, [])
 
   const processFile = async (file: File) => {
@@ -70,11 +74,16 @@ export default function SettingsPage() {
     showToast('已导出 JSON ✅', 'success')
   }
 
-  const saveSemesterConfig = (updates: Partial<{ teachingWeeks: number; examWeeks: number; holidays: Holiday[]; makeupDays: MakeupDay[] }>) => {
+  const saveSemesterConfig = async (updates: Partial<{ semesterStart: string; teachingWeeks: number; examWeeks: number; holidays: Holiday[]; makeupDays: MakeupDay[] }>) => {
     const config = getSemesterConfig()
     const newConfig = { ...config, ...updates }
-    updateSemesterConfig(newConfig)
-    showToast('学期信息已保存', 'success')
+    setSemesterCache(newConfig)
+    const ok = await updateSemesterConfigToDB(updates as any)
+    if (ok) {
+      showToast('学期信息已保存', 'success')
+    } else {
+      showToast('保存失败，请检查网络', 'error')
+    }
   }
 
   return (
@@ -119,7 +128,7 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>当前课程高亮</span>
-            <button onClick={() => { const v = !highlightEnabled; setHighlightEnabled(v); localStorage.setItem('highlight_enabled', String(v)) }} className="w-11 h-6 rounded-full relative transition-colors" style={{ backgroundColor: highlightEnabled ? 'var(--accent-info)' : 'var(--border-light)' }}>
+            <button onClick={() => { const v = !highlightEnabled; setHighlightEnabled(v); setSettingBoth('highlight_enabled', String(v)) }} className="w-11 h-6 rounded-full relative transition-colors" style={{ backgroundColor: highlightEnabled ? 'var(--accent-info)' : 'var(--border-light)' }}>
               <div className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm" style={{ left: highlightEnabled ? 'calc(100% - 22px)' : '2px' }} />
             </button>
           </div>

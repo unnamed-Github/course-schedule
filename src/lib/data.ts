@@ -1,6 +1,8 @@
 import { supabase } from './supabase'
 import { Course, CourseSchedule, Assignment, Memo } from './types'
 import { COURSES, SCHEDULES } from './seed-data'
+import { setSemesterCache } from './semester'
+import type { Holiday, MakeupDay } from './semester'
 
 // ---- Cache layer ----
 const CACHE_TTL = 5 * 60 * 1000
@@ -46,6 +48,20 @@ async function ensureSeedData() {
       { key: 'password_hash', value: 'f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816c757' },
     ])
   }
+  await loadSemesterConfigToCache()
+}
+
+async function loadSemesterConfigToCache() {
+  const { data } = await supabase.from('semester_config').select('key, value')
+  if (!data || data.length === 0) return
+  const map = new Map(data.map((r: { key: string; value: string }) => [r.key, r.value]))
+  setSemesterCache({
+    semesterStart: map.get('semester_start') ?? '2026-02-25',
+    teachingWeeks: parseInt(map.get('teaching_weeks') ?? '15'),
+    examWeeks: parseInt(map.get('exam_weeks') ?? '2'),
+    holidays: JSON.parse(map.get('holidays') ?? '[]') as Holiday[],
+    makeupDays: JSON.parse(map.get('makeup_days') ?? '[]') as MakeupDay[],
+  })
 }
 
 // ---------- Courses ----------
