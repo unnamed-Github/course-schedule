@@ -215,27 +215,6 @@ export function DayView() {
                   opacity: isCancelled ? 0.45 : 1,
                 }}
               >
-                {isOngoing && !isEndedEarly && (
-                  <div
-                    onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, 'ended_early') }}
-                    className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: course.color }}
-                  >
-                    <div className="flex-1 h-1 rounded-full bg-white/30">
-                      <div className="h-full rounded-full bg-white transition-all duration-1000" style={{ width: `${progress}%` }} />
-                    </div>
-                    <span className="text-[10px] text-white font-medium whitespace-nowrap">提前下课</span>
-                  </div>
-                )}
-                {isOngoing && isEndedEarly && (
-                  <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: '#10B981' }}>
-                    <div className="flex-1 h-1 rounded-full bg-white/30">
-                      <div className="h-full rounded-full bg-white" style={{ width: '100%' }} />
-                    </div>
-                    <span className="text-[10px] text-white font-medium whitespace-nowrap">已下课</span>
-                  </div>
-                )}
-
                 <div 
                   className={`p-4 ${isCancelled ? '' : 'cursor-pointer'}`}
                   onClick={() => { if (!isCancelled) setExpandedCourse(isExpanded ? null : schedule.id) }}

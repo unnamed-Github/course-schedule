@@ -2,13 +2,16 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getCourses, getSchedules, getAssignments } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getScheduleOverrides, createScheduleOverride, deleteScheduleOverride } from '@/lib/data'
 import { getTodayCourses } from '@/lib/schedule'
 import { getCurrentPeriod, PERIOD_TIMES, getPeriodTime } from '@/lib/semester'
-import { Course, CourseSchedule } from '@/lib/types'
+import { Course, CourseSchedule, ScheduleOverride } from '@/lib/types'
 import { useWarmthBanner } from './WarmthBannerContext'
-import { Clock, X } from 'lucide-react'
+import { Clock, X, CheckCircle2, RotateCcw } from 'lucide-react'
 import { useFestivalGreeting } from './FestivalEasterEgg'
+import { useToast } from './ToastProvider'
+import { getDailyQuote } from '@/lib/daily-quote'
+import { useClassFinish, ClassFinishCelebration } from './ClassFinishCelebration'
 
 const MORNING_GREETINGS = ['早上好', '上午好']
 const AFTERNOON_GREETINGS = ['下午好', '午后好']
@@ -62,12 +65,20 @@ function getCurrentCourseProgress(
 export function WarmthBanner() {
   const { isEnabled, isHiddenToday, hideToday } = useWarmthBanner()
   const { greeting: festivalGreeting, subGreeting: festivalSubGreeting } = useFestivalGreeting()
+  const { showToast } = useToast()
   const [message, setMessage] = useState('')
   const [encouragement, setEncouragement] = useState('')
   const [courses, setCourses] = useState<Course[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  const [overrides, setOverrides] = useState<ScheduleOverride[]>([])
+  const [viewDate, setViewDate] = useState(new Date())
+
+  const loadOverrides = () => {
+    const dateStr = viewDate.toISOString().split('T')[0]
+    getScheduleOverrides(dateStr).then(setOverrides).catch(() => setOverrides([]))
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -75,13 +86,69 @@ export function WarmthBanner() {
       setCurrentPeriod(getCurrentPeriod())
     }, 60000)
     setCurrentPeriod(getCurrentPeriod())
+    loadOverrides()
     return () => clearInterval(timer)
   }, [])
 
+  const overrideMap = useMemo(() => {
+    const map = new Map<string, ScheduleOverride>()
+    for (const o of overrides) {
+      map.set(o.schedule_id, o)
+    }
+    return map
+  }, [overrides])
+
   const currentCourseInfo = useMemo(() => {
     const todaySchedules = getTodayCourses(schedules)
-    return getCurrentCourseProgress(currentPeriod, todaySchedules, courses)
-  }, [currentPeriod, schedules, courses, currentTime])
+    for (const schedule of todaySchedules) {
+      if (!currentPeriod) continue
+      if (currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period) {
+        const course = courses.find(c => c.id === schedule.course_id)
+        if (!course) continue
+        const overrideEntry = overrideMap.get(schedule.id)
+        const isEndedEarly = overrideEntry?.type === 'ended_early'
+        const startTime = getPeriodTime(schedule.start_period)
+        const endTime = getPeriodTime(schedule.end_period)
+        if (!startTime || !endTime) continue
+        if (isEndedEarly) {
+          return { course, schedule, progress: 100, isEndedEarly, isCancelled: overrideEntry?.type === 'cancelled' }
+        }
+        const now = new Date()
+        const currentMs = now.getHours() * 3600000 + now.getMinutes() * 60000
+        const [sh, sm] = startTime.start.split(':').map(Number)
+        const [eh, em] = endTime.end.split(':').map(Number)
+        const startMs = sh * 3600000 + sm * 60000
+        const endMs = eh * 3600000 + em * 60000
+        const totalDuration = endMs - startMs
+        const elapsed = currentMs - startMs
+        const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100))
+        return { course, schedule, progress, isEndedEarly: false, isCancelled: false }
+      }
+    }
+    return null
+  }, [currentPeriod, schedules, courses, currentTime, overrideMap])
+
+  const handleEarlyEnd = async (scheduleId: string) => {
+    const dateStr = new Date().toISOString().split('T')[0]
+    const result = await createScheduleOverride({ schedule_id: scheduleId, date: dateStr, type: 'ended_early' })
+    if (result) {
+      showToast('已标记提前下课', 'success')
+      loadOverrides()
+    } else {
+      showToast('操作失败，请稍后重试', 'error')
+    }
+  }
+
+  const handleRevertEarlyEnd = async (scheduleId: string) => {
+    const dateStr = new Date().toISOString().split('T')[0]
+    const ok = await deleteScheduleOverride(scheduleId, dateStr)
+    if (ok) {
+      showToast('已恢复', 'success')
+      loadOverrides()
+    } else {
+      showToast('操作失败，请稍后重试', 'error')
+    }
+  }
 
   useEffect(() => {
     if (!isEnabled || isHiddenToday) return
@@ -116,8 +183,12 @@ export function WarmthBanner() {
     hideToday()
   }
 
+  const { shouldCelebrate, courseName } = useClassFinish(currentCourseInfo)
+
   return (
-    <AnimatePresence>
+    <>
+      <ClassFinishCelebration shouldCelebrate={shouldCelebrate} courseName={courseName} />
+      <AnimatePresence>
       {(isEnabled && !isHiddenToday) && (
         <motion.div
           initial={{ opacity: 0, y: -8, height: 0 }}
@@ -138,6 +209,14 @@ export function WarmthBanner() {
                 <p className="text-base font-medium truncate" style={{ color: 'var(--text-primary)' }}>
                   {message}
                 </p>
+                {(() => {
+                  const q = getDailyQuote()
+                  return (
+                    <p className="text-xs italic mt-1 truncate" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>
+                      「{q.text}」— {q.author}
+                    </p>
+                  )
+                })()}
               </div>
               <button
                 onClick={handleClose}
@@ -151,35 +230,56 @@ export function WarmthBanner() {
           )}
 
           {/* 第二层：当前课程实时条 */}
-          {currentCourseInfo && (
+          {currentCourseInfo && !currentCourseInfo.isCancelled && (
             <div className="px-4 py-3 rounded-2xl"
               style={{
                 backgroundColor: 'var(--bg-card)',
-                border: `2px solid ${currentCourseInfo.course.color}`,
+                border: `2px solid ${currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color}`,
               }}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}><Clock size={14} strokeWidth={1.8} />正在上</span>
-                  <span className="font-semibold" style={{ color: currentCourseInfo.course.color }}>
+                  <span className="font-semibold" style={{ color: currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color }}>
                     {currentCourseInfo.course.name}
                   </span>
                   <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                     ({currentCourseInfo.schedule.start_period}-{currentCourseInfo.schedule.end_period}节)
                   </span>
                 </div>
-                <span className="text-sm font-medium" style={{ color: currentCourseInfo.course.color }}>
-                  {Math.round(currentCourseInfo.progress)}%
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium" style={{ color: currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color }}>
+                    {Math.round(currentCourseInfo.progress)}%
+                  </span>
+                  {currentCourseInfo.isEndedEarly ? (
+                    <button
+                      onClick={() => handleRevertEarlyEnd(currentCourseInfo.schedule.id)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs rounded-full text-white cursor-pointer hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: '#10B981' }}
+                    >
+                      <RotateCcw size={12} />
+                      恢复
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleEarlyEnd(currentCourseInfo.schedule.id)}
+                      className="flex items-center gap-1 px-2 py-1 text-xs rounded-full text-white cursor-pointer hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: currentCourseInfo.course.color }}
+                    >
+                      <CheckCircle2 size={12} />
+                      提前下课
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="h-2 rounded-full overflow-hidden"
-                style={{ backgroundColor: `${currentCourseInfo.course.color}26` }}
+                style={{ backgroundColor: currentCourseInfo.isEndedEarly ? '#10B98126' : `${currentCourseInfo.course.color}26` }}
               >
                 <div
                   className="h-full rounded-full transition-all duration-1000"
                   style={{
                     width: `${currentCourseInfo.progress}%`,
-                    backgroundColor: currentCourseInfo.course.color,
+                    backgroundColor: currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color,
                   }}
                 />
               </div>
@@ -188,5 +288,6 @@ export function WarmthBanner() {
         </motion.div>
       )}
     </AnimatePresence>
+    </>
   )
 }
