@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, useState, useRef } from 'react'
-import Link from 'next/link'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
@@ -26,6 +26,10 @@ export default function CoursesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<Course | null>(null)
   const [addingCourse, setAddingCourse] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', teacher: '', classroom: '', color: '#6366F1', week_type: 'all' as 'all' | 'odd' | 'even' })
+  
+  // 时间编辑相关状态
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null)
+  const [scheduleForm, setScheduleForm] = useState({ day_of_week: 1, start_period: 1, end_period: 2, location: '', week_type: 'all' as 'all' | 'odd' | 'even' })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -73,6 +77,57 @@ export default function CoursesPage() {
       setAddForm({ name: '', teacher: '', classroom: '', color: '#6366F1', week_type: 'all' })
     }
   }
+  
+  const handleEditSchedule = (schedule: CourseSchedule) => {
+    setEditingScheduleId(schedule.id)
+    setScheduleForm({
+      day_of_week: schedule.day_of_week,
+      start_period: schedule.start_period,
+      end_period: schedule.end_period,
+      location: schedule.location,
+      week_type: schedule.week_type
+    })
+  }
+  
+  const handleSaveSchedule = async () => {
+    if (!editingScheduleId || !editingCard) return
+    try {
+      const updated = await updateSchedule(editingScheduleId, scheduleForm)
+      if (updated) {
+        setSchedules((prev) => prev.map((s) => s.id === updated.id ? updated : s))
+        setEditingScheduleId(null)
+      }
+    } catch (error) {
+      console.error('Failed to save schedule:', error)
+    }
+  }
+  
+  const handleAddSchedule = async () => {
+    if (!editingCard) return
+    try {
+      const created = await createSchedule({
+        ...scheduleForm,
+        course_id: editingCard.id
+      })
+      if (created) {
+        setSchedules((prev) => [...prev, created])
+        setEditingScheduleId(null)
+      }
+    } catch (error) {
+      console.error('Failed to add schedule:', error)
+    }
+  }
+  
+  const handleDeleteSchedule = async (scheduleId: string) => {
+    try {
+      const success = await deleteSchedule(scheduleId)
+      if (success) {
+        setSchedules((prev) => prev.filter((s) => s.id !== scheduleId))
+      }
+    } catch (error) {
+      console.error('Failed to delete schedule:', error)
+    }
+  }
 
   const handleImport = async () => {
     if (importPreview.length === 0) { setShowImport(false); return }
@@ -112,6 +167,8 @@ export default function CoursesPage() {
   }
 
   const totalWeeks = getSemesterConfig().teachingWeeks
+  
+  const DAY_MAP: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五' }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -162,13 +219,13 @@ export default function CoursesPage() {
                 <div style={{ height: 4, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}88 100%)` }} />
                 <div className="p-4">
                   <div className="flex items-start justify-between">
-                    <Link href={`/courses/${course.id}`} className="flex-1 min-w-0">
+                    <button onClick={() => setExpandedCard(isExpanded ? null : course.id)} className="flex-1 min-w-0 text-left">
                       <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h3>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                         {course.teacher !== '—' ? course.teacher : ''}
                         {course.classroom !== '—' ? ` · ${course.classroom}` : ''}
                       </p>
-                    </Link>
+                    </button>
                     <div className="flex items-center gap-1 ml-2">
                       {course.week_type !== 'all' && <span className="chip">{course.week_type === 'odd' ? '单周' : '双周'}</span>}
                     </div>
@@ -229,7 +286,7 @@ export default function CoursesPage() {
                         {isExpanded && (
                           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                             className="mt-2 space-y-1 overflow-hidden">
-                            {[...courseAssignments].sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 5).map((a) => {
+                            {[...courseAssignments].sort((a, b) => a.due_date.localeCompare(b.due_date)).map((a) => {
                               const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
                               const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
                               return (
@@ -239,7 +296,6 @@ export default function CoursesPage() {
                                 </div>
                               )
                             })}
-                            {courseAssignments.length > 5 && <Link href={`/courses/${course.id}`} className="text-[10px] block" style={{ color: 'var(--accent-info)' }}>查看全部 →</Link>}
                           </motion.div>
                         )}
                       </AnimatePresence>
@@ -291,25 +347,109 @@ export default function CoursesPage() {
       </Modal>
 
       {/* Edit Modal */}
-      <Modal open={!!editingCard} onClose={() => setEditingCard(null)} title="编辑课程">
+      <Modal open={!!editingCard} onClose={() => { setEditingCard(null); setEditingScheduleId(null); }} title="编辑课程">
         {editingCard && (
-          <div className="space-y-3">
-            {(['name', 'teacher', 'classroom'] as const).map((f) => (
-              <div key={f}>
-                <label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>{f === 'name' ? '课程名' : f === 'teacher' ? '教师' : '教室'}</label>
-                <input value={editForm[f]} onChange={(e) => setEditForm((pf) => ({ ...pf, [f]: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-              </div>
-            ))}
-            <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>颜色</label><input type="color" value={editForm.color} onChange={(e) => setEditForm((pf) => ({ ...pf, color: e.target.value }))} className="w-full h-10 rounded-xl cursor-pointer" /></div>
-              <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>单双周</label>
-                <select value={editForm.week_type} onChange={(e) => setEditForm((pf) => ({ ...pf, week_type: e.target.value as 'all' | 'odd' | 'even' }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
-                  <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
-                </select>
+          <div className="space-y-4">
+            {/* 基本信息 */}
+            <div>
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-primary)' }}>基本信息</p>
+              <div className="space-y-3">
+                {(['name', 'teacher', 'classroom'] as const).map((f) => (
+                  <div key={f}>
+                    <label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>{f === 'name' ? '课程名' : f === 'teacher' ? '教师' : '教室'}</label>
+                    <input value={editForm[f]} onChange={(e) => setEditForm((pf) => ({ ...pf, [f]: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+                  </div>
+                ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>颜色</label><input type="color" value={editForm.color} onChange={(e) => setEditForm((pf) => ({ ...pf, color: e.target.value }))} className="w-full h-10 rounded-xl cursor-pointer" /></div>
+                  <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>单双周</label>
+                    <select value={editForm.week_type} onChange={(e) => setEditForm((pf) => ({ ...pf, week_type: e.target.value as 'all' | 'odd' | 'even' }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
+                      <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            {/* 时间编辑 */}
+            <div className="border-t pt-3" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>上课时间</p>
+                {editingScheduleId === null && (
+                  <button onClick={() => setEditingScheduleId('new')} className="btn-ghost text-xs">+ 添加</button>
+                )}
+              </div>
+              
+              {/* 时间列表 */}
+              <div className="space-y-2">
+                {schedules.filter((s) => s.course_id === editingCard.id).map((schedule) => (
+                  <div key={schedule.id} className="flex items-center justify-between p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                    {editingScheduleId === schedule.id ? (
+                      <div className="flex-1 flex items-center gap-2">
+                        <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                          {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
+                        </select>
+                        <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                        </select>
+                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
+                        <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                          {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                        </select>
+                        <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
+                        <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                          <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{DAY_MAP[schedule.day_of_week]} {schedule.start_period}-{schedule.end_period}节</span>
+                        {schedule.location && schedule.location !== '—' && <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>· {schedule.location}</span>}
+                        {schedule.week_type !== 'all' && <span className="chip text-[10px]" style={{ backgroundColor: 'var(--accent-info)', color: 'white' }}>{schedule.week_type === 'odd' ? '单周' : '双周'}</span>}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      {editingScheduleId === schedule.id ? (
+                        <>
+                          <button onClick={handleSaveSchedule} className="btn-ghost text-xs" style={{ color: 'var(--accent-info)' }}>保存</button>
+                          <button onClick={() => setEditingScheduleId(null)} className="btn-ghost text-xs">取消</button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => handleEditSchedule(schedule)} className="btn-ghost text-xs" style={{ color: 'var(--accent-info)' }}>编辑</button>
+                          <button onClick={() => handleDeleteSchedule(schedule.id)} className="btn-ghost text-xs" style={{ color: 'var(--accent-danger)' }}>删除</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* 新增时间 */}
+                {editingScheduleId === 'new' && (
+                  <div className="flex items-center gap-2 p-2 rounded-xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                    <select value={scheduleForm.day_of_week} onChange={(e) => setScheduleForm({ ...scheduleForm, day_of_week: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                      {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>{DAY_MAP[d]}</option>)}
+                    </select>
+                    <select value={scheduleForm.start_period} onChange={(e) => setScheduleForm({ ...scheduleForm, start_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                    </select>
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>-</span>
+                    <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                      {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
+                    </select>
+                    <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
+                    <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
+                      <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+                    </select>
+                    <button onClick={handleAddSchedule} className="btn-primary text-xs" style={{ backgroundColor: 'var(--accent-info)' }}>添加</button>
+                    <button onClick={() => setEditingScheduleId(null)} className="btn-ghost text-xs">取消</button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div className="flex gap-2 justify-end pt-2">
-              <button onClick={() => setEditingCard(null)} className="btn-ghost text-xs">取消</button>
+              <button onClick={() => { setEditingCard(null); setEditingScheduleId(null); }} className="btn-ghost text-xs">取消</button>
               <button onClick={handleSaveEdit} className="btn-primary text-xs">保存</button>
             </div>
           </div>

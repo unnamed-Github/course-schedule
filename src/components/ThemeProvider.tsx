@@ -26,15 +26,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
     const initial = stored ?? (prefersDark ? "dark" : "light")
     setTheme(initial)
+    // 确保初始时也应用主题
+    if (initial === "dark") {
+      document.documentElement.classList.add("dark")
+    }
     setMounted(true)
   }, [])
 
   useEffect(() => {
     if (!mounted) return
     if (theme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark")
+      document.documentElement.classList.add("dark")
     } else {
-      document.documentElement.removeAttribute("data-theme")
+      document.documentElement.classList.remove("dark")
     }
     safeSet("theme", theme)
   }, [theme, mounted])
