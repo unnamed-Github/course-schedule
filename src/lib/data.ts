@@ -70,8 +70,16 @@ export async function updateCourse(id: string, updates: Partial<Course>): Promis
 
 export async function deleteCourse(id: string): Promise<boolean> {
   const { error } = await supabase.from('courses').delete().eq('id', id)
-  invalidateCache('courses')
+  if (!error) invalidateCache('courses')
   return !error
+}
+
+export async function createCourse(input: Omit<Course, 'id'>): Promise<Course | null> {
+  const record = { ...input, id: genId() }
+  const { data, error } = await supabase.from('courses').insert(record).select().single()
+  if (error) { console.error('createCourse error:', error); return null }
+  invalidateCache('courses')
+  return data
 }
 
 // ---------- Schedules ----------

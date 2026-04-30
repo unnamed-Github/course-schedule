@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig, getWeekDateRange } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
@@ -24,6 +24,8 @@ export default function CoursesPage() {
   const [editingCard, setEditingCard] = useState<Course | null>(null)
   const [editForm, setEditForm] = useState({ name: '', teacher: '', classroom: '', color: '', week_type: 'all' as 'all' | 'odd' | 'even' })
   const [deleteConfirm, setDeleteConfirm] = useState<Course | null>(null)
+  const [addingCourse, setAddingCourse] = useState(false)
+  const [addForm, setAddForm] = useState({ name: '', teacher: '', classroom: '', color: '#6366F1', week_type: 'all' as 'all' | 'odd' | 'even' })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -60,6 +62,16 @@ export default function CoursesPage() {
     await deleteCourse(course.id)
     setCourses((prev) => prev.filter((c) => c.id !== course.id))
     setDeleteConfirm(null)
+  }
+
+  const handleCreateCourse = async () => {
+    if (!addForm.name.trim()) return
+    const created = await createCourse(addForm)
+    if (created) {
+      setCourses((prev) => [...prev, created].sort((a, b) => (a.order ?? 99) - (b.order ?? 99)))
+      setAddingCourse(false)
+      setAddForm({ name: '', teacher: '', classroom: '', color: '#6366F1', week_type: 'all' })
+    }
   }
 
   const totalWeeks = getSemesterConfig().teachingWeeks
@@ -209,11 +221,37 @@ export default function CoursesPage() {
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: courses.length * 0.1 }}>
           <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-[var(--border-light)] transition-colors"
-            style={{ border: '2px dashed var(--border-light)' }}>
+            style={{ border: '2px dashed var(--border-light)' }}
+            onClick={() => setAddingCourse(true)}
+          >
             <span className="text-2xl" style={{ color: 'var(--text-secondary)' }}>+</span>
           </div>
         </motion.div>
       </div>
+
+      {/* Add Modal */}
+      <Modal open={addingCourse} onClose={() => setAddingCourse(false)} title="添加课程">
+        <div className="space-y-3">
+          {(['name', 'teacher', 'classroom'] as const).map((f) => (
+            <div key={f}>
+              <label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>{f === 'name' ? '课程名' : f === 'teacher' ? '教师' : '教室'}</label>
+              <input value={addForm[f]} onChange={(e) => setAddForm((pf) => ({ ...pf, [f]: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+            </div>
+          ))}
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>颜色</label><input type="color" value={addForm.color} onChange={(e) => setAddForm((pf) => ({ ...pf, color: e.target.value }))} className="w-full h-10 rounded-xl cursor-pointer" /></div>
+            <div><label className="text-[10px] block mb-0.5" style={{ color: 'var(--text-secondary)' }}>单双周</label>
+              <select value={addForm.week_type} onChange={(e) => setAddForm((pf) => ({ ...pf, week_type: e.target.value as 'all' | 'odd' | 'even' }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
+                <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end pt-2">
+            <button onClick={() => setAddingCourse(false)} className="btn-ghost text-xs">取消</button>
+            <button onClick={handleCreateCourse} disabled={!addForm.name.trim()} className="btn-primary text-xs disabled:opacity-40">添加</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Edit Modal */}
       <Modal open={!!editingCard} onClose={() => setEditingCard(null)} title="编辑课程">
