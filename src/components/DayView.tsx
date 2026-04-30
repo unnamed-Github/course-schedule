@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { CourseSchedule, Course, Assignment, Memo, MoodTag } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, createMemo } from '@/lib/data'
+import { getCourses, getSchedules, getAssignments, getMemos, createMemo, deleteMemo } from '@/lib/data'
 import { getTodayCourses, getCurrentPeriod, getWeekNumber } from '@/lib/schedule'
 import { getPeriodTime } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
@@ -28,6 +29,7 @@ export function DayView() {
   const [loadError, setLoadError] = useState(false)
   const [quickMemo, setQuickMemo] = useState('')
   const [quickEmoji, setQuickEmoji] = useState('😊')
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set())
   const dateInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = () => {
@@ -72,6 +74,21 @@ export function DayView() {
     setQuickMemo('')
   }
 
+  const toggleCourseExpansion = (courseId: string) => {
+    const newExpanded = new Set(expandedCourses)
+    if (newExpanded.has(courseId)) {
+      newExpanded.delete(courseId)
+    } else {
+      newExpanded.add(courseId)
+    }
+    setExpandedCourses(newExpanded)
+  }
+
+  const handleDeleteMemo = async (memoId: string) => {
+    await deleteMemo(memoId)
+    setMemos((prev) => prev.filter((m) => m.id !== memoId))
+  }
+
   if (!loaded) {
     return (
       <div className="max-w-4xl mx-auto space-y-3 pt-4">
@@ -100,12 +117,12 @@ export function DayView() {
   return (
     <div className="max-w-4xl mx-auto space-y-4">
       <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-3">
-        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)]" style={{ color: 'var(--text-secondary)' }}>←</button>
+        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" style={{ color: 'var(--text-secondary)' }}>←</button>
         <button onClick={() => dateInputRef.current?.showPicker?.()} className="text-lg font-semibold hover:opacity-70 transition-opacity cursor-pointer" style={{ color: 'var(--text-primary)' }} title="点击选择日期">
           {viewDateLabel}
         </button>
         <input ref={dateInputRef} type="date" value={formatDateFull(viewDate)} onChange={(e) => { if (e.target.value) setViewDate(new Date(e.target.value + 'T00:00:00')) }} className="absolute opacity-0 pointer-events-none" aria-label="选择日期" />
-        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)]" style={{ color: 'var(--text-secondary)' }}>→</button>
+        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800" style={{ color: 'var(--text-secondary)' }}>→</button>
       </motion.div>
 
       {!isToday && (
@@ -157,57 +174,61 @@ export function DayView() {
               })}
 
               {nowTop >= 0 && (
-                <div className="absolute left-[-12px] right-0 z-20 flex items-center pointer-events-none" style={{ top: `${nowTop}px` }}>
-                  <div className="w-2 h-2 rounded-full -ml-[5px]" style={{ backgroundColor: 'var(--accent-warm)' }} />
-                  <div className="flex-1 h-px" style={{ backgroundColor: 'var(--accent-warm)' }} />
-                  <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: 'var(--accent-warm)' }}>
-                    {String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:{String(nowMinutes % 60).padStart(2, '0')}
-                  </span>
-                </div>
-              )}
+        <div className="absolute left-[-12px] right-0 z-20 flex items-center pointer-events-none" style={{ top: `${nowTop}px` }}>
+          <div className="w-2 h-2 rounded-full -ml-[5px]" style={{ backgroundColor: 'var(--accent-warm)' }} />
+          <div className="flex-1 border-t-2" style={{ borderColor: 'var(--accent-warm)' }} />
+          <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: 'var(--accent-warm)' }}>
+            {String(Math.floor(nowMinutes / 60)).padStart(2, '0')}:{String(nowMinutes % 60).padStart(2, '0')}
+          </span>
+        </div>
+      )}
 
               {sortedSchedules.map((schedule) => {
-                const course = courseMap.get(schedule.course_id)
-                if (!course) return null
-                const st = getPeriodTime(schedule.start_period); const et = getPeriodTime(schedule.end_period)
-                if (!st || !et) return null
-                const topPx = parseInt(st.start.split(':')[0]) * 60 + parseInt(st.start.split(':')[1]) - START_MIN
-                const isNow = isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
-                const isPast = isToday && currentPeriod !== null && schedule.end_period < currentPeriod
-                return (
-                  <motion.div key={schedule.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: schedule.start_period * 0.03 }}
-                    className="absolute left-0 right-0 pr-2" style={{ top: `${topPx}px`, zIndex: isNow ? 10 : 1 }}>
-                    <div className="rounded-2xl p-4 flex items-start gap-3" style={{
-                      backgroundColor: 'var(--bg-card)', border: isNow ? '2px solid var(--accent-warm)' : '1px solid var(--border-light)',
-                      boxShadow: isNow ? 'var(--shadow-lg)' : 'var(--shadow-sm)', opacity: isPast ? 0.55 : 1,
-                    }}>
-                      <div className="flex flex-col items-center min-w-[44px]">
-                        <span className="text-sm font-semibold" style={{ color: isNow ? 'var(--accent-warm)' : 'var(--text-primary)' }}>{st.start}</span>
-                        <div className="w-px flex-1 min-h-[20px] my-1" style={{ backgroundColor: 'var(--border-light)' }} />
-                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{et.end}</span>
-                      </div>
-                      <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: course.color, width: 3 }} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{course.name}</h4>
-                          {isNow && <span className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: 'var(--accent-warm)' }}>进行中</span>}
-                        </div>
-                        <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          {course.teacher !== '—' && <span>👨‍🏫 {course.teacher}</span>}
-                          {schedule.location !== '—' && <span>📍 {schedule.location}</span>}
-                          <span style={{ opacity: 0.6 }}>第{schedule.start_period}-{schedule.end_period}节</span>
-                        </div>
-                      </div>
-                      <button
-                        className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isPast ? 'border-var(--accent-success)' : 'border-var(--border-light)'}`}
-                        style={{ borderColor: isPast ? 'var(--accent-success)' : 'var(--border-light)', backgroundColor: isPast ? 'var(--accent-success)' : 'transparent' }}
-                      >
-                        {isPast && <span className="text-white text-[10px]">✓</span>}
-                      </button>
-                    </div>
-                  </motion.div>
-                )
-              })}
+        const course = courseMap.get(schedule.course_id)
+        if (!course) return null
+        const st = getPeriodTime(schedule.start_period); const et = getPeriodTime(schedule.end_period)
+        if (!st || !et) return null
+        const topPx = parseInt(st.start.split(':')[0]) * 60 + parseInt(st.start.split(':')[1]) - START_MIN
+        const isNow = isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
+        const isPast = isToday && currentPeriod !== null && schedule.end_period < currentPeriod
+        const hasMemos = viewMemos.some((m) => m.course_id === course.id)
+        return (
+          <motion.div key={schedule.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: schedule.start_period * 0.03 }}
+            className="absolute left-0 right-0 pr-2" style={{ top: `${topPx}px`, zIndex: isNow ? 10 : 1 }}>
+            <div className="rounded-2xl p-4 flex items-start gap-3" style={{
+              backgroundColor: 'var(--bg-card)', border: isNow ? '2px solid var(--accent-warm)' : '1px solid var(--border-light)',
+              boxShadow: isNow ? 'var(--shadow-lg)' : 'var(--shadow-sm)', opacity: isPast ? 0.55 : 1,
+            }}>
+              <div className="flex flex-col items-center min-w-[44px]">
+                <span className="text-sm font-semibold" style={{ color: isNow ? 'var(--accent-warm)' : 'var(--text-primary)' }}>{st.start}</span>
+                <div className="w-px flex-1 min-h-[20px] my-1" style={{ backgroundColor: 'var(--border-light)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{et.end}</span>
+              </div>
+              <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: course.color, width: 3 }} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{course.name}</h4>
+                  {isNow && <span className="text-[10px] px-1.5 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: 'var(--accent-warm)' }}>进行中</span>}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {course.teacher !== '—' && <span>👨‍🏫 {course.teacher}</span>}
+                  {schedule.location !== '—' && <span>📍 {schedule.location}</span>}
+                  <span style={{ opacity: 0.6 }}>第{schedule.start_period}-{schedule.end_period}节</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1 items-center">
+                {hasMemos && <span className="text-sm">📌</span>}
+                <button
+                  className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${isPast ? 'border-var(--accent-success)' : 'border-var(--border-light)'}`}
+                  style={{ borderColor: isPast ? 'var(--accent-success)' : 'var(--border-light)', backgroundColor: isPast ? 'var(--accent-success)' : 'transparent' }}
+                >
+                  {isPast && <span className="text-white text-[10px]">✓</span>}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )
+      })}
             </div>
           )}
         </div>
@@ -241,21 +262,58 @@ export function DayView() {
           <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
             <h3 className="text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>📝 {isToday ? '今日' : '当天'}作业 ({viewAssignments.length})</h3>
             {viewAssignments.length === 0 ? (
-              <p className="text-xs py-2" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无</p>
+              <div>
+                <p className="text-xs py-2" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无</p>
+                <Link href="/courses" className="btn-ghost text-xs w-full justify-center mt-2">+ 添加</Link>
+              </div>
             ) : (
-              viewAssignments.map((a) => {
-                const c = courseMap.get(a.course_id)
-                const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
-                const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
-                return (
-                  <div key={a.id} className="flex items-center gap-2 py-1.5 border-b last:border-0 text-xs" style={{ borderColor: 'var(--border-light)' }}>
-                    <span>{a.status === 'submitted' ? '✅' : '📝'}</span>
-                    <span className="truncate flex-1" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-primary)' }}>{a.title}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{c?.name}</span>
-                    {isOverdue && <span className="font-medium" style={{ color: 'var(--accent-danger)', animation: 'breathe-danger 3s ease-in-out infinite' }}>超时</span>}
-                  </div>
-                )
-              })
+              <>
+                {/* Group assignments by course */}
+                {(() => {
+                  const grouped = new Map<string, Assignment[]>()
+                  viewAssignments.forEach((a) => {
+                    const course = courseMap.get(a.course_id)
+                    const key = course?.name || '未知课程'
+                    if (!grouped.has(key)) grouped.set(key, [])
+                    grouped.get(key)!.push(a)
+                  })
+
+                  return Array.from(grouped.entries()).map(([courseName, assignments]) => {
+                    const courseId = assignments[0].course_id
+                    const isExpanded = expandedCourses.has(courseId)
+                    return (
+                      <div key={courseId} className="border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
+                        <button
+                          onClick={() => toggleCourseExpansion(courseId)}
+                          className="flex items-center justify-between w-full py-2 text-left hover:bg-[var(--border-light)]/30 rounded px-1"
+                        >
+                          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{courseName}</span>
+                          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{assignments.length}</span>
+                        </button>
+                        {isExpanded && (
+                          <div className="pb-2 pl-2 space-y-1">
+                            {assignments.map((a) => {
+                              const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+                              const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
+                              const dueTime = a.due_date.slice(5, 16).replace('T', ' ')
+                              return (
+                                <div key={a.id} className="flex items-center justify-between gap-2 py-1 text-xs">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span>{a.status === 'submitted' ? '✅' : '📝'}</span>
+                                    <span className="truncate" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-primary)' }}>{a.title}</span>
+                                  </div>
+                                  <span className="text-[10px] flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>{dueTime}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                })()}
+                <Link href="/courses" className="btn-ghost text-xs w-full justify-center mt-2">+ 添加</Link>
+              </>
             )}
           </div>
 
@@ -270,10 +328,11 @@ export function DayView() {
                 return (
                   <div key={m.id} className="flex items-start gap-2 py-1.5 border-b last:border-0" style={{ borderColor: 'var(--border-light)' }}>
                     <span className="text-sm">{m.mood_emoji}</span>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <p className="text-xs" style={{ color: 'var(--text-primary)' }}>{m.content}</p>
                       <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{c?.name} · {m.created_at.slice(11, 16)}</p>
                     </div>
+                    <button onClick={() => handleDeleteMemo(m.id)} className="text-xs opacity-30 hover:opacity-60">×</button>
                   </div>
                 )
               })

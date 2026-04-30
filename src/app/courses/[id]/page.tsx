@@ -104,14 +104,14 @@ export default function CourseDetailPage() {
                 {course.name.charAt(0)}
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h1>
+                <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h1>
                 <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {course.teacher !== '—' ? course.teacher : ''}
                   {course.classroom !== '—' ? ` · ${course.classroom}` : ''}
                 </p>
               </div>
             </div>
-            <button onClick={() => setEditing(!editing)} className="btn-ghost text-xs">{editing ? '取消' : '编辑'}</button>
+            <button onClick={() => setEditing(!editing)} className="btn-ghost text-sm">{editing ? '取消' : '编辑'}</button>
           </div>
 
           {editing && (
@@ -159,22 +159,32 @@ export default function CourseDetailPage() {
       </motion.div>
 
       {/* ======== MOOD ======== */}
-      {Object.keys(tagCounts).length > 0 && (
-        <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
-          <h3 className="text-xs font-medium mb-3" style={{ color: 'var(--text-primary)' }}>心情统计</h3>
-          <div className="flex gap-2 flex-wrap">
+      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+        <h3 className="text-xs font-medium mb-3" style={{ color: 'var(--text-primary)' }}>心情统计</h3>
+        {Object.keys(tagCounts).length > 0 ? (
+          <div className="space-y-2">
             {(['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待'] as MoodTag[]).map((tag) => {
               const count = tagCounts[tag] ?? 0
-              if (count === 0) return null
+              const totalCount = Object.values(tagCounts).reduce((a, b) => a + b, 0)
+              const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
               return (
-                <span key={tag} className="text-[10px] px-2 py-1 rounded-full font-medium" style={{ backgroundColor: `${getMoodColor(tag)}1A`, color: getMoodColor(tag) }}>
-                  {tag} ×{count}
-                </span>
+                <div key={tag} className="flex items-center gap-3">
+                  <span className="w-24 text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{tag}</span>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border-light)' }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${percentage}%`, backgroundColor: getMoodColor(tag) }}
+                    />
+                  </div>
+                  <span className="w-8 text-xs text-right" style={{ color: 'var(--text-secondary)' }}>{count}</span>
+                </div>
               )
             })}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-xs py-3 text-center" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>还没有记录心情，上课时记得标记哦～</p>
+        )}
+      </div>
 
       {/* ======== ASSIGNMENTS ======== */}
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>

@@ -30,7 +30,7 @@
   --border: var(--border-light);
   --nav-glass-bg: rgba(255, 251, 245, 0.8);
   --tab-glass-bg: rgba(255, 255, 255, 0.82);
-  --holiday-cell: rgba(0, 0, 0, 0.06);
+  --holiday-cell: rgba(229, 231, 235, 0.5);
   --makeup-badge: rgba(245, 158, 11, 0.08);
   --drop-highlight: rgba(59, 130, 246, 0.04);
 }

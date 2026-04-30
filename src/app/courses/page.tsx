@@ -163,7 +163,7 @@ export default function CoursesPage() {
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <Link href={`/courses/${course.id}`} className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>{course.name}</h3>
+                      <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{course.name}</h3>
                       <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                         {course.teacher !== '—' ? course.teacher : ''}
                         {course.classroom !== '—' ? ` · ${course.classroom}` : ''}
@@ -174,7 +174,7 @@ export default function CoursesPage() {
                     </div>
                   </div>
 
-                  <div className="flex gap-1 mt-3 flex-wrap">
+                  <div className="flex gap-[2px] mt-3 flex-wrap">
                     {Array.from({ length: totalClasses }, (_, i) => {
                       const isCompleted = i < completedClasses
                       const isCurrent = i >= completedClasses && i < completedClasses + perWeek
@@ -187,7 +187,7 @@ export default function CoursesPage() {
                       })
                       const tooltip = dotAssignments.length > 0 ? `${label}\n📝 ${dotAssignments.map((a) => a.title).join(', ')}` : label
                       return (
-                        <div key={i} className="w-2 h-2 rounded-sm relative group/dot" title={tooltip}
+                        <div key={i} className="w-4 h-4 rounded-sm relative group/dot" title={tooltip}
                           style={{
                             backgroundColor: isCompleted ? course.color : 'transparent',
                             border: isCurrent && !isCompleted ? '1.5px solid var(--accent-warm)' : isCompleted ? 'none' : '1px dashed var(--border-light)',
@@ -247,8 +247,8 @@ export default function CoursesPage() {
                   )}
 
                   <div className="flex justify-end gap-3 mt-3">
-                    <button onClick={() => handleOpenEdit(course)} className="text-[10px]" style={{ color: 'var(--accent-info)' }}>✏️ 编辑</button>
-                    <button onClick={() => setDeleteConfirm(course)} className="text-[10px]" style={{ color: 'var(--accent-danger)' }}>🗑️ 删除</button>
+                    <button onClick={() => handleOpenEdit(course)} className="text-sm" style={{ color: 'var(--accent-info)' }}>✏️ 编辑</button>
+                    <button onClick={() => setDeleteConfirm(course)} className="text-sm" style={{ color: 'var(--accent-danger)' }}>🗑️ 删除</button>
                   </div>
                 </div>
               </motion.div>
@@ -257,7 +257,7 @@ export default function CoursesPage() {
         })}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: courses.length * 0.1 }}>
-          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-[var(--border-light)] transition-colors"
+          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             style={{ border: '2px dashed var(--border-light)' }}
             onClick={() => setAddingCourse(true)}
           >

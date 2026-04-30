@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCourses, getSchedules } from '@/lib/data'
 import { getTodayCourses } from '@/lib/schedule'
+import { useWarmthBanner } from './WarmthBannerContext'
 
 const MORNING_GREETINGS = ['早上好', '上午好']
 const AFTERNOON_GREETINGS = ['下午好', '午后好']
@@ -22,13 +23,12 @@ const ENCOURAGEMENTS = [
 ]
 
 export function WarmthBanner() {
+  const { isEnabled, isHiddenToday, hideToday } = useWarmthBanner()
   const [message, setMessage] = useState('')
   const [encouragement, setEncouragement] = useState('')
-  const [visible, setVisible] = useState(true)
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    try { const hiddenDate = localStorage.getItem('warmth_banner_hidden'); if (hiddenDate === today) { setVisible(false); return } } catch {}
+    if (!isEnabled || isHiddenToday) return
 
     Promise.all([getCourses(), getSchedules()]).then(([, schedules]) => {
       const todayCourses = getTodayCourses(schedules)
@@ -47,45 +47,43 @@ export function WarmthBanner() {
       setMessage(`${timeGreet}，${count}节课。${word}`)
       setEncouragement(ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)])
     })
-  }, [])
+  }, [isEnabled, isHiddenToday])
 
   const handleClose = () => {
-    const today = new Date().toISOString().slice(0, 10)
-    try { localStorage.setItem('warmth_banner_hidden', today) } catch {}
-    setVisible(false)
+    hideToday()
   }
+
+  if (!isEnabled || isHiddenToday || !message) return null
 
   return (
     <AnimatePresence>
-      {visible && message && (
-        <motion.div
-          initial={{ opacity: 0, y: -8, height: 0 }}
-          animate={{ opacity: 1, y: 0, height: 'auto' }}
-          exit={{ opacity: 0, y: -8, height: 0 }}
-          className="mb-4 relative h-12 flex items-center px-4 rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            borderLeft: '4px solid var(--accent-warm)',
-          }}
+      <motion.div
+        initial={{ opacity: 0, y: -8, height: 0 }}
+        animate={{ opacity: 1, y: 0, height: 'auto' }}
+        exit={{ opacity: 0, y: -8, height: 0 }}
+        className="mb-4 relative h-12 flex items-center px-4 rounded-2xl overflow-hidden"
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderLeft: '4px solid var(--accent-warm)',
+        }}
+      >
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <p className="text-base font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
+            {message}
+          </p>
+          <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+            {encouragement}
+          </p>
+        </div>
+        <button
+          onClick={handleClose}
+          className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-label="关闭问候"
         >
-          <div className="flex-1 min-w-0 flex flex-col justify-center">
-            <p className="text-base font-medium truncate" style={{ color: 'var(--text-secondary)' }}>
-              {message}
-            </p>
-            <p className="text-xs italic truncate" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-              {encouragement}
-            </p>
-          </div>
-          <button
-            onClick={handleClose}
-            className="ml-2 w-6 h-6 flex items-center justify-center rounded-full opacity-30 hover:opacity-60 transition-opacity text-xs flex-shrink-0"
-            style={{ color: 'var(--text-secondary)' }}
-            aria-label="关闭问候"
-          >
-            ✕
-          </button>
-        </motion.div>
-      )}
+          ✕
+        </button>
+      </motion.div>
     </AnimatePresence>
   )
 }

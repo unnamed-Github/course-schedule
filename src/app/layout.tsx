@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/ThemeProvider"
+import { WarmthBannerProvider } from "@/components/WarmthBannerContext"
 import { TopBar } from "@/components/TopBar"
 import { BottomNav } from "@/components/BottomNav"
 import { PageTransition } from "@/components/PageTransition"
@@ -21,13 +22,15 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
           <ToastProvider>
-            <TopBar />
-            <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-24">
-              <PageTransition>
-                {children}
-              </PageTransition>
-            </main>
-            <BottomNav />
+            <WarmthBannerProvider>
+              <TopBar />
+              <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-24">
+                <PageTransition>
+                  {children}
+                </PageTransition>
+              </main>
+              <BottomNav />
+            </WarmthBannerProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

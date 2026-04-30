@@ -6,17 +6,22 @@ import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { useTheme } from '@/components/ThemeProvider'
 import { getSemesterConfig } from '@/lib/semester'
 import { useToast } from '@/components/ToastProvider'
+import { useWarmthBanner } from '@/components/WarmthBannerContext'
 
 const semester = getSemesterConfig()
 
 export default function SettingsPage() {
   const { theme, toggle } = useTheme()
+  const { isEnabled: warmthBannerEnabled, toggleEnabled: toggleWarmthBanner } = useWarmthBanner()
   const { showToast } = useToast()
   const [importPreview, setImportPreview] = useState<unknown[]>([])
   const [showImport, setShowImport] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [teachingWeeks, setTeachingWeeks] = useState(15)
+  const [examWeeks, setExamWeeks] = useState(2)
+  const totalWeeks = teachingWeeks + examWeeks
 
   const processFile = async (file: File) => {
     try {
@@ -68,9 +73,9 @@ export default function SettingsPage() {
           <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={async (e) => { const f = e.target.files?.[0]; if (f) await processFile(f) }} className="hidden" />
         </div>
         <div className="flex flex-wrap gap-2">
-          <button onClick={handleExportCSV} className="btn-ghost text-sm flex-1">📤 CSV</button>
-          <button onClick={handleExportExcel} className="btn-ghost text-sm flex-1">📤 Excel</button>
-          <button onClick={handleExportJSON} className="btn-ghost text-sm flex-1">📤 JSON</button>
+          <button onClick={handleExportCSV} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 CSV</button>
+          <button onClick={handleExportExcel} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 Excel</button>
+          <button onClick={handleExportJSON} className="btn-primary text-sm flex-1" style={{ justifyContent: 'center' }}>📤 JSON</button>
         </div>
         {showImport && importPreview.length > 0 && (
           <div className="mt-3 p-3 rounded-2xl" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -95,6 +100,12 @@ export default function SettingsPage() {
               <div className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm" style={{ left: highlightEnabled ? 'calc(100% - 22px)' : '2px' }} />
             </button>
           </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>每日问候横幅</span>
+            <button onClick={toggleWarmthBanner} className="w-11 h-6 rounded-full relative transition-colors" style={{ backgroundColor: warmthBannerEnabled ? 'var(--accent-info)' : 'var(--border-light)' }}>
+              <div className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm" style={{ left: warmthBannerEnabled ? 'calc(100% - 22px)' : '2px' }} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -104,11 +115,14 @@ export default function SettingsPage() {
           <div className="flex justify-between text-sm"><span>开学日期</span>
             <input type="date" className="rounded-lg px-2 py-1 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} defaultValue="2026-02-25" />
           </div>
+          <div className="flex justify-between text-sm"><span>总周数（含考试）</span>
+            <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{totalWeeks} 周</span>
+          </div>
           <div className="flex justify-between text-sm"><span>教学周</span>
-            <input type="number" className="rounded-lg px-2 py-1 w-20 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} defaultValue={15} min={1} max={30} />
+            <input type="number" className="rounded-lg px-2 py-1 w-20 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} value={teachingWeeks} onChange={(e) => setTeachingWeeks(Math.max(1, parseInt(e.target.value) || 1))} min={1} max={30} />
           </div>
           <div className="flex justify-between text-sm"><span>考试周</span>
-            <input type="number" className="rounded-lg px-2 py-1 w-20 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} defaultValue={2} min={0} max={10} />
+            <input type="number" className="rounded-lg px-2 py-1 w-20 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }} value={examWeeks} onChange={(e) => setExamWeeks(Math.max(0, parseInt(e.target.value) || 0))} min={0} max={10} />
           </div>
           <div className="flex justify-between text-sm"><span>节假日</span><span>清明 4/5 · 五一 5/1-5 · 端午 6/19</span></div>
         </div>
@@ -135,7 +149,7 @@ export default function SettingsPage() {
         <div className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
           <p>课表 · 竹 v1.0</p>
           <p>2026 春季学期 · 南科大</p>
-          <p>温暖手帐 · 云端同步 · 开源</p>
+          <p>温暖手账 · 云端同步 · 开源</p>
         </div>
       </div>
     </div>

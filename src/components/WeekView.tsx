@@ -110,9 +110,9 @@ export function WeekView() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-center gap-4 mb-4">
-        <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
+        <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>←</button>
         <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>第{weekNum}/15周 · {weekRange ? `${formatDate(weekRange.start)}—${formatDate(weekRange.end)}` : ''}</span>
-        <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
+        <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" style={{ color: 'var(--text-secondary)' }}>→</button>
       </div>
 
       <div className="overflow-x-auto">
@@ -156,10 +156,10 @@ export function WeekView() {
                     return (
                       <div key={day} className="p-1 flex flex-col gap-0.5" style={{ backgroundColor: holiday ? 'var(--holiday-cell)' : 'transparent' }}>
                         {holiday && makeup ? (
-                          <div className="flex-1 flex items-center justify-center p-2 rounded-2xl" style={{ backgroundColor: 'var(--makeup-badge)' }}>
-                            <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>补课 · 周{DAYS[makeup.replacesDayOfWeek - 1]}</span>
-                          </div>
-                        ) : holiday ? (
+                <div className="flex-1 flex items-center justify-center p-2 rounded-2xl" style={{ backgroundColor: 'var(--makeup-badge)' }}>
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>原{makeup.date.slice(5)} 补课</span>
+                </div>
+              ) : holiday ? (
                           <div className="flex-1 flex items-center justify-center">
                             <span className="text-sm italic" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{holiday.name}</span>
                           </div>
@@ -179,18 +179,24 @@ export function WeekView() {
                             courseMemos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
 
                             return (
-                              <motion.div
-                                key={schedule.id}
-                                onClick={() => setSelectedSlot(isSelected ? null : { courseId: schedule.course_id, scheduleId: schedule.id })}
-                                className="rounded-2xl p-2 cursor-pointer relative"
-                                style={{
-                                  backgroundColor: `${course.color}26`,
-                                  borderLeft: `4px solid ${course.color}`,
-                                  boxShadow: active ? '0 0 0 2px var(--accent-warm)' : 'none',
-                                }}
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ duration: 0.15 }}
-                              >
+            <motion.div
+              key={schedule.id}
+              onClick={() => setSelectedSlot(isSelected ? null : { courseId: schedule.course_id, scheduleId: schedule.id })}
+              className="rounded-2xl p-2 cursor-pointer relative"
+              style={{
+                backgroundColor: `${course.color}26`,
+                borderLeft: `4px solid ${course.color}`,
+                ...(active
+                  ? {
+                      outline: '2px solid var(--accent-warm)',
+                      outlineOffset: '1px',
+                      boxShadow: 'var(--shadow-lg)',
+                    }
+                  : {}),
+              }}
+              whileHover={{ scale: 1.02, boxShadow: 'var(--shadow-md)' }}
+              transition={{ duration: 0.15 }}
+            >
                                 <div className="flex items-start justify-between">
                                   <div className="min-w-0 flex-1">
                                     <div className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{course.name}</div>
@@ -278,8 +284,19 @@ function SlidePanelContent({
   memos: Memo[]
   onClose: () => void
 }) {
+  const [selectedTags, setSelectedTags] = useState<Set<MoodTag>>(new Set())
   const tagCounts: Record<string, number> = {}
   memos.forEach((m) => { m.mood_tags?.forEach((t) => { tagCounts[t] = (tagCounts[t] ?? 0) + 1 }) })
+
+  const toggleTag = (tag: MoodTag) => {
+    const newTags = new Set(selectedTags)
+    if (newTags.has(tag)) {
+      newTags.delete(tag)
+    } else {
+      newTags.add(tag)
+    }
+    setSelectedTags(newTags)
+  }
 
   return (
     <div>
@@ -292,7 +309,7 @@ function SlidePanelContent({
       </div>
 
       <div className="mb-4">
-        <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业</p>
+        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>📝 作业</p>
         {assignments.length === 0 ? (
           <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>暂无作业</p>
         ) : (
@@ -308,26 +325,32 @@ function SlidePanelContent({
             )
           })
         )}
-        <Link href={`/courses/${course.id}`} className="text-[10px] mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 添加作业</Link>
+        <Link href={`/courses/${course.id}`} className="text-sm mt-1 inline-block" style={{ color: 'var(--accent-info)' }}>+ 添加作业</Link>
       </div>
 
       <div className="mb-4">
         <p className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>心情标签</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {(['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期待'] as MoodTag[]).map((tag) => {
             const count = tagCounts[tag] ?? 0
+            const isSelected = selectedTags.has(tag)
             return (
-              <span
+              <motion.button
                 key={tag}
-                className="text-xs px-3 py-1 rounded-full"
+                onClick={() => toggleTag(tag)}
+                className="text-xs px-3 py-1 rounded-full cursor-pointer"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={isSelected ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ duration: 0.2 }}
                 style={{
-                  backgroundColor: count > 0 ? `${getMoodColor(tag)}33` : 'var(--bg-primary)',
-                  color: count > 0 ? getMoodColor(tag) : 'var(--text-secondary)',
-                  border: `1px solid ${count > 0 ? getMoodColor(tag) : 'var(--border-light)'}`,
+                  backgroundColor: isSelected ? `${getMoodColor(tag)}33` : count > 0 ? `${getMoodColor(tag)}1A` : 'var(--bg-primary)',
+                  color: isSelected || count > 0 ? getMoodColor(tag) : 'var(--text-secondary)',
+                  border: `1px solid ${isSelected || count > 0 ? getMoodColor(tag) : 'var(--border-light)'}`,
                 }}
               >
                 {tag}{count > 0 ? ` ${count}` : ''}
-              </span>
+              </motion.button>
             )
           })}
         </div>

@@ -24,11 +24,11 @@ export function TopBar() {
   return (
     <header
       className="sticky top-0 z-50 h-14 flex items-center justify-between px-4"
-      style={{ backgroundColor: 'var(--nav-glass-bg)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--border-light)' }}
+      style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)' }}
     >
       <button
         onClick={toggle}
-        className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--border-light)]"
+        className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
         aria-label="切换主题"
         style={{ color: 'var(--text-secondary)' }}
       >
