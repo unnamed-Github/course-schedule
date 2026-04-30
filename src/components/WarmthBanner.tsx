@@ -4,13 +4,13 @@ import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getCourses, getSchedules, getAssignments, getScheduleOverrides, createScheduleOverride, deleteScheduleOverride } from '@/lib/data'
 import { getTodayCourses } from '@/lib/schedule'
-import { getCurrentPeriod, PERIOD_TIMES, getPeriodTime } from '@/lib/semester'
+import { getCurrentPeriod, PERIOD_TIMES, getPeriodTime, isHoliday, getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { Course, CourseSchedule, ScheduleOverride } from '@/lib/types'
 import { useWarmthBanner } from './WarmthBannerContext'
 import { Clock, X, CheckCircle2, RotateCcw } from 'lucide-react'
 import { useFestivalGreeting } from './FestivalEasterEgg'
 import { useToast } from './ToastProvider'
-import { getDailyQuote } from '@/lib/daily-quote'
+import { getDailyQuote, type QuoteContext } from '@/lib/daily-quote'
 import { useClassFinish, ClassFinishCelebration } from './ClassFinishCelebration'
 
 const MORNING_GREETINGS = ['早上好', '上午好']
@@ -184,7 +184,27 @@ export function WarmthBanner() {
   }
 
   const { shouldCelebrate, courseName } = useClassFinish(currentCourseInfo)
-  const dailyQuote = useMemo(() => getDailyQuote(), [])
+  const dailyQuote = useMemo(() => {
+    const now = new Date()
+    const holiday = isHoliday(now)
+    const weekNum = getWeekNumber(now)
+    const config = getSemesterConfig()
+    const totalTeaching = config.teachingWeeks
+    let semesterPhase: QuoteContext['semesterPhase'] = 'mid'
+    if (weekNum <= 2) semesterPhase = 'early'
+    else if (weekNum <= Math.floor(totalTeaching * 0.7)) semesterPhase = 'mid'
+    else if (weekNum <= totalTeaching) semesterPhase = 'late'
+    else if (weekNum <= totalTeaching + config.examWeeks) semesterPhase = 'exam'
+    else semesterPhase = 'break'
+
+    return getDailyQuote({
+      date: now,
+      holiday: holiday ? { name: holiday.name } : null,
+      semesterPhase,
+      isWeekend: now.getDay() === 0 || now.getDay() === 6,
+      courseCount: getTodayCourses(schedules).length,
+    })
+  }, [schedules])
 
   return (
     <>
