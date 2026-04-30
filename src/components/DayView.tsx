@@ -200,8 +200,6 @@ export function DayView() {
             const isCurrent = !isCancelled && highlightEnabled && isToday && currentPeriod !== null && currentPeriod >= schedule.start_period && currentPeriod <= schedule.end_period
             const progress = getCourseProgress(schedule)
             const isExpanded = !isCancelled && expandedCourse === schedule.id
-            const isViewingTodayOrFuture = isSameDay(viewDate, new Date()) || viewDate > new Date()
-            const canOperate = isViewingTodayOrFuture && !isCancelled
 
             return (
               <motion.div
@@ -256,8 +254,17 @@ export function DayView() {
                         {isEndedEarly && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#10B981', color: 'white' }}>已下课</span>
                         )}
-                        {isCurrent && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium" style={{ backgroundColor: course.color }}>进行中 {Math.round(progress)}%</span>
+                        {isCurrent && !isEndedEarly && (
+                          <span
+                            onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, 'ended_early') }}
+                            className="text-[10px] px-2 py-0.5 rounded-full text-white font-medium cursor-pointer hover:opacity-80"
+                            style={{ backgroundColor: course.color }}
+                          >
+                            进行中 {Math.round(progress)}% · 提前下课
+                          </span>
+                        )}
+                        {isCurrent && isEndedEarly && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: '#10B981', color: 'white' }}>已下课</span>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -334,28 +341,14 @@ export function DayView() {
                                   </button>
                                 </div>
                               ) : (
-                                <>
-                                  {canOperate && (
-                                    <button
-                                      onClick={() => handleOverrideAction(schedule.id, 'cancelled')}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                                      style={{ border: '1px solid #EF4444', color: '#EF4444' }}
-                                    >
-                                      <Trash2 size={14} strokeWidth={1.8} />
-                                      取消本课
-                                    </button>
-                                  )}
-                                  {canOperate && !isEndedEarly && (
-                                    <button
-                                      onClick={() => handleOverrideAction(schedule.id, 'ended_early')}
-                                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                                      style={{ border: '1px solid #10B981', color: '#10B981' }}
-                                    >
-                                      <CheckCircle2 size={14} strokeWidth={1.8} />
-                                      提前下课
-                                    </button>
-                                  )}
-                                </>
+                                <button
+                                  onClick={() => handleOverrideAction(schedule.id, 'cancelled')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                                  style={{ border: '1px solid #EF4444', color: '#EF4444' }}
+                                >
+                                  <Trash2 size={14} strokeWidth={1.8} />
+                                  取消本课
+                                </button>
                               )}
                             </div>
                           )}

@@ -9,7 +9,7 @@ import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeup
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
 import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
-import { ChevronLeft, ChevronRight, User, Clock, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw } from 'lucide-react'
 
 const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
 const PERIOD_GROUP_DEFS = [
@@ -331,8 +331,6 @@ export function WeekView() {
                         const active = !isCancelled && highlightEnabled && isCurrentCourse(schedule)
                         const isExpanded = !isCancelled && expandedSchedule?.id === schedule.id
                         const assignmentCount = getCourseAssignmentCount(course.id)
-                        const isViewingTodayOrFuture = dateStr >= new Date().toISOString().split('T')[0]
-                        const canOperate = isViewingTodayOrFuture && !isCancelled
 
                         return (
                           <motion.div
@@ -358,6 +356,15 @@ export function WeekView() {
                                 )}
                                 {isEndedEarly && (
                                   <div className="text-[10px] opacity-90 mt-1 font-medium" style={{ color: '#D1FAE5' }}>已下课</div>
+                                )}
+                                {active && !isEndedEarly && (
+                                  <div
+                                    onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'ended_early') }}
+                                    className="text-[10px] opacity-90 mt-1 font-medium cursor-pointer hover:opacity-70"
+                                    style={{ color: '#D1FAE5' }}
+                                  >
+                                    提前下课
+                                  </div>
                                 )}
                               </div>
                               {assignmentCount > 0 && !isCancelled && (
@@ -415,28 +422,14 @@ export function WeekView() {
                                             </button>
                                           </div>
                                         ) : (
-                                          <>
-                                            {canOperate && (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'cancelled') }}
-                                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
-                                                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                                              >
-                                                <Trash2 size={12} strokeWidth={2} />
-                                                取消本课
-                                              </button>
-                                            )}
-                                            {canOperate && !isEndedEarly && (
-                                              <button
-                                                onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'ended_early') }}
-                                                className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
-                                                style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
-                                              >
-                                                <CheckCircle2 size={12} strokeWidth={2} />
-                                                提前下课
-                                              </button>
-                                            )}
-                                          </>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handleOverrideAction(schedule.id, dateStr, 'cancelled') }}
+                                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white' }}
+                                          >
+                                            <Trash2 size={12} strokeWidth={2} />
+                                            取消本课
+                                          </button>
                                         )}
                                       </div>
                                     )}
