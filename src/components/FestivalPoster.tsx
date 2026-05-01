@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTodayFestival } from '@/lib/festivals'
 import { X } from 'lucide-react'
@@ -8,6 +8,14 @@ import { X } from 'lucide-react'
 export function FestivalPoster() {
   const festival = useMemo(() => getTodayFestival(), [])
   const [visible, setVisible] = useState(false)
+  const overlayRef = useRef<HTMLDivElement>(null)
+
+  const show = useCallback(() => setVisible(true), [])
+
+  useEffect(() => {
+    window.addEventListener('festival-poster:show', show)
+    return () => window.removeEventListener('festival-poster:show', show)
+  }, [show])
 
   useEffect(() => {
     if (!festival) return
@@ -34,11 +42,13 @@ export function FestivalPoster() {
     <AnimatePresence>
       {visible && (
         <motion.div
+          ref={overlayRef}
           className="fixed inset-0 z-[80] flex items-center justify-center p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
+          onClick={(e) => { if (e.target === overlayRef.current) handleClose() }}
           style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
         >
           <motion.div
@@ -92,7 +102,7 @@ export function FestivalPoster() {
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.35 }}
-                className="text-sm mb-8"
+                className="text-sm mb-6"
                 style={{ color: 'rgba(255,255,255,0.8)' }}
               >
                 {festival.subGreeting}
@@ -102,25 +112,20 @@ export function FestivalPoster() {
                 initial={{ y: 8, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex justify-center gap-2"
+                className="mx-2 mb-6 p-4 rounded-2xl"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(4px)' }}
               >
-                {[...Array(3)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    animate={{ y: [0, -8, 0], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, delay: i * 0.3, repeat: Infinity, ease: 'easeInOut' }}
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.4)' }}
-                  />
-                ))}
+                <p className="text-xs leading-relaxed text-left" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                  {festival.history}
+                </p>
               </motion.div>
 
               <motion.button
                 initial={{ y: 8, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.55 }}
+                transition={{ delay: 0.6 }}
                 onClick={handleClose}
-                className="mt-6 px-6 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95"
+                className="px-6 py-2.5 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95"
                 style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', backdropFilter: 'blur(4px)' }}
               >
                 知道了

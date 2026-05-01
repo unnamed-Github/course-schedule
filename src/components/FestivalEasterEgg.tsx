@@ -14,13 +14,18 @@ export function FestivalEasterEgg() {
 
   if (!festival) return null
 
+  const handleClick = () => {
+    window.dispatchEvent(new CustomEvent('festival-poster:show'))
+  }
+
   return (
     <motion.span
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.3 }}
       whileHover={{ scale: 1.2 }}
-      className="inline-flex items-center gap-1 cursor-default"
+      onClick={handleClick}
+      className="inline-flex items-center gap-1 cursor-pointer"
       title={festival.greeting}
     >
       <PartyPopper size={18} strokeWidth={1.8} style={{ color: 'var(--accent-warm)' }} />
