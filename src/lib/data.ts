@@ -380,6 +380,31 @@ export async function deleteMemo(id: string): Promise<boolean> {
   }
 }
 
+export async function updateMemo(id: string, updates: Partial<Memo>): Promise<Memo | null> {
+  if (!supabaseAvailable) {
+    const index = localStorage.memos.findIndex(m => m.id === id)
+    if (index !== -1) {
+      localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
+      invalidateCache('memos')
+      return localStorage.memos[index]
+    }
+    return null
+  }
+  try {
+    const { data } = await supabase.from('memos').update(updates).eq('id', id).select().single()
+    if (data) invalidateCache('memos')
+    return data
+  } catch (e) {
+    const index = localStorage.memos.findIndex(m => m.id === id)
+    if (index !== -1) {
+      localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
+      invalidateCache('memos')
+      return localStorage.memos[index]
+    }
+    return null
+  }
+}
+
 // ---------- Schedule Overrides ----------
 
 export async function getScheduleOverrides(date: string): Promise<ScheduleOverride[]> {

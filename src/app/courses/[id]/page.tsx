@@ -9,7 +9,7 @@ import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
 import { useToast } from '@/components/ToastProvider'
 import { EMOJI_OPTIONS } from '@/lib/constants'
-import { ClipboardList, Pin, Check, Square, X, ChevronLeft, Plus } from 'lucide-react'
+import { ClipboardList, Pin, Check, Square, X, ChevronLeft, Plus, Pencil, Trash2 } from 'lucide-react'
 
 export const dynamic = 'auto'
 
@@ -40,6 +40,8 @@ export default function CourseDetailPage() {
 
   const [showAssignmentForm, setShowAssignmentForm] = useState(false)
   const [assignmentForm, setAssignmentForm] = useState({ title: '', description: '', due_date: '' })
+  const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null)
+  const [editAssignmentForm, setEditAssignmentForm] = useState({ title: '', description: '', due_date: '' })
 
   const [showMemoForm, setShowMemoForm] = useState(false)
   const [memoForm, setMemoForm] = useState({ content: '', mood_emoji: '😊', mood_tags: [] as MoodTag[] })
@@ -162,6 +164,27 @@ export default function CourseDetailPage() {
     } catch (e) {
       showToast('删除失败', 'error')
     }
+  }
+  const handleEditAssignment = (a: Assignment) => {
+    setEditingAssignmentId(a.id)
+    setEditAssignmentForm({ title: a.title, description: a.description || '', due_date: a.due_date.slice(0, 16) })
+  }
+  const handleSaveEditAssignment = async () => {
+    if (!editingAssignmentId || !editAssignmentForm.title.trim()) return
+    try {
+      const u = await updateAssignment(editingAssignmentId, {
+        title: editAssignmentForm.title.trim(),
+        description: editAssignmentForm.description.trim(),
+        due_date: editAssignmentForm.due_date,
+      })
+      if (u) {
+        setAssignments((prev) => prev.map((a) => (a.id === editingAssignmentId ? u : a)))
+        showToast('作业已更新', 'success')
+      }
+    } catch (e) {
+      showToast('更新失败', 'error')
+    }
+    setEditingAssignmentId(null)
   }
   const handleAddMemo = async () => {
     try {
@@ -409,19 +432,36 @@ export default function CourseDetailPage() {
               const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
               const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
               return (
-                <div key={a.id} className="flex items-center gap-3 py-2.5 px-3 rounded-xl group hover:bg-[var(--border-light)]/30 transition-colors">
-                  <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0 cursor-pointer">{a.status === 'submitted' ? <Check size={16} strokeWidth={2.5} style={{ color: 'var(--accent-success)' }} /> : <Square size={16} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />}</button>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="w-0.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : course.color, minHeight: '16px', width: 2 }} />
-                      <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <Check size={12} strokeWidth={2.5} style={{ color: 'var(--accent-success)', display: 'inline', marginLeft: '4px', verticalAlign: '-2px' }} />}</p>
+                <div key={a.id} className="py-2.5 px-3 rounded-xl hover:bg-[var(--border-light)]/30 transition-colors">
+                  {editingAssignmentId === a.id ? (
+                    <div className="space-y-2">
+                      <input value={editAssignmentForm.title} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, title: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                      <input value={editAssignmentForm.description} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, description: e.target.value }))} placeholder="描述" className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                      <input type="datetime-local" value={editAssignmentForm.due_date} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                      <div className="flex gap-2">
+                        <button onClick={handleSaveEditAssignment} className="btn-primary text-xs">保存</button>
+                        <button onClick={() => setEditingAssignmentId(null)} className="btn-ghost text-xs">取消</button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
-                      <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
-                      <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{a.due_date.slice(0, 16).replace('T', ' ')}</span>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => handleToggleAssignment(a.id, a.status)} className="text-base flex-shrink-0 cursor-pointer">{a.status === 'submitted' ? <Check size={16} strokeWidth={2.5} style={{ color: 'var(--accent-success)' }} /> : <Square size={16} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.3 }} />}</button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="w-0.5 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : course.color, minHeight: '16px', width: 2 }} />
+                          <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <Check size={12} strokeWidth={2.5} style={{ color: 'var(--accent-success)', display: 'inline', marginLeft: '4px', verticalAlign: '-2px' }} />}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
+                          <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
+                          <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{a.due_date.slice(0, 16).replace('T', ' ')}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => handleEditAssignment(a)} className="cursor-pointer opacity-30 hover:opacity-60 transition-opacity" style={{ color: 'var(--accent-info)' }}><Pencil size={13} strokeWidth={2} /></button>
+                        <button onClick={() => handleDeleteAssignment(a.id)} className="cursor-pointer opacity-30 hover:opacity-60 transition-opacity" style={{ color: 'var(--accent-danger)' }}><Trash2 size={13} strokeWidth={2} /></button>
+                      </div>
                     </div>
-                  </div>
-                  <button onClick={() => handleDeleteAssignment(a.id)} className="cursor-pointer opacity-0 group-hover:opacity-30 transition-opacity"><X size={14} strokeWidth={1.8} /></button>
+                  )}
                 </div>
               )
             })}

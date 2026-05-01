@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Course, Memo } from '@/lib/types'
-import { getCourses, getMemos, createMemo, deleteMemo } from '@/lib/data'
+import { getCourses, getMemos, createMemo, deleteMemo, updateMemo } from '@/lib/data'
 import { Modal } from './Modal'
-import { Plus, StickyNote, X } from 'lucide-react'
+import { Plus, StickyNote, X, Pencil } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
@@ -17,6 +17,9 @@ export function MemosView() {
   const [selectedEmoji, setSelectedEmoji] = useState('📝')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editEmoji, setEditEmoji] = useState('📝')
 
   useEffect(() => {
     Promise.all([getCourses(), getMemos()]).then(([c, m]) => {
@@ -32,20 +35,20 @@ export function MemosView() {
     return acc
   }, {} as Record<string, number>)
 
-  const sortedCourses = [...courses].sort((a, b) => 
+  const sortedCourses = [...courses].sort((a, b) =>
     (courseMemoCounts[b.id] || 0) - (courseMemoCounts[a.id] || 0)
   )
 
   const handleAddMemo = async () => {
     if (!newMemo.trim() || !selectedCourseId) return
-    
+
     const memo = await createMemo({
       course_id: selectedCourseId,
       content: newMemo,
       mood_emoji: selectedEmoji,
       mood_tags: [],
     })
-    
+
     if (memo) {
       setMemos(prev => [memo, ...prev])
       setNewMemo('')
@@ -57,6 +60,24 @@ export function MemosView() {
     setMemos(prev => prev.filter(m => m.id !== id))
   }
 
+  const handleEditMemo = (memo: Memo) => {
+    setEditingId(memo.id)
+    setEditContent(memo.content)
+    setEditEmoji(memo.mood_emoji || '📝')
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editContent.trim()) return
+    const updated = await updateMemo(editingId, {
+      content: editContent.trim(),
+      mood_emoji: editEmoji,
+    })
+    if (updated) {
+      setMemos(prev => prev.map(m => m.id === updated.id ? updated : m))
+    }
+    setEditingId(null)
+  }
+
   if (!loaded) return null
 
   return (
@@ -66,7 +87,6 @@ export function MemosView() {
         <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />新增备忘</button>
       </div>
 
-      {/* 备忘列表 */}
       <div className="space-y-3">
         {memos.length === 0 ? (
           <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
@@ -85,32 +105,64 @@ export function MemosView() {
                 className="p-4 rounded-2xl flex gap-3"
                 style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}
               >
-                <div 
+                <div
                   className="w-1 rounded-full flex-shrink-0"
                   style={{ backgroundColor: course?.color || 'var(--border-light)' }}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{memo.mood_emoji}</span>
-                      {course && (
-                        <span className="text-sm font-medium" style={{ color: course.color }}>
-                          {course.name}
-                        </span>
-                      )}
+                  {editingId === memo.id ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {EMOJI_OPTIONS.map((emoji) => (
+                          <button key={emoji} onClick={() => setEditEmoji(emoji)} className={`text-lg p-0.5 rounded-lg transition-colors ${editEmoji === emoji ? 'bg-[var(--border-light)]' : ''}`}>{emoji}</button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        rows={2}
+                        className="w-full rounded-xl px-3 py-2 text-sm resize-none"
+                        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={handleSaveEdit} className="btn-primary text-xs">保存</button>
+                        <button onClick={() => setEditingId(null)} className="btn-ghost text-xs">取消</button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteMemo(memo.id)}
-                      className="opacity-30 hover:opacity-60 transition-opacity flex-shrink-0 cursor-pointer"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      <X size={14} strokeWidth={1.8} />
-                    </button>
-                  </div>
-                  <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{memo.content}</p>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-                    {memo.created_at.replace('T', ' ')}
-                  </p>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-3 mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{memo.mood_emoji}</span>
+                          {course && (
+                            <span className="text-sm font-medium" style={{ color: course.color }}>
+                              {course.name}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => handleEditMemo(memo)}
+                            className="opacity-30 hover:opacity-60 transition-opacity cursor-pointer"
+                            style={{ color: 'var(--accent-info)' }}
+                          >
+                            <Pencil size={13} strokeWidth={2} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMemo(memo.id)}
+                            className="opacity-30 hover:opacity-60 transition-opacity cursor-pointer"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            <X size={14} strokeWidth={1.8} />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{memo.content}</p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+                        {memo.created_at.replace('T', ' ')}
+                      </p>
+                    </>
+                  )}
                 </div>
               </motion.div>
             )
@@ -118,7 +170,6 @@ export function MemosView() {
         )}
       </div>
 
-      {/* 底部心情统计 */}
       {sortedCourses.some(c => (courseMemoCounts[c.id] || 0) > 0) && (
         <div className="pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
           <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>
@@ -129,7 +180,7 @@ export function MemosView() {
               const count = courseMemoCounts[course.id] || 0
               const maxCount = Math.max(...Object.values(courseMemoCounts), 1)
               const percentage = (count / maxCount) * 100
-              
+
               return (
                 <div key={course.id} className="flex items-center gap-3">
                   <div className="flex-1">
@@ -142,7 +193,7 @@ export function MemosView() {
                       </span>
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${course.color}26` }}>
-                      <div 
+                      <div
                         className="h-full rounded-full"
                         style={{ width: `${percentage}%`, backgroundColor: course.color }}
                       />

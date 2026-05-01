@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment } from '@/lib/types'
-import { getCourses, getAssignments, updateAssignment, createAssignment } from '@/lib/data'
+import { getCourses, getAssignments, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
 import { Modal } from './Modal'
-import { Bell, AlertTriangle, Check, Plus } from 'lucide-react'
+import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2 } from 'lucide-react'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
 
@@ -20,6 +20,10 @@ export function AssignmentsView() {
   const [newCourseId, setNewCourseId] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
   const [newDesc, setNewDesc] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDueDate, setEditDueDate] = useState('')
+  const [editDesc, setEditDesc] = useState('')
 
   useEffect(() => {
     Promise.all([getCourses(), getAssignments()]).then(([c, a]) => {
@@ -41,7 +45,7 @@ export function AssignmentsView() {
     all: assignments.length,
     pending: assignments.filter(a => a.status === 'pending').length,
     submitted: assignments.filter(a => a.status === 'submitted').length,
-    overdue: assignments.filter(a => 
+    overdue: assignments.filter(a =>
       new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
     ).length,
   }
@@ -75,6 +79,32 @@ export function AssignmentsView() {
     }
   }
 
+  const handleEdit = (assignment: Assignment) => {
+    setEditingId(assignment.id)
+    setEditTitle(assignment.title)
+    setEditDueDate(assignment.due_date.slice(0, 16))
+    setEditDesc(assignment.description || '')
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editTitle.trim()) return
+    const updated = await updateAssignment(editingId, {
+      title: editTitle.trim(),
+      due_date: editDueDate,
+      description: editDesc.trim(),
+    })
+    if (updated) {
+      setAssignments(prev => prev.map(a => a.id === updated.id ? updated : a))
+    }
+    setEditingId(null)
+  }
+
+  const handleDelete = async (id: string) => {
+    await deleteAssignment(id)
+    setAssignments(prev => prev.filter(a => a.id !== id))
+    setExpandedId(null)
+  }
+
   if (!loaded) return null
 
   return (
@@ -84,7 +114,6 @@ export function AssignmentsView() {
         <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />快速添加作业</button>
       </div>
 
-      {/* 四宫格统计 */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
         <StatCard label="待提交" value={stats.pending} color="var(--accent-warm)" />
@@ -92,7 +121,6 @@ export function AssignmentsView() {
         <StatCard label="已过期" value={stats.overdue} color="var(--accent-danger)" />
       </div>
 
-      {/* 筛选标签 */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
         {(['all', 'pending', 'submitted', 'overdue'] as FilterType[]).map(f => (
           <button
@@ -112,7 +140,6 @@ export function AssignmentsView() {
         ))}
       </div>
 
-      {/* 作业列表 */}
       <div className="space-y-3">
         {filteredAssignments.length === 0 ? (
           <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
@@ -139,7 +166,7 @@ export function AssignmentsView() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div 
+                      <div
                         className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
                         style={{ backgroundColor: course?.color || 'var(--border-light)' }}
                       />
@@ -197,15 +224,65 @@ export function AssignmentsView() {
                       style={{ borderColor: 'var(--border-light)' }}
                     >
                       <div className="p-4">
-                        {assignment.description && (
-                          <div className="mb-3">
-                            <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>描述</p>
-                            <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{assignment.description}</p>
+                        {editingId === assignment.id ? (
+                          <div className="space-y-2">
+                            <input
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg text-sm"
+                              style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                            />
+                            <input
+                              type="datetime-local"
+                              value={editDueDate}
+                              onChange={(e) => setEditDueDate(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg text-sm"
+                              style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                            />
+                            <textarea
+                              value={editDesc}
+                              onChange={(e) => setEditDesc(e.target.value)}
+                              placeholder="描述（可选）"
+                              rows={2}
+                              className="w-full px-3 py-2 rounded-lg text-sm resize-none"
+                              style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                            />
+                            <div className="flex gap-2">
+                              <button onClick={handleSaveEdit} className="btn-primary text-xs">保存</button>
+                              <button onClick={() => setEditingId(null)} className="btn-ghost text-xs">取消</button>
+                            </div>
                           </div>
+                        ) : (
+                          <>
+                            {assignment.description && (
+                              <div className="mb-3">
+                                <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>描述</p>
+                                <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{assignment.description}</p>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+                                创建于: {assignment.created_at.replace('T', ' ')}
+                              </span>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEdit(assignment)}
+                                  className="btn-ghost text-xs flex items-center gap-1"
+                                  style={{ color: 'var(--accent-info)' }}
+                                >
+                                  <Pencil size={12} strokeWidth={2} />编辑
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(assignment.id)}
+                                  className="btn-ghost text-xs flex items-center gap-1"
+                                  style={{ color: 'var(--accent-danger)' }}
+                                >
+                                  <Trash2 size={12} strokeWidth={2} />删除
+                                </button>
+                              </div>
+                            </div>
+                          </>
                         )}
-                        <div className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-                          创建于: {assignment.created_at.replace('T', ' ')}
-                        </div>
                       </div>
                     </motion.div>
                   )}
