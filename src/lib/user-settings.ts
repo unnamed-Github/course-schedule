@@ -43,7 +43,7 @@ export async function getUserSetting(key: string): Promise<string | null> {
 export async function setUserSetting(key: string, value: string): Promise<boolean> {
   if (!await checkSupabaseAvailability()) return false
   const { error } = await supabase.from('user_settings').upsert({ key, value }, { onConflict: 'key' })
-  if (error) { console.error('setUserSetting error:', error); return false }
+  if (error) { return false }
   return true
 }
 
@@ -59,7 +59,6 @@ export function setLocalSetting(key: string, value: string) {
 export async function deleteUserSetting(key: string) {
   if (!await checkSupabaseAvailability()) return
   const { error } = await supabase.from('user_settings').delete().eq('key', key)
-  if (error) console.error('deleteUserSetting error:', error)
 }
 
 export function setSettingBoth(key: string, value: string) {

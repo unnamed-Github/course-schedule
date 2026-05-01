@@ -71,6 +71,16 @@ CREATE TABLE IF NOT EXISTS user_settings (
   value TEXT NOT NULL
 );
 
+-- 课表覆盖表（临时取消课程/提前下课等）
+CREATE TABLE IF NOT EXISTS schedule_overrides (
+  id TEXT PRIMARY KEY,
+  schedule_id TEXT NOT NULL REFERENCES course_schedules(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN ('cancelled', 'ended_early')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(schedule_id, date)
+);
+
 -- 启用 Row Level Security
 -- 注: 本项目为个人应用，使用 anon key 进行完整读写。
 -- site_config 表包含敏感数据(密码哈希)，仅允许 SELECT，不允许通过 anon key 写入。
@@ -82,6 +92,7 @@ ALTER TABLE memos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE semester_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule_overrides ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow all on courses" ON courses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on course_schedules" ON course_schedules FOR ALL USING (true) WITH CHECK (true);
@@ -90,3 +101,4 @@ CREATE POLICY "Allow all on memos" ON memos FOR ALL USING (true) WITH CHECK (tru
 CREATE POLICY "Allow all on semester_config" ON semester_config FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Restrict site_config" ON site_config FOR SELECT USING (true);
 CREATE POLICY "Allow all on user_settings" ON user_settings FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on schedule_overrides" ON schedule_overrides FOR ALL USING (true) WITH CHECK (true);
