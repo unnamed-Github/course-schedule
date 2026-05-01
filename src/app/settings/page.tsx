@@ -10,6 +10,7 @@ import { ImportExportPanel } from '@/components/ImportExportPanel'
 import { HolidayEditor } from '@/components/HolidayEditor'
 import { MakeupDayEditor } from '@/components/MakeupDayEditor'
 import { useSemesterConfig } from '@/hooks/useSemesterConfig'
+import { APP_VERSION } from '@/lib/version'
 
 export default function SettingsPage() {
   const { theme, toggle } = useTheme()
@@ -110,7 +111,7 @@ export default function SettingsPage() {
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>关于</h3>
         <div className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          <p>课表 · 竹 v1.0</p>
+          <p>课表 · 竹 v{APP_VERSION}</p>
           <p>2026 春季学期 · 南科大</p>
           <p>温暖手账 · 云端同步 · 开源</p>
         </div>

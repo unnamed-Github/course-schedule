@@ -12,8 +12,7 @@ import { HolidayEditor } from './HolidayEditor'
 import { MakeupDayEditor } from './MakeupDayEditor'
 import { useSemesterConfig } from '@/hooks/useSemesterConfig'
 import { Sun, Moon, CalendarDays } from 'lucide-react'
-
-const APP_VERSION = process.env.npm_package_version ?? '0.1.0'
+import { APP_VERSION } from '@/lib/version'
 
 type SettingsTab = 'display' | 'data'
 

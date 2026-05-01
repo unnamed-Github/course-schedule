@@ -56,7 +56,7 @@ export function WeekView() {
 
   const [showQuickAssign, setShowQuickAssign] = useState(false)
   const [quickAssignTitle, setQuickAssignTitle] = useState('')
-  const [quickAssignDueDate, setQuickAssignDueDate] = useState('')
+  const [quickAssignDueDate, setQuickAssignDueDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [quickMemoContent, setQuickMemoContent] = useState('')
   const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')

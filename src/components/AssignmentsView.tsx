@@ -15,6 +15,14 @@ function getScheduleLabel(schedule: CourseSchedule): string {
   return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节`
 }
 
+function todayDateString() { return new Date().toISOString().slice(0, 10) }
+
+function todayDateTimeLocal() {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
+}
+
 export function AssignmentsView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -26,7 +34,7 @@ export function AssignmentsView() {
   const [newTitle, setNewTitle] = useState('')
   const [newCourseId, setNewCourseId] = useState('')
   const [newScheduleId, setNewScheduleId] = useState('')
-  const [newDueDate, setNewDueDate] = useState('')
+  const [newDueDate, setNewDueDate] = useState(() => todayDateTimeLocal())
   const [newDesc, setNewDesc] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
