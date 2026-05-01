@@ -151,6 +151,20 @@ export function WarmthBanner() {
   }
 
   const { shouldCelebrate, courseName } = useClassFinish(currentCourseInfo)
+  const todayCourseList = useMemo(() => getTodayCourses(schedules), [schedules])
+
+  const nextClassInfo = useMemo(() => {
+    if (!currentPeriod) return null
+    for (const schedule of todayCourseList) {
+      if (schedule.start_period > currentPeriod) {
+        const course = courses.find(c => c.id === schedule.course_id)
+        if (!course) continue
+        const startTime = getPeriodTime(schedule.start_period)
+        return { course, schedule, startTime }
+      }
+    }
+    return null
+  }, [currentPeriod, todayCourseList, courses])
   const dailyQuote = useMemo(() => {
     const now = new Date()
     const holiday = isHoliday(now)
@@ -169,9 +183,9 @@ export function WarmthBanner() {
       holiday: holiday ? { name: holiday.name } : null,
       semesterPhase,
       isWeekend: now.getDay() === 0 || now.getDay() === 6,
-      courseCount: getTodayCourses(schedules).length,
+      courseCount: todayCourseList.length,
     })
-  }, [schedules])
+  }, [schedules, todayCourseList])
 
   return (
     <>
@@ -268,6 +282,46 @@ export function WarmthBanner() {
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* 第三层：下一节课预告 */}
+          {!currentCourseInfo && nextClassInfo && (
+            <div className="px-4 py-3 rounded-2xl"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-light)',
+                borderLeft: `3px solid ${nextClassInfo.course.color}80`,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>下一节</span>
+                  <span className="font-semibold text-sm" style={{ color: nextClassInfo.course.color }}>
+                    {nextClassInfo.course.name}
+                  </span>
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {nextClassInfo.startTime?.start} · {nextClassInfo.schedule.start_period}-{nextClassInfo.schedule.end_period}节
+                  </span>
+                </div>
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {nextClassInfo.startTime?.start}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 今天已无课 */}
+          {!currentCourseInfo && !nextClassInfo && getTodayCourses(schedules).length > 0 && (
+            <div className="px-4 py-3 rounded-2xl"
+              style={{
+                backgroundColor: 'var(--bg-card)',
+                border: '1px solid var(--border-light)',
+              }}
+            >
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                今天课已上完，好好休息吧 🌙
+              </p>
             </div>
           )}
         </motion.div>
