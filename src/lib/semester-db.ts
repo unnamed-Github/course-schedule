@@ -1,24 +1,7 @@
 import { supabase } from './supabase'
 import type { Holiday, MakeupDay } from './semester'
 import { getSemesterConfig } from './semester'
-
-let supabaseAvailable = true
-let supabaseCheckDone = false
-
-async function checkSupabaseAvailability(): Promise<boolean> {
-  if (supabaseCheckDone) return supabaseAvailable
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 3000)
-    const { error } = await supabase.from('semester_config').select('count', { count: 'exact', head: true }).abortSignal(controller.signal)
-    clearTimeout(timeout)
-    supabaseAvailable = !error
-  } catch {
-    supabaseAvailable = false
-  }
-  supabaseCheckDone = true
-  return supabaseAvailable
-}
+import { checkSupabaseAvailability, isSupabaseAvailable, markSupabaseUnavailable } from './supabase-availability'
 
 function getDefaults() {
   const config = getSemesterConfig()
@@ -38,9 +21,8 @@ export async function getSemesterConfigFromDB(): Promise<{
   holidays: Holiday[]
   makeupDays: MakeupDay[]
 }> {
+  if (!await checkSupabaseAvailability()) return getDefaults()
   try {
-    if (!await checkSupabaseAvailability()) return getDefaults()
-
     const { data } = await supabase.from('semester_config').select('key, value')
 
     if (!data || data.length === 0) {
@@ -58,6 +40,7 @@ export async function getSemesterConfigFromDB(): Promise<{
       makeupDays: JSON.parse(map.get('makeup_days') ?? JSON.stringify(defaults.makeupDays)),
     }
   } catch (e) {
+    markSupabaseUnavailable()
     return getDefaults()
   }
 }
@@ -69,8 +52,8 @@ export async function updateSemesterConfigToDB(config: {
   holidays?: Holiday[]
   makeupDays?: MakeupDay[]
 }): Promise<boolean> {
+  if (!await checkSupabaseAvailability()) return false
   try {
-    if (!await checkSupabaseAvailability()) return false
     const current = await getSemesterConfigFromDB()
     const merged = { ...current, ...config }
 
@@ -83,10 +66,10 @@ export async function updateSemesterConfigToDB(config: {
     ]
 
     const { error } = await supabase.from('semester_config').upsert(upserts, { onConflict: 'key' })
-    if (error) { console.error('updateSemesterConfigToDB error:', error); return false }
+    if (error) { return false }
     return true
   } catch (e) {
-    console.error('updateSemesterConfigToDB error:', e)
+    markSupabaseUnavailable()
     return false
   }
 }

@@ -1,7 +1,5 @@
 import { supabase } from './supabase'
-
-let supabaseAvailable = true
-let supabaseCheckDone = false
+import { checkSupabaseAvailability, isSupabaseAvailable } from './supabase-availability'
 
 export const HEALTH_REMINDER_DEFAULTS = {
   water_reminder_enabled: 'true',
@@ -19,32 +17,25 @@ export function getHealthReminderSetting(key: string): string {
   return getLocalSetting(key, (HEALTH_REMINDER_DEFAULTS as Record<string, string>)[key] ?? '')
 }
 
-async function checkSupabaseAvailability(): Promise<boolean> {
-  if (supabaseCheckDone) return supabaseAvailable
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 3000)
-    const { error } = await supabase.from('user_settings').select('count', { count: 'exact', head: true }).abortSignal(controller.signal)
-    clearTimeout(timeout)
-    supabaseAvailable = !error
-  } catch {
-    supabaseAvailable = false
-  }
-  supabaseCheckDone = true
-  return supabaseAvailable
-}
-
 export async function getUserSetting(key: string): Promise<string | null> {
   if (!await checkSupabaseAvailability()) return null
-  const { data } = await supabase.from('user_settings').select('value').eq('key', key).single()
-  return data?.value ?? null
+  try {
+    const { data } = await supabase.from('user_settings').select('value').eq('key', key).single()
+    return data?.value ?? null
+  } catch {
+    return null
+  }
 }
 
 export async function setUserSetting(key: string, value: string): Promise<boolean> {
   if (!await checkSupabaseAvailability()) return false
-  const { error } = await supabase.from('user_settings').upsert({ key, value }, { onConflict: 'key' })
-  if (error) { return false }
-  return true
+  try {
+    const { error } = await supabase.from('user_settings').upsert({ key, value }, { onConflict: 'key' })
+    if (error) { return false }
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function getLocalSetting(key: string, fallback: string): string {
@@ -58,7 +49,11 @@ export function setLocalSetting(key: string, value: string) {
 
 export async function deleteUserSetting(key: string) {
   if (!await checkSupabaseAvailability()) return
-  const { error } = await supabase.from('user_settings').delete().eq('key', key)
+  try {
+    await supabase.from('user_settings').delete().eq('key', key)
+  } catch {
+    // Do nothing
+  }
 }
 
 export function setSettingBoth(key: string, value: string) {
@@ -73,9 +68,13 @@ export function removeSettingBoth(key: string) {
 
 export async function syncSettingsFromDB() {
   if (!await checkSupabaseAvailability()) return
-  const { data } = await supabase.from('user_settings').select('key, value')
-  if (!data) return
-  for (const row of data) {
-    setLocalSetting(row.key, row.value)
+  try {
+    const { data } = await supabase.from('user_settings').select('key, value')
+    if (!data) return
+    for (const row of data) {
+      setLocalSetting(row.key, row.value)
+    }
+  } catch {
+    // Do nothing
   }
 }

@@ -3,32 +3,7 @@ import { Course, CourseSchedule, Assignment, Memo, ScheduleOverride } from './ty
 import { COURSES, SCHEDULES } from './seed-data'
 import { setSemesterCache, getSemesterConfig } from './semester'
 import type { Holiday, MakeupDay } from './semester'
-
-let supabaseAvailable = true
-let supabaseCheckDone = false
-
-async function checkSupabaseAvailability(): Promise<boolean> {
-  if (supabaseCheckDone) return supabaseAvailable
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 3000)
-    const { error } = await supabase.from('courses').select('count', { count: 'exact', head: true }).abortSignal(controller.signal)
-    clearTimeout(timeout)
-    supabaseAvailable = !error
-  } catch {
-    supabaseAvailable = false
-  }
-  supabaseCheckDone = true
-  if (!supabaseAvailable) {
-    console.warn('Supabase unavailable, using local fallback for all operations')
-  }
-  return supabaseAvailable
-}
-
-function markSupabaseUnavailable() {
-  supabaseAvailable = false
-  supabaseCheckDone = true
-}
+import { checkSupabaseAvailability, markSupabaseUnavailable, isSupabaseAvailable } from './supabase-availability'
 
 const localStorage: {
   assignments: Assignment[]
@@ -110,7 +85,7 @@ export async function getCourses(): Promise<Course[]> {
   const cached = getCached<Course[]>('courses')
   if (cached) return cached
   await ensureSeedData()
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     setCache('courses', COURSES)
     return COURSES
   }
@@ -233,7 +208,7 @@ export async function getAssignments(courseId?: string, scheduleId?: string): Pr
   const cacheKey = courseId ? (scheduleId ? `assignments_${courseId}_${scheduleId}` : `assignments_${courseId}`) : (scheduleId ? `assignments_schedule_${scheduleId}` : 'assignments_all')
   const cached = getCached<Assignment[]>(cacheKey)
   if (cached) return cached
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     let result = courseId ? localStorage.assignments.filter(a => a.course_id === courseId) : [...localStorage.assignments]
     if (scheduleId) result = result.filter(a => a.schedule_id === scheduleId)
     setCache(cacheKey, result)
@@ -257,7 +232,7 @@ export async function getAssignments(courseId?: string, scheduleId?: string): Pr
 }
 
 export async function createAssignment(input: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>): Promise<Assignment | null> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const record = { ...input, id: genId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     localStorage.assignments.push(record)
     invalidateCache('assignments')
@@ -266,10 +241,11 @@ export async function createAssignment(input: Omit<Assignment, 'id' | 'created_a
   try {
     const record = { ...input, id: genId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     const { data, error } = await supabase.from('assignments').insert(record).select().single()
-    if (error) { console.error('createAssignment error:', error); return null }
+    if (error) { return null }
     invalidateCache('assignments')
     return data
   } catch (e) {
+    markSupabaseUnavailable()
     const record = { ...input, id: genId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     localStorage.assignments.push(record)
     invalidateCache('assignments')
@@ -278,7 +254,7 @@ export async function createAssignment(input: Omit<Assignment, 'id' | 'created_a
 }
 
 export async function updateAssignment(id: string, updates: Partial<Assignment>): Promise<Assignment | null> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const index = localStorage.assignments.findIndex(a => a.id === id)
     if (index !== -1) {
       localStorage.assignments[index] = { ...localStorage.assignments[index], ...updates, updated_at: new Date().toISOString() }
@@ -292,6 +268,7 @@ export async function updateAssignment(id: string, updates: Partial<Assignment>)
     if (data) invalidateCache('assignments')
     return data
   } catch (e) {
+    markSupabaseUnavailable()
     const index = localStorage.assignments.findIndex(a => a.id === id)
     if (index !== -1) {
       localStorage.assignments[index] = { ...localStorage.assignments[index], ...updates, updated_at: new Date().toISOString() }
@@ -303,7 +280,7 @@ export async function updateAssignment(id: string, updates: Partial<Assignment>)
 }
 
 export async function deleteAssignment(id: string): Promise<boolean> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     localStorage.assignments = localStorage.assignments.filter(a => a.id !== id)
     invalidateCache('assignments')
     return true
@@ -313,6 +290,7 @@ export async function deleteAssignment(id: string): Promise<boolean> {
     if (!error) invalidateCache('assignments')
     return !error
   } catch (e) {
+    markSupabaseUnavailable()
     localStorage.assignments = localStorage.assignments.filter(a => a.id !== id)
     invalidateCache('assignments')
     return true
@@ -325,7 +303,7 @@ export async function getMemos(courseId?: string, scheduleId?: string): Promise<
   const cacheKey = courseId ? (scheduleId ? `memos_${courseId}_${scheduleId}` : `memos_${courseId}`) : (scheduleId ? `memos_schedule_${scheduleId}` : 'memos_all')
   const cached = getCached<Memo[]>(cacheKey)
   if (cached) return cached
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     let result = courseId ? localStorage.memos.filter(m => m.course_id === courseId) : [...localStorage.memos]
     if (scheduleId) result = result.filter(m => m.schedule_id === scheduleId)
     setCache(cacheKey, result)
@@ -349,7 +327,7 @@ export async function getMemos(courseId?: string, scheduleId?: string): Promise<
 }
 
 export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promise<Memo | null> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     localStorage.memos.push(record)
     invalidateCache('memos')
@@ -358,10 +336,11 @@ export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promis
   try {
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     const { data, error } = await supabase.from('memos').insert(record).select().single()
-    if (error) { console.error('createMemo error:', error); return null }
+    if (error) { return null }
     invalidateCache('memos')
     return data
   } catch (e) {
+    markSupabaseUnavailable()
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     localStorage.memos.push(record)
     invalidateCache('memos')
@@ -370,7 +349,7 @@ export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promis
 }
 
 export async function deleteMemo(id: string): Promise<boolean> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     localStorage.memos = localStorage.memos.filter(m => m.id !== id)
     invalidateCache('memos')
     return true
@@ -380,6 +359,7 @@ export async function deleteMemo(id: string): Promise<boolean> {
     if (!error) invalidateCache('memos')
     return !error
   } catch (e) {
+    markSupabaseUnavailable()
     localStorage.memos = localStorage.memos.filter(m => m.id !== id)
     invalidateCache('memos')
     return true
@@ -387,7 +367,7 @@ export async function deleteMemo(id: string): Promise<boolean> {
 }
 
 export async function updateMemo(id: string, updates: Partial<Memo>): Promise<Memo | null> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const index = localStorage.memos.findIndex(m => m.id === id)
     if (index !== -1) {
       localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
@@ -401,6 +381,7 @@ export async function updateMemo(id: string, updates: Partial<Memo>): Promise<Me
     if (data) invalidateCache('memos')
     return data
   } catch (e) {
+    markSupabaseUnavailable()
     const index = localStorage.memos.findIndex(m => m.id === id)
     if (index !== -1) {
       localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
@@ -417,7 +398,7 @@ export async function getScheduleOverrides(date: string): Promise<ScheduleOverri
   const cacheKey = `overrides_${date}`
   const cached = getCached<ScheduleOverride[]>(cacheKey)
   if (cached) return cached
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const result = localStorage.scheduleOverrides.filter(o => o.date === date)
     setCache(cacheKey, result)
     return result
@@ -436,7 +417,7 @@ export async function getScheduleOverrides(date: string): Promise<ScheduleOverri
 }
 
 export async function createScheduleOverride(input: { schedule_id: string; date: string; type: 'cancelled' | 'ended_early' }): Promise<ScheduleOverride | null> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     const existingIndex = localStorage.scheduleOverrides.findIndex(o => o.schedule_id === input.schedule_id && o.date === input.date)
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     if (existingIndex !== -1) {
@@ -452,10 +433,11 @@ export async function createScheduleOverride(input: { schedule_id: string; date:
       { ...input, id: genId(), created_at: new Date().toISOString() },
       { onConflict: 'schedule_id,date' }
     ).select().single()
-    if (error) { console.error('createScheduleOverride error:', error); return null }
+    if (error) { return null }
     invalidateCache('overrides')
     return data
   } catch (e) {
+    markSupabaseUnavailable()
     const existingIndex = localStorage.scheduleOverrides.findIndex(o => o.schedule_id === input.schedule_id && o.date === input.date)
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     if (existingIndex !== -1) {
@@ -469,7 +451,7 @@ export async function createScheduleOverride(input: { schedule_id: string; date:
 }
 
 export async function deleteScheduleOverride(scheduleId: string, date: string): Promise<boolean> {
-  if (!supabaseAvailable) {
+  if (!isSupabaseAvailable()) {
     localStorage.scheduleOverrides = localStorage.scheduleOverrides.filter(o => !(o.schedule_id === scheduleId && o.date === date))
     invalidateCache('overrides')
     return true
@@ -479,6 +461,7 @@ export async function deleteScheduleOverride(scheduleId: string, date: string): 
     if (!error) invalidateCache('overrides')
     return !error
   } catch (e) {
+    markSupabaseUnavailable()
     localStorage.scheduleOverrides = localStorage.scheduleOverrides.filter(o => !(o.schedule_id === scheduleId && o.date === date))
     invalidateCache('overrides')
     return true

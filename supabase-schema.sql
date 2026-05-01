@@ -1,9 +1,6 @@
 -- 课表管理应用 · 数据库 Schema
 -- 在 Supabase SQL Editor 中执行此文件
 
--- 迁移 v0.2: 为 assignments 表添加 reminders 列
--- ALTER TABLE assignments ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]'::jsonb;
-
 -- 课程表
 CREATE TABLE IF NOT EXISTS courses (
   id TEXT PRIMARY KEY,
@@ -37,6 +34,7 @@ CREATE TABLE IF NOT EXISTS assignments (
   description TEXT DEFAULT '',
   due_date TIMESTAMPTZ NOT NULL,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'submitted')),
+  reminders JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -102,3 +100,11 @@ CREATE POLICY "Allow all on semester_config" ON semester_config FOR ALL USING (t
 CREATE POLICY "Restrict site_config" ON site_config FOR SELECT USING (true);
 CREATE POLICY "Allow all on user_settings" ON user_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all on schedule_overrides" ON schedule_overrides FOR ALL USING (true) WITH CHECK (true);
+
+-- ========== 迁移语句（用于更新已存在的数据库）==========
+
+-- 为 assignments 表添加 reminders 列（如果不存在）
+ALTER TABLE assignments ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]'::jsonb;
+
+-- 为 memos 表添加 updated_at 列（如果不存在）
+ALTER TABLE memos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();

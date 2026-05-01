@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment, CourseSchedule, DDL_REMINDER_OPTIONS } from '@/lib/types'
 import { getCourses, getAssignments, getSchedules, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
 import { Modal } from './Modal'
-import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2, ChevronDown, Settings } from 'lucide-react'
 import { DAY_LABELS, WEEK_TYPE_SHORT } from '@/lib/constants'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
@@ -22,6 +22,30 @@ function todayDateTimeLocal() {
   return d.toISOString().slice(0, 16)
 }
 
+function formatCountdown(dueDate: string): string {
+  const now = Date.now()
+  const due = new Date(dueDate).getTime()
+  const diff = due - now
+
+  if (diff < 0) {
+    return '已过期'
+  }
+
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (days > 0) {
+    return `提前 ${days} 天`
+  } else if (hours > 0) {
+    return `提前 ${hours} 小时`
+  } else if (minutes > 0) {
+    return `提前 ${minutes} 分钟`
+  } else {
+    return '即将截止'
+  }
+}
+
 export function AssignmentsView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
@@ -30,12 +54,16 @@ export function AssignmentsView() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [quickAddExpanded, setQuickAddExpanded] = useState(true)
+  const [quickAddMoreExpanded, setQuickAddMoreExpanded] = useState(false)
+
   const [newTitle, setNewTitle] = useState('')
   const [newCourseId, setNewCourseId] = useState('')
   const [newScheduleId, setNewScheduleId] = useState('')
   const [newDueDate, setNewDueDate] = useState(() => todayDateTimeLocal())
   const [newDesc, setNewDesc] = useState('')
   const [newReminders, setNewReminders] = useState<number[]>([])
+
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
@@ -79,6 +107,35 @@ export function AssignmentsView() {
     }
   }
 
+  const handleQuickAdd = async () => {
+    if (!newTitle.trim() || !newCourseId || !newDueDate) return
+    const created = await createAssignment({
+      title: newTitle.trim(),
+      course_id: newCourseId,
+      due_date: newDueDate,
+      description: newDesc.trim() || '',
+      status: 'pending',
+      schedule_id: newScheduleId || undefined,
+      reminders: newReminders.length > 0 ? newReminders : undefined,
+    })
+    if (created) {
+      setAssignments(prev => [...prev, created])
+      setNewTitle('')
+      setNewCourseId('')
+      setNewScheduleId('')
+      setNewDueDate(todayDateTimeLocal())
+      setNewDesc('')
+      setNewReminders([])
+    }
+  }
+
+  const handleQuickAddKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleQuickAdd()
+    }
+  }
+
   const handleAddAssignment = async () => {
     if (!newTitle.trim() || !newCourseId || !newDueDate) return
     const created = await createAssignment({
@@ -95,7 +152,7 @@ export function AssignmentsView() {
       setNewTitle('')
       setNewCourseId('')
       setNewScheduleId('')
-      setNewDueDate('')
+      setNewDueDate(todayDateTimeLocal())
       setNewDesc('')
       setNewReminders([])
       setShowAddModal(false)
@@ -136,11 +193,6 @@ export function AssignmentsView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>作业</h2>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />快速添加作业</button>
-      </div>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
         <StatCard label="待提交" value={stats.pending} color="var(--accent-warm)" />
@@ -148,23 +200,171 @@ export function AssignmentsView() {
         <StatCard label="已过期" value={stats.overdue} color="var(--accent-danger)" />
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {(['all', 'pending', 'submitted', 'overdue'] as FilterType[]).map(f => (
+      <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>快速添加作业</h3>
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
-              filter === f ? 'shadow-sm' : ''
-            }`}
-            style={{
-              backgroundColor: filter === f ? 'var(--accent-info)' : 'var(--bg-card)',
-              color: filter === f ? 'white' : 'var(--text-secondary)',
-              border: '1px solid var(--border-light)',
-            }}
+            onClick={() => setQuickAddExpanded(!quickAddExpanded)}
+            className="p-1 rounded-lg transition-colors"
+            style={{ color: 'var(--text-secondary)' }}
           >
-            {f === 'all' ? '全部' : f === 'pending' ? '待提交' : f === 'submitted' ? '已提交' : '已过期'}
+            <ChevronDown
+              size={18}
+              strokeWidth={2}
+              className={`transition-transform ${quickAddExpanded ? 'rotate-180' : ''}`}
+            />
           </button>
-        ))}
+        </div>
+
+        <AnimatePresence>
+          {quickAddExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="space-y-3">
+                <div className="flex gap-2 flex-wrap">
+                  <input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    onKeyDown={handleQuickAddKeyDown}
+                    placeholder="作业标题..."
+                    className="flex-1 min-w-[160px] px-3 py-2 rounded-xl text-sm"
+                    style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                  />
+                  <select
+                    value={newCourseId}
+                    onChange={(e) => { setNewCourseId(e.target.value); setNewScheduleId('') }}
+                    className="px-3 py-2 rounded-xl text-sm"
+                    style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                  >
+                    <option value="">选择课程</option>
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                  <input
+                    type="datetime-local"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className="px-3 py-2 rounded-xl text-sm"
+                    style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                  />
+                  <button
+                    onClick={handleQuickAdd}
+                    disabled={!newTitle.trim() || !newCourseId || !newDueDate}
+                    className="btn-primary text-xs disabled:opacity-50"
+                  >
+                    添加
+                  </button>
+                </div>
+
+                <div>
+                  <button
+                    onClick={() => setQuickAddMoreExpanded(!quickAddMoreExpanded)}
+                    className="text-xs flex items-center gap-1"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <ChevronDown
+                      size={14}
+                      strokeWidth={2}
+                      className={`transition-transform ${quickAddMoreExpanded ? 'rotate-180' : ''}`}
+                    />
+                    更多选项
+                  </button>
+
+                  <AnimatePresence>
+                    {quickAddMoreExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-3 space-y-3">
+                          <select
+                            value={newScheduleId}
+                            onChange={(e) => setNewScheduleId(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl text-sm"
+                            style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                          >
+                            <option value="">不关联具体课时</option>
+                            {schedules.filter(s => s.course_id === newCourseId).map(s => (
+                              <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
+                            ))}
+                          </select>
+                          <textarea
+                            value={newDesc}
+                            onChange={(e) => setNewDesc(e.target.value)}
+                            placeholder="描述（可选）"
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-xl text-sm resize-none"
+                            style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                          />
+                          <div>
+                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</label>
+                            <div className="flex flex-wrap gap-2">
+                              {DDL_REMINDER_OPTIONS.map(opt => (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => setNewReminders(prev =>
+                                    prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                                  )}
+                                  className="px-3 py-1 rounded-lg text-xs transition-colors"
+                                  style={{
+                                    backgroundColor: newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-primary)',
+                                    color: newReminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                                    border: `1px solid ${newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--border-light)'}`,
+                                  }}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>按 Enter 键快速添加</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {(['all', 'pending', 'submitted', 'overdue'] as FilterType[]).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+                filter === f ? 'shadow-sm' : ''
+              }`}
+              style={{
+                backgroundColor: filter === f ? 'var(--accent-info)' : 'var(--bg-card)',
+                color: filter === f ? 'white' : 'var(--text-secondary)',
+                border: '1px solid var(--border-light)',
+              }}
+            >
+              {f === 'all' ? '全部' : f === 'pending' ? '待提交' : f === 'submitted' ? '已提交' : '已过期'}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button className="p-2 rounded-xl" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+            <Settings size={18} strokeWidth={2} />
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="btn-primary text-xs flex items-center gap-1"
+          >
+            <Plus size={16} strokeWidth={2} />添加作业
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -194,10 +394,13 @@ export function AssignmentsView() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div
-                        className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
-                        style={{ backgroundColor: course?.color || 'var(--border-light)' }}
-                      />
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full flex-shrink-0 mt-1"
+                          style={{ backgroundColor: course?.color || 'var(--border-light)' }}
+                        />
+                        <span className="text-lg">📝</span>
+                      </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
@@ -224,9 +427,14 @@ export function AssignmentsView() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                          截止: {assignment.due_date.replace('T', ' ')}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            {assignment.due_date.replace('T', ' ')}
+                          </p>
+                          <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-success)26', color: 'var(--accent-success)' }}>
+                            {formatCountdown(assignment.due_date)}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <button
@@ -374,7 +582,7 @@ export function AssignmentsView() {
         )}
       </div>
 
-      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setNewScheduleId(''); setNewReminders([]) }} title="快速添加作业">
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setNewScheduleId(''); setNewReminders([]) }} title="添加作业">
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>作业标题</label>
@@ -383,7 +591,7 @@ export function AssignmentsView() {
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="输入作业标题"
               className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             />
           </div>
           <div>
@@ -392,7 +600,7 @@ export function AssignmentsView() {
               value={newCourseId}
               onChange={(e) => { setNewCourseId(e.target.value); setNewScheduleId('') }}
               className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
               <option value="">选择课程</option>
               {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -404,8 +612,9 @@ export function AssignmentsView() {
               value={newScheduleId}
               onChange={(e) => setNewScheduleId(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
+              <option value="">不关联具体课时</option>
               {schedules.filter(s => s.course_id === newCourseId).map(s => (
                 <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
               ))}
@@ -418,7 +627,7 @@ export function AssignmentsView() {
               value={newDueDate}
               onChange={(e) => setNewDueDate(e.target.value)}
               className="w-full px-3 py-2 rounded-lg text-sm"
-              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             />
           </div>
           <div>
@@ -429,7 +638,7 @@ export function AssignmentsView() {
               placeholder="输入作业描述"
               rows={2}
               className="w-full px-3 py-2 rounded-lg text-sm resize-none"
-              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+              style={{ backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             />
           </div>
           <div>
@@ -468,7 +677,7 @@ export function AssignmentsView() {
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="p-4 rounded-2xl text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+    <div className="p-4 rounded-2xl text-left" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
       <div className="text-2xl font-bold mb-1" style={{ color }}>
         {value}
       </div>
