@@ -13,6 +13,8 @@ import { MakeupDayEditor } from './MakeupDayEditor'
 import { useSemesterConfig } from '@/hooks/useSemesterConfig'
 import { Sun, Moon, CalendarDays } from 'lucide-react'
 
+const APP_VERSION = process.env.npm_package_version ?? '0.1.0'
+
 type SettingsTab = 'display' | 'data'
 
 export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClose: () => void }) {
@@ -132,7 +134,7 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
 
           <div className="border-t pt-3" style={{ borderColor: 'var(--border-light)' }}>
             <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-              <p>课表 · 竹 v1.0</p>
+              <p>课表 · 竹 v{APP_VERSION}</p>
               <p>2026 春季学期 · 南科大</p>
             </div>
           </div>
