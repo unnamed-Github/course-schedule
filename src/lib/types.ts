@@ -26,9 +26,18 @@ export interface Assignment {
   description: string
   due_date: string
   status: 'pending' | 'submitted'
+  reminders?: number[]
   created_at: string
   updated_at?: string
 }
+
+export const DDL_REMINDER_OPTIONS = [
+  { value: 30, label: '30分钟前' },
+  { value: 60, label: '1小时前' },
+  { value: 180, label: '3小时前' },
+  { value: 1440, label: '1天前' },
+  { value: 4320, label: '3天前' },
+]
 
 export const MOOD_TAGS = [
   { value: '⭐喜欢' as const, emoji: '⭐', label: '喜欢', color: '#F59E0B' },

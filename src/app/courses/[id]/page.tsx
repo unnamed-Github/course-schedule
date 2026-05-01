@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
+import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor, DDL_REMINDER_OPTIONS } from '@/lib/types'
 import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment, updateAssignment, deleteAssignment, getMemos, createMemo, deleteMemo, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
@@ -39,9 +39,9 @@ export default function CourseDetailPage() {
   const [editForm, setEditForm] = useState({ name: '', teacher: '', classroom: '', color: '', week_type: 'all' as 'all' | 'odd' | 'even' })
 
   const [showAssignmentForm, setShowAssignmentForm] = useState(false)
-  const [assignmentForm, setAssignmentForm] = useState({ title: '', description: '', due_date: '' })
+  const [assignmentForm, setAssignmentForm] = useState({ title: '', description: '', due_date: '', reminders: [] as number[] })
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null)
-  const [editAssignmentForm, setEditAssignmentForm] = useState({ title: '', description: '', due_date: '' })
+  const [editAssignmentForm, setEditAssignmentForm] = useState({ title: '', description: '', due_date: '', reminders: [] as number[] })
 
   const [showMemoForm, setShowMemoForm] = useState(false)
   const [memoForm, setMemoForm] = useState({ content: '', mood_emoji: '😊', mood_tags: [] as MoodTag[] })
@@ -132,10 +132,10 @@ export default function CourseDetailPage() {
   const handleAddAssignment = async () => {
     try {
       if (!assignmentForm.title || !assignmentForm.due_date) return
-      const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending' })
+      const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending', reminders: assignmentForm.reminders.length > 0 ? assignmentForm.reminders : undefined })
       if (a) {
         setAssignments((prev) => [...prev, a])
-        setAssignmentForm({ title: '', description: '', due_date: '' })
+        setAssignmentForm({ title: '', description: '', due_date: '', reminders: [] })
         setShowAssignmentForm(false)
         showToast('作业已添加', 'success')
       } else {
@@ -167,7 +167,7 @@ export default function CourseDetailPage() {
   }
   const handleEditAssignment = (a: Assignment) => {
     setEditingAssignmentId(a.id)
-    setEditAssignmentForm({ title: a.title, description: a.description || '', due_date: a.due_date.slice(0, 16) })
+    setEditAssignmentForm({ title: a.title, description: a.description || '', due_date: a.due_date.slice(0, 16), reminders: a.reminders || [] })
   }
   const handleSaveEditAssignment = async () => {
     if (!editingAssignmentId || !editAssignmentForm.title.trim()) return
@@ -176,6 +176,7 @@ export default function CourseDetailPage() {
         title: editAssignmentForm.title.trim(),
         description: editAssignmentForm.description.trim(),
         due_date: editAssignmentForm.due_date,
+        reminders: editAssignmentForm.reminders,
       })
       if (u) {
         setAssignments((prev) => prev.map((a) => (a.id === editingAssignmentId ? u : a)))

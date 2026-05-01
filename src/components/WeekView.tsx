@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
+import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride, DDL_REMINDER_OPTIONS } from '@/lib/types'
 import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides, createAssignment, createMemo } from '@/lib/data'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
@@ -57,6 +57,7 @@ export function WeekView() {
   const [showQuickAssign, setShowQuickAssign] = useState(false)
   const [quickAssignTitle, setQuickAssignTitle] = useState('')
   const [quickAssignDueDate, setQuickAssignDueDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [quickReminders, setQuickReminders] = useState<number[]>([])
   const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [quickMemoContent, setQuickMemoContent] = useState('')
   const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')
@@ -180,10 +181,12 @@ export function WeekView() {
       description: '',
       status: 'pending',
       schedule_id: scheduleId || undefined,
+      reminders: quickReminders.length > 0 ? quickReminders : undefined,
     })
     if (created) {
       setQuickAssignTitle('')
       setQuickAssignDueDate('')
+      setQuickReminders([])
       setShowQuickAssign(false)
       refreshAssignments()
       showToast('作业已添加 ✅', 'success')
@@ -579,6 +582,27 @@ export function WeekView() {
                                               style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}
                                               onClick={(e) => e.stopPropagation()}
                                             />
+                                          </div>
+                                          <div className="flex flex-wrap gap-1">
+                                            {DDL_REMINDER_OPTIONS.map(opt => (
+                                              <button
+                                                key={opt.value}
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  setQuickReminders(prev =>
+                                                    prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                                                  )
+                                                }}
+                                                className="px-2 py-0.5 rounded text-[9px] transition-colors"
+                                                style={{
+                                                  backgroundColor: quickReminders.includes(opt.value) ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.1)',
+                                                  color: 'white',
+                                                  border: '1px solid rgba(255,255,255,0.2)',
+                                                }}
+                                              >
+                                                {opt.label}
+                                              </button>
+                                            ))}
                                           </div>
                                           <div className="flex gap-1 justify-end">
                                             <button

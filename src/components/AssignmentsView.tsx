@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Course, Assignment, CourseSchedule } from '@/lib/types'
+import { Course, Assignment, CourseSchedule, DDL_REMINDER_OPTIONS } from '@/lib/types'
 import { getCourses, getAssignments, getSchedules, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
 import { Modal } from './Modal'
 import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2 } from 'lucide-react'
+import { DAY_LABELS, WEEK_TYPE_SHORT } from '@/lib/constants'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
 
-const DAY_LABELS: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' }
-
 function getScheduleLabel(schedule: CourseSchedule): string {
-  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节`
+  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
 }
 
 function todayDateString() { return new Date().toISOString().slice(0, 10) }
@@ -36,11 +35,13 @@ export function AssignmentsView() {
   const [newScheduleId, setNewScheduleId] = useState('')
   const [newDueDate, setNewDueDate] = useState(() => todayDateTimeLocal())
   const [newDesc, setNewDesc] = useState('')
+  const [newReminders, setNewReminders] = useState<number[]>([])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
   const [editDesc, setEditDesc] = useState('')
   const [editScheduleId, setEditScheduleId] = useState('')
+  const [editReminders, setEditReminders] = useState<number[]>([])
 
   useEffect(() => {
     Promise.all([getCourses(), getAssignments(), getSchedules()]).then(([c, a, sc]) => {
@@ -87,6 +88,7 @@ export function AssignmentsView() {
       description: newDesc.trim() || '',
       status: 'pending',
       schedule_id: newScheduleId || undefined,
+      reminders: newReminders.length > 0 ? newReminders : undefined,
     })
     if (created) {
       setAssignments(prev => [...prev, created])
@@ -95,6 +97,7 @@ export function AssignmentsView() {
       setNewScheduleId('')
       setNewDueDate('')
       setNewDesc('')
+      setNewReminders([])
       setShowAddModal(false)
     }
   }
@@ -105,6 +108,7 @@ export function AssignmentsView() {
     setEditDueDate(assignment.due_date.slice(0, 16))
     setEditDesc(assignment.description || '')
     setEditScheduleId(assignment.schedule_id || '')
+    setEditReminders(assignment.reminders || [])
   }
 
   const handleSaveEdit = async () => {
@@ -114,6 +118,7 @@ export function AssignmentsView() {
       due_date: editDueDate,
       description: editDesc.trim(),
       schedule_id: editScheduleId || undefined,
+      reminders: editReminders,
     })
     if (updated) {
       setAssignments(prev => prev.map(a => a.id === updated.id ? updated : a))
@@ -286,6 +291,27 @@ export function AssignmentsView() {
                               className="w-full px-3 py-2 rounded-lg text-sm resize-none"
                               style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                             />
+                            <div>
+                              <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</label>
+                              <div className="flex flex-wrap gap-2">
+                                {DDL_REMINDER_OPTIONS.map(opt => (
+                                  <button
+                                    key={opt.value}
+                                    onClick={() => setEditReminders(prev =>
+                                      prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                                    )}
+                                    className="px-3 py-1 rounded-lg text-xs transition-colors"
+                                    style={{
+                                      backgroundColor: editReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-primary)',
+                                      color: editReminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                                      border: `1px solid ${editReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--border-light)'}`,
+                                    }}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                             <div className="flex gap-2">
                               <button onClick={handleSaveEdit} className="btn-primary text-xs">保存</button>
                               <button onClick={() => setEditingId(null)} className="btn-ghost text-xs">取消</button>
@@ -297,6 +323,22 @@ export function AssignmentsView() {
                               <div className="mb-3">
                                 <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>描述</p>
                                 <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{assignment.description}</p>
+                              </div>
+                            )}
+                            {assignment.reminders && assignment.reminders.length > 0 && (
+                              <div className="mb-3">
+                                <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>提醒设置</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {assignment.reminders.map(r => {
+                                    const opt = DDL_REMINDER_OPTIONS.find(o => o.value === r)
+                                    return (
+                                      <span key={r} className="px-2 py-0.5 rounded-full text-xs"
+                                        style={{ backgroundColor: 'var(--accent-info)26', color: 'var(--accent-info)', border: '1px solid var(--accent-info)40' }}>
+                                        ⏰ {opt?.label || `${r}分钟前`}
+                                      </span>
+                                    )
+                                  })}
+                                </div>
                               </div>
                             )}
                             <div className="flex items-center justify-between">
@@ -332,7 +374,7 @@ export function AssignmentsView() {
         )}
       </div>
 
-      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setNewScheduleId('') }} title="快速添加作业">
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setNewScheduleId(''); setNewReminders([]) }} title="快速添加作业">
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>作业标题</label>
@@ -364,7 +406,6 @@ export function AssignmentsView() {
               className="w-full px-3 py-2 rounded-lg text-sm"
               style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
-              <option value="">不关联具体课时</option>
               {schedules.filter(s => s.course_id === newCourseId).map(s => (
                 <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
               ))}
@@ -390,6 +431,27 @@ export function AssignmentsView() {
               className="w-full px-3 py-2 rounded-lg text-sm resize-none"
               style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</label>
+            <div className="flex flex-wrap gap-2">
+              {DDL_REMINDER_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setNewReminders(prev =>
+                    prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                  )}
+                  className="px-3 py-1 rounded-lg text-xs transition-colors"
+                  style={{
+                    backgroundColor: newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-primary)',
+                    color: newReminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                    border: `1px solid ${newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--border-light)'}`,
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           <button
             onClick={handleAddAssignment}

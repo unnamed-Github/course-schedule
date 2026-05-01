@@ -6,13 +6,12 @@ import { Course, Memo, CourseSchedule } from '@/lib/types'
 import { getCourses, getMemos, getSchedules, createMemo, deleteMemo, updateMemo } from '@/lib/data'
 import { Modal } from './Modal'
 import { Plus, StickyNote, X, Pencil } from 'lucide-react'
+import { DAY_LABELS, WEEK_TYPE_SHORT } from '@/lib/constants'
 
 const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
-const DAY_LABELS: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' }
-
 function getScheduleLabel(schedule: CourseSchedule): string {
-  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节`
+  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
 }
 
 export function MemosView() {
@@ -269,7 +268,6 @@ export function MemosView() {
               className="w-full rounded-xl px-3 py-2 text-sm"
               style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
-              <option value="">不关联具体课时</option>
               {schedules.filter(s => s.course_id === selectedCourseId).map(s => (
                 <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
               ))}

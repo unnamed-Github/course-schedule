@@ -4,6 +4,8 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, Re
 import { getHealthReminderSetting, setSettingBoth } from '@/lib/user-settings'
 import { sendNotification, getNotificationPermission, requestNotificationPermission } from '@/lib/notification-utils'
 import { pickWaterMessage, getKegelMessage, pickNightMessage } from '@/lib/reminder-messages'
+import { getAssignments } from '@/lib/data'
+import { Assignment } from '@/lib/types'
 
 interface ReminderContextType {
   waterEnabled: boolean
@@ -11,12 +13,14 @@ interface ReminderContextType {
   kegelEnabled: boolean
   kegelTimes: string
   nightEnabled: boolean
+  ddlEnabled: boolean
   notificationPermission: NotificationPermission
   toggleWater: () => void
   setWaterInterval: (v: number) => void
   toggleKegel: () => void
   setKegelTimes: (times: string) => void
   toggleNight: () => void
+  toggleDdl: () => void
   requestPermission: () => Promise<NotificationPermission>
   dismissPermissionPrompt: () => void
 }
@@ -53,12 +57,19 @@ function isInTimeRange(startTime: string, endTime: string): boolean {
   return now >= start || now < end
 }
 
+function formatRelativeTime(minutes: number): string {
+  if (minutes < 60) return `${minutes} 分钟`
+  if (minutes < 1440) return `${Math.round(minutes / 60)} 小时`
+  return `${Math.round(minutes / 1440)} 天`
+}
+
 export function ReminderProvider({ children }: { children: ReactNode }) {
   const [waterEnabled, setWaterEnabled] = useState(() => getHealthReminderSetting('water_reminder_enabled') !== 'false')
   const [waterInterval, setWaterIntervalState] = useState(() => parseInt(getHealthReminderSetting('water_interval')) || 40)
   const [kegelEnabled, setKegelEnabled] = useState(() => getHealthReminderSetting('kegel_reminder_enabled') !== 'false')
   const [kegelTimes, setKegelTimesState] = useState(() => getHealthReminderSetting('kegel_times') || '10:00,15:00,20:00')
   const [nightEnabled, setNightEnabled] = useState(() => getHealthReminderSetting('night_reminder_enabled') !== 'false')
+  const [ddlEnabled, setDdlEnabled] = useState(() => getHealthReminderSetting('ddl_reminder_enabled') !== 'false')
   const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission)
 
   const [permissionPromptDismissed, setPermissionPromptDismissed] = useState(() => {
@@ -69,6 +80,21 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const lastWaterRef = useRef(0)
   const lastKegelDayRef = useRef('')
   const lastNightRef = useRef(0)
+  const assignmentsRef = useRef<Assignment[]>([])
+  const ddlFiredRef = useRef<Set<string>>(new Set())
+
+  useEffect(() => {
+    const load = () => {
+      getAssignments().then(a => { assignmentsRef.current = a }).catch(() => {})
+    }
+    load()
+    const timer = setInterval(load, 120000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    ddlFiredRef.current.clear()
+  }, [ddlEnabled])
 
   const toggleWater = useCallback(() => {
     setWaterEnabled(v => {
@@ -100,6 +126,14 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     setNightEnabled(v => {
       const next = !v
       setSettingBoth('night_reminder_enabled', String(next))
+      return next
+    })
+  }, [])
+
+  const toggleDdl = useCallback(() => {
+    setDdlEnabled(v => {
+      const next = !v
+      setSettingBoth('ddl_reminder_enabled', String(next))
       return next
     })
   }, [])
@@ -160,12 +194,31 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
           }
         }
       }
+
+      if (ddlEnabled) {
+        const now = Date.now()
+        for (const a of assignmentsRef.current) {
+          if (a.status !== 'pending') continue
+          if (!a.reminders || a.reminders.length === 0) continue
+          const dueMs = new Date(a.due_date).getTime()
+          if (now >= dueMs) continue
+          for (const rm of a.reminders) {
+            const triggerMs = dueMs - rm * 60000
+            const key = `${a.id}_${rm}`
+            if (now >= triggerMs && now < triggerMs + 30000 && !ddlFiredRef.current.has(key)) {
+              ddlFiredRef.current.add(key)
+              sendNotification('⏰ 作业截止提醒', `「${a.title}」将在 ${formatRelativeTime(rm)} 后截止\n请及时提交`)
+              break
+            }
+          }
+        }
+      }
     }
 
     checkReminders()
     const timer = setInterval(checkReminders, 30000)
     return () => clearInterval(timer)
-  }, [waterEnabled, waterInterval, kegelEnabled, kegelTimes, nightEnabled])
+  }, [waterEnabled, waterInterval, kegelEnabled, kegelTimes, nightEnabled, ddlEnabled])
 
   const showPermissionBanner = notificationPermission === 'default' && !permissionPromptDismissed
 
@@ -177,12 +230,14 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         kegelEnabled,
         kegelTimes,
         nightEnabled,
+        ddlEnabled,
         notificationPermission,
         toggleWater,
         setWaterInterval,
         toggleKegel,
         setKegelTimes,
         toggleNight,
+        toggleDdl,
         requestPermission,
         dismissPermissionPrompt,
       }}
@@ -199,7 +254,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-blue-100">🔔 开启健康提醒</p>
               <p className="text-xs text-blue-200 mt-0.5">
-                {permissionError ? '通知被拒，可在浏览器设置中手动开启' : '喝水、提肛、熬夜提醒需要通知权限'}
+                {permissionError ? '通知被拒，可在浏览器设置中手动开启' : '喝水、提肛、熬夜、DDL提醒需要通知权限'}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">

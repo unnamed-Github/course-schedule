@@ -1,6 +1,9 @@
 -- 课表管理应用 · 数据库 Schema
 -- 在 Supabase SQL Editor 中执行此文件
 
+-- 迁移 v0.2: 为 assignments 表添加 reminders 列
+-- ALTER TABLE assignments ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]'::jsonb;
+
 -- 课程表
 CREATE TABLE IF NOT EXISTS courses (
   id TEXT PRIMARY KEY,

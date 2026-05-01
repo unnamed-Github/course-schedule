@@ -10,6 +10,12 @@ export const DAY_MAP: Record<number, string> = {
   1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日',
 }
 
+export const WEEK_TYPE_SHORT: Record<string, string> = {
+  all: '',
+  odd: '（单周）',
+  even: '（双周）',
+}
+
 export function countdown(targetDate: string): { days: number; hours: number; minutes: number } {
   const now = new Date()
   const target = new Date(targetDate)
