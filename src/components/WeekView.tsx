@@ -434,8 +434,12 @@ export function WeekView() {
                                   </div>
 
                                   {(() => {
-                                    const courseAssignments = assignments.filter(a => a.course_id === course.id)
-                                    const courseMemos = memos.filter(m => m.course_id === course.id).slice(0, 3)
+                                    const courseAssignments = assignments.filter(a =>
+                                      a.course_id === course.id && (a.schedule_id === schedule.id || !a.schedule_id)
+                                    )
+                                    const courseMemos = memos.filter(m =>
+                                      m.course_id === course.id && (m.schedule_id === schedule.id || !m.schedule_id)
+                                    ).slice(0, 3)
                                     const hasContent = courseAssignments.length > 0 || courseMemos.length > 0
 
                                     if (!hasContent) {
