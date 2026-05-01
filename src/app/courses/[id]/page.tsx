@@ -418,6 +418,27 @@ export default function CourseDetailPage() {
             <input placeholder="标题" value={assignmentForm.title} onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }} autoFocus className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
             <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
             <input type="datetime-local" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+            <div className="flex flex-wrap gap-1">
+              {DDL_REMINDER_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setAssignmentForm((f) => ({
+                    ...f,
+                    reminders: f.reminders.includes(opt.value)
+                      ? f.reminders.filter(v => v !== opt.value)
+                      : [...f.reminders, opt.value],
+                  }))}
+                  className="px-2 py-0.5 rounded text-xs transition-colors"
+                  style={{
+                    backgroundColor: assignmentForm.reminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-card)',
+                    color: assignmentForm.reminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                    border: '1px solid var(--border-light)',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             <div className="flex gap-2">
               <button onClick={handleAddAssignment} className="btn-primary text-xs">添加</button>
               <button onClick={() => setShowAssignmentForm(false)} className="btn-ghost text-xs">取消</button>
@@ -439,6 +460,27 @@ export default function CourseDetailPage() {
                       <input value={editAssignmentForm.title} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, title: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
                       <input value={editAssignmentForm.description} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, description: e.target.value }))} placeholder="描述" className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
                       <input type="datetime-local" value={editAssignmentForm.due_date} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                      <div className="flex flex-wrap gap-1">
+                        {DDL_REMINDER_OPTIONS.map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setEditAssignmentForm((f) => ({
+                              ...f,
+                              reminders: f.reminders.includes(opt.value)
+                                ? f.reminders.filter(v => v !== opt.value)
+                                : [...f.reminders, opt.value],
+                            }))}
+                            className="px-2 py-0.5 rounded text-xs transition-colors"
+                            style={{
+                              backgroundColor: editAssignmentForm.reminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-card)',
+                              color: editAssignmentForm.reminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                              border: '1px solid var(--border-light)',
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                       <div className="flex gap-2">
                         <button onClick={handleSaveEditAssignment} className="btn-primary text-xs">保存</button>
                         <button onClick={() => setEditingAssignmentId(null)} className="btn-ghost text-xs">取消</button>

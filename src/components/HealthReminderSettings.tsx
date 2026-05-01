@@ -17,12 +17,14 @@ export function HealthReminderSettings() {
     kegelEnabled,
     kegelTimes,
     nightEnabled,
+    ddlEnabled,
     notificationPermission,
     toggleWater,
     setWaterInterval,
     toggleKegel,
     setKegelTimes,
     toggleNight,
+    toggleDdl,
     requestPermission,
   } = useReminder()
 
@@ -152,6 +154,23 @@ export function HealthReminderSettings() {
             <div
               className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm"
               style={{ left: nightEnabled ? 'calc(100% - 22px)' : '2px' }}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>⏰ 作业 DDL 提醒</span>
+            <span className="text-xs ml-2" style={{ color: 'var(--text-tertiary)' }}>截止前通知</span>
+          </div>
+          <button
+            onClick={toggleDdl}
+            className="w-11 h-6 rounded-full relative transition-colors"
+            style={{ backgroundColor: ddlEnabled ? 'var(--accent-info)' : 'var(--border-light)' }}
+          >
+            <div
+              className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm"
+              style={{ left: ddlEnabled ? 'calc(100% - 22px)' : '2px' }}
             />
           </button>
         </div>
