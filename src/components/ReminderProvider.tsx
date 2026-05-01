@@ -18,6 +18,7 @@ interface ReminderContextType {
   setKegelTimes: (times: string) => void
   toggleNight: () => void
   requestPermission: () => Promise<NotificationPermission>
+  dismissPermissionPrompt: () => void
 }
 
 const ReminderContext = createContext<ReminderContextType | undefined>(undefined)
@@ -60,6 +61,11 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const [nightEnabled, setNightEnabled] = useState(() => getHealthReminderSetting('night_reminder_enabled') !== 'false')
   const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission)
 
+  const [permissionPromptDismissed, setPermissionPromptDismissed] = useState(() => {
+    try { return localStorage.getItem('notification_prompt_dismissed') === '1' } catch { return false }
+  })
+  const [permissionError, setPermissionError] = useState(false)
+
   const lastWaterRef = useRef(0)
   const lastKegelDayRef = useRef('')
   const lastNightRef = useRef(0)
@@ -99,9 +105,21 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const requestPermission = useCallback(async () => {
-    const perm = await requestNotificationPermission()
-    setNotificationPermission(perm)
-    return perm
+    setPermissionError(false)
+    try {
+      const perm = await requestNotificationPermission()
+      setNotificationPermission(perm)
+      if (perm !== 'granted') setPermissionError(true)
+      return perm
+    } catch {
+      setPermissionError(true)
+      return 'denied' as NotificationPermission
+    }
+  }, [])
+
+  const dismissPermissionPrompt = useCallback(() => {
+    setPermissionPromptDismissed(true)
+    try { localStorage.setItem('notification_prompt_dismissed', '1') } catch {}
   }, [])
 
   useEffect(() => {
@@ -149,6 +167,8 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer)
   }, [waterEnabled, waterInterval, kegelEnabled, kegelTimes, nightEnabled])
 
+  const showPermissionBanner = notificationPermission === 'default' && !permissionPromptDismissed
+
   return (
     <ReminderContext.Provider
       value={{
@@ -164,8 +184,45 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         setKegelTimes,
         toggleNight,
         requestPermission,
+        dismissPermissionPrompt,
       }}
     >
+      {showPermissionBanner && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md">
+          <div
+            className="rounded-2xl p-4 shadow-lg flex items-center justify-between gap-3"
+            style={{
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #1e3a5f 100%)',
+              border: '1px solid rgba(96, 165, 250, 0.3)',
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-blue-100">🔔 开启健康提醒</p>
+              <p className="text-xs text-blue-200 mt-0.5">
+                {permissionError ? '通知被拒，可在浏览器设置中手动开启' : '喝水、提肛、熬夜提醒需要通知权限'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {!permissionError && (
+                <button
+                  onClick={requestPermission}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-opacity hover:opacity-80"
+                  style={{ backgroundColor: '#3B82F6', color: '#fff' }}
+                >
+                  开启
+                </button>
+              )}
+              <button
+                onClick={dismissPermissionPrompt}
+                className="px-2 py-1.5 rounded-lg text-xs transition-opacity hover:opacity-80"
+                style={{ color: '#93c5fd' }}
+              >
+                暂不
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {children}
     </ReminderContext.Provider>
   )
