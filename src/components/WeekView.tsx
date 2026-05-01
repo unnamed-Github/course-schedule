@@ -282,7 +282,7 @@ export function WeekView() {
       {/* 周切换 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={18} strokeWidth={1.8} /></button>
+          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={18} strokeWidth={1.8} /></button>
           <select
             value={weekNum}
             onChange={(e) => selectWeek(parseInt(e.target.value))}
@@ -293,7 +293,7 @@ export function WeekView() {
               <option key={w} value={w}>第 {w} 周</option>
             ))}
           </select>
-          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={18} strokeWidth={1.8} /></button>
+          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={18} strokeWidth={1.8} /></button>
           <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             第{weekNum}/{totalWeeks}周 · {weekRange ? `${weekRange.start.getMonth() + 1}/${weekRange.start.getDate()}—${weekRange.end.getMonth() + 1}/${weekRange.end.getDate()}` : ''}
           </span>

@@ -20,7 +20,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-xl"
       style={{
         backgroundColor: 'var(--nav-glass-bg)',
         borderTop: '1px solid var(--border-light)',
@@ -37,8 +37,8 @@ export function BottomNav() {
               <button
                 key={tab.view}
                 onClick={() => setCurrentView(tab.view!)}
-                className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors cursor-pointer"
-                style={{ color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)' }}
+                className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors duration-200 cursor-pointer rounded-lg focus-visible:shadow-[var(--focus-ring)]"
+                style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
               >
                 {tab.icon}
                 <span className={`text-[10px] whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
@@ -52,8 +52,8 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href!}
-              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors cursor-pointer"
-              style={{ color: isActive ? 'var(--accent-info)' : 'var(--text-secondary)' }}
+              className="flex flex-col items-center gap-0.5 min-w-0 flex-1 py-1 transition-colors duration-200 cursor-pointer rounded-lg focus-visible:shadow-[var(--focus-ring)]"
+              style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)' }}
             >
               {tab.icon}
               <span className={`text-[10px] whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>

@@ -131,7 +131,7 @@ export function DayView() {
     <div className="max-w-4xl mx-auto space-y-4">
       {/* 日期导航 */}
       <div className="flex items-center justify-center gap-4">
-        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={20} strokeWidth={1.8} /></button>
+        <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={20} strokeWidth={1.8} /></button>
         <div className="text-center cursor-pointer" onClick={() => dateInputRef.current?.showPicker()}>
           <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{viewDate.getMonth() + 1}月{viewDate.getDate()}日</p>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>周{dayNames[viewDate.getDay()]}</p>
@@ -143,7 +143,7 @@ export function DayView() {
             className="invisible absolute w-0 h-0"
           />
         </div>
-        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-cyan-100 dark:hover:bg-cyan-900 transition-colors cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={20} strokeWidth={1.8} /></button>
+        <button onClick={() => setViewDate(addDays(viewDate, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={20} strokeWidth={1.8} /></button>
       </div>
 
       {!isToday && (

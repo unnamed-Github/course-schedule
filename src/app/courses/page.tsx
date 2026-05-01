@@ -381,7 +381,7 @@ export default function CoursesPage() {
         })}
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: courses.length * 0.1 }}>
-          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-cyan-50 dark:hover:bg-cyan-950 transition-colors"
+          <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-[var(--border-light)] transition-colors duration-200"
             style={{ border: '2px dashed var(--border-light)' }}
             onClick={() => setAddingCourse(true)}
           >

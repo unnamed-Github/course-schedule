@@ -23,13 +23,19 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:px-4 focus:py-2 focus:bg-[var(--accent-info)] focus:text-white focus:rounded-lg focus:shadow-lg"
+        >
+          跳转到主要内容
+        </a>
         <ThemeProvider>
           <ReminderProvider>
           <ToastProvider>
             <WarmthBannerProvider>
               <ViewProvider>
                 <TopBar />
-                <main className="flex-1 w-full max-w-6xl mx-auto px-4 pt-4 pb-8">
+                <main id="main-content" className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 sm:pb-8">
                   <ErrorBoundary>
                   <PageTransition>
                     {children}

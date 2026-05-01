@@ -51,9 +51,9 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
       <div className="flex gap-1 mb-4">
         <button
           onClick={() => setActiveTab('display')}
-          className="flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors"
+          className="flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 cursor-pointer focus-visible:shadow-[var(--focus-ring)]"
           style={{
-            backgroundColor: activeTab === 'display' ? 'var(--accent-info)' : 'transparent',
+            backgroundColor: activeTab === 'display' ? 'var(--accent-primary)' : 'transparent',
             color: activeTab === 'display' ? 'white' : 'var(--text-secondary)',
           }}
         >
@@ -61,9 +61,9 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
         </button>
         <button
           onClick={() => setActiveTab('data')}
-          className="flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors"
+          className="flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 cursor-pointer focus-visible:shadow-[var(--focus-ring)]"
           style={{
-            backgroundColor: activeTab === 'data' ? 'var(--accent-info)' : 'transparent',
+            backgroundColor: activeTab === 'data' ? 'var(--accent-primary)' : 'transparent',
             color: activeTab === 'data' ? 'white' : 'var(--text-secondary)',
           }}
         >

@@ -25,7 +25,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       {open && (
         <motion.div
           ref={overlayRef}
-          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -38,8 +38,11 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto"
-            style={{ backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-light)' }}
+            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto card"
+            style={{ boxShadow: 'var(--shadow-xl)' }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title || '对话框'}
           >
             {title && (
               <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
