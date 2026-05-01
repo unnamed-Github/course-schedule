@@ -229,25 +229,28 @@ export async function deleteSchedule(id: string): Promise<boolean> {
 
 // ---------- Assignments ----------
 
-export async function getAssignments(courseId?: string): Promise<Assignment[]> {
-  const cacheKey = courseId ? `assignments_${courseId}` : 'assignments_all'
+export async function getAssignments(courseId?: string, scheduleId?: string): Promise<Assignment[]> {
+  const cacheKey = courseId ? (scheduleId ? `assignments_${courseId}_${scheduleId}` : `assignments_${courseId}`) : (scheduleId ? `assignments_schedule_${scheduleId}` : 'assignments_all')
   const cached = getCached<Assignment[]>(cacheKey)
   if (cached) return cached
   if (!supabaseAvailable) {
-    const result = courseId ? localStorage.assignments.filter(a => a.course_id === courseId) : localStorage.assignments
+    let result = courseId ? localStorage.assignments.filter(a => a.course_id === courseId) : [...localStorage.assignments]
+    if (scheduleId) result = result.filter(a => a.schedule_id === scheduleId)
     setCache(cacheKey, result)
     return result
   }
   try {
     let query = supabase.from('assignments').select('*').order('due_date', { ascending: true })
     if (courseId) query = query.eq('course_id', courseId)
+    if (scheduleId) query = query.eq('schedule_id', scheduleId)
     const { data } = await query
     const result = data ?? []
     setCache(cacheKey, result)
     return result
   } catch (e) {
     markSupabaseUnavailable()
-    const result = courseId ? localStorage.assignments.filter(a => a.course_id === courseId) : localStorage.assignments
+    let result = courseId ? localStorage.assignments.filter(a => a.course_id === courseId) : [...localStorage.assignments]
+    if (scheduleId) result = result.filter(a => a.schedule_id === scheduleId)
     setCache(cacheKey, result)
     return result
   }
@@ -318,25 +321,28 @@ export async function deleteAssignment(id: string): Promise<boolean> {
 
 // ---------- Memos ----------
 
-export async function getMemos(courseId?: string): Promise<Memo[]> {
-  const cacheKey = courseId ? `memos_${courseId}` : 'memos_all'
+export async function getMemos(courseId?: string, scheduleId?: string): Promise<Memo[]> {
+  const cacheKey = courseId ? (scheduleId ? `memos_${courseId}_${scheduleId}` : `memos_${courseId}`) : (scheduleId ? `memos_schedule_${scheduleId}` : 'memos_all')
   const cached = getCached<Memo[]>(cacheKey)
   if (cached) return cached
   if (!supabaseAvailable) {
-    const result = courseId ? localStorage.memos.filter(m => m.course_id === courseId) : localStorage.memos
+    let result = courseId ? localStorage.memos.filter(m => m.course_id === courseId) : [...localStorage.memos]
+    if (scheduleId) result = result.filter(m => m.schedule_id === scheduleId)
     setCache(cacheKey, result)
     return result
   }
   try {
     let query = supabase.from('memos').select('*').order('created_at', { ascending: false })
     if (courseId) query = query.eq('course_id', courseId)
+    if (scheduleId) query = query.eq('schedule_id', scheduleId)
     const { data } = await query
     const result = data ?? []
     setCache(cacheKey, result)
     return result
   } catch (e) {
     markSupabaseUnavailable()
-    const result = courseId ? localStorage.memos.filter(m => m.course_id === courseId) : localStorage.memos
+    let result = courseId ? localStorage.memos.filter(m => m.course_id === courseId) : [...localStorage.memos]
+    if (scheduleId) result = result.filter(m => m.schedule_id === scheduleId)
     setCache(cacheKey, result)
     return result
   }

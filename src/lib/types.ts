@@ -21,6 +21,7 @@ export interface CourseSchedule {
 export interface Assignment {
   id: string
   course_id: string
+  schedule_id?: string
   title: string
   description: string
   due_date: string
@@ -45,6 +46,7 @@ export function getMoodColor(tag: MoodTag): string {
 export interface Memo {
   id: string
   course_id: string
+  schedule_id?: string
   content: string
   mood_emoji: string
   mood_tags?: MoodTag[]

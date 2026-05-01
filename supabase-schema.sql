@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS course_schedules (
 CREATE TABLE IF NOT EXISTS assignments (
   id TEXT PRIMARY KEY,
   course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  schedule_id TEXT REFERENCES course_schedules(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   due_date TIMESTAMPTZ NOT NULL,
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS assignments (
 CREATE TABLE IF NOT EXISTS memos (
   id TEXT PRIMARY KEY,
   course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  schedule_id TEXT REFERENCES course_schedules(id) ON DELETE SET NULL,
   content TEXT NOT NULL,
   mood_emoji TEXT DEFAULT '😊',
   mood_tags JSONB DEFAULT '[]'::jsonb,

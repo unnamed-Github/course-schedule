@@ -2,33 +2,43 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Course, Assignment } from '@/lib/types'
-import { getCourses, getAssignments, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
+import { Course, Assignment, CourseSchedule } from '@/lib/types'
+import { getCourses, getAssignments, getSchedules, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
 import { Modal } from './Modal'
 import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2 } from 'lucide-react'
 
 type FilterType = 'all' | 'pending' | 'submitted' | 'overdue'
 
+const DAY_LABELS: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' }
+
+function getScheduleLabel(schedule: CourseSchedule): string {
+  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节`
+}
+
 export function AssignmentsView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [filter, setFilter] = useState<FilterType>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newCourseId, setNewCourseId] = useState('')
+  const [newScheduleId, setNewScheduleId] = useState('')
   const [newDueDate, setNewDueDate] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editDueDate, setEditDueDate] = useState('')
   const [editDesc, setEditDesc] = useState('')
+  const [editScheduleId, setEditScheduleId] = useState('')
 
   useEffect(() => {
-    Promise.all([getCourses(), getAssignments()]).then(([c, a]) => {
+    Promise.all([getCourses(), getAssignments(), getSchedules()]).then(([c, a, sc]) => {
       setCourses(c)
       setAssignments(a)
+      setSchedules(sc)
       setLoaded(true)
     })
   }, [])
@@ -68,11 +78,13 @@ export function AssignmentsView() {
       due_date: newDueDate,
       description: newDesc.trim() || '',
       status: 'pending',
+      schedule_id: newScheduleId || undefined,
     })
     if (created) {
       setAssignments(prev => [...prev, created])
       setNewTitle('')
       setNewCourseId('')
+      setNewScheduleId('')
       setNewDueDate('')
       setNewDesc('')
       setShowAddModal(false)
@@ -84,6 +96,7 @@ export function AssignmentsView() {
     setEditTitle(assignment.title)
     setEditDueDate(assignment.due_date.slice(0, 16))
     setEditDesc(assignment.description || '')
+    setEditScheduleId(assignment.schedule_id || '')
   }
 
   const handleSaveEdit = async () => {
@@ -92,6 +105,7 @@ export function AssignmentsView() {
       title: editTitle.trim(),
       due_date: editDueDate,
       description: editDesc.trim(),
+      schedule_id: editScheduleId || undefined,
     })
     if (updated) {
       setAssignments(prev => prev.map(a => a.id === updated.id ? updated : a))
@@ -148,6 +162,7 @@ export function AssignmentsView() {
         ) : (
           filteredAssignments.map(assignment => {
             const course = getCourse(assignment.course_id)
+            const schedule = assignment.schedule_id ? schedules.find(s => s.id === assignment.schedule_id) : null
             const isOverdue = new Date(assignment.due_date).getTime() < Date.now() && assignment.status === 'pending'
             const isNear = !isOverdue && new Date(assignment.due_date).getTime() - Date.now() < 86400000 && assignment.status === 'pending'
             const isExpanded = expandedId === assignment.id
@@ -178,6 +193,11 @@ export function AssignmentsView() {
                           {course && (
                             <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${course.color}26`, color: course.color }}>
                               {course.name}
+                            </span>
+                          )}
+                          {schedule && (
+                            <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${course?.color}26`, color: course?.color }}>
+                              {getScheduleLabel(schedule)}
                             </span>
                           )}
                           {isNear && (
@@ -239,6 +259,17 @@ export function AssignmentsView() {
                               className="w-full px-3 py-2 rounded-lg text-sm"
                               style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                             />
+                            <select
+                              value={editScheduleId}
+                              onChange={(e) => setEditScheduleId(e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg text-sm"
+                              style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                            >
+                              <option value="">不关联具体课时</option>
+                              {schedules.filter(s => s.course_id === assignment.course_id).map(s => (
+                                <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
+                              ))}
+                            </select>
                             <textarea
                               value={editDesc}
                               onChange={(e) => setEditDesc(e.target.value)}
@@ -293,7 +324,7 @@ export function AssignmentsView() {
         )}
       </div>
 
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="快速添加作业">
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setNewScheduleId('') }} title="快速添加作业">
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>作业标题</label>
@@ -309,12 +340,26 @@ export function AssignmentsView() {
             <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>所属课程</label>
             <select
               value={newCourseId}
-              onChange={(e) => setNewCourseId(e.target.value)}
+              onChange={(e) => { setNewCourseId(e.target.value); setNewScheduleId('') }}
               className="w-full px-3 py-2 rounded-lg text-sm"
               style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
               <option value="">选择课程</option>
               {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>关联课时（可选）</label>
+            <select
+              value={newScheduleId}
+              onChange={(e) => setNewScheduleId(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              <option value="">不关联具体课时</option>
+              {schedules.filter(s => s.course_id === newCourseId).map(s => (
+                <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
+              ))}
             </select>
           </div>
           <div>

@@ -2,29 +2,39 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Course, Memo } from '@/lib/types'
-import { getCourses, getMemos, createMemo, deleteMemo, updateMemo } from '@/lib/data'
+import { Course, Memo, CourseSchedule } from '@/lib/types'
+import { getCourses, getMemos, getSchedules, createMemo, deleteMemo, updateMemo } from '@/lib/data'
 import { Modal } from './Modal'
 import { Plus, StickyNote, X, Pencil } from 'lucide-react'
 
 const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
+const DAY_LABELS: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五', 6: '周六', 7: '周日' }
+
+function getScheduleLabel(schedule: CourseSchedule): string {
+  return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节`
+}
+
 export function MemosView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
+  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [loaded, setLoaded] = useState(false)
   const [newMemo, setNewMemo] = useState('')
   const [selectedEmoji, setSelectedEmoji] = useState('📝')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string>('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editEmoji, setEditEmoji] = useState('📝')
+  const [editScheduleId, setEditScheduleId] = useState<string>('')
 
   useEffect(() => {
-    Promise.all([getCourses(), getMemos()]).then(([c, m]) => {
+    Promise.all([getCourses(), getMemos(), getSchedules()]).then(([c, m, sc]) => {
       setCourses(c)
       setMemos(m)
+      setSchedules(sc)
       if (c.length > 0) setSelectedCourseId(c[0].id)
       setLoaded(true)
     })
@@ -47,11 +57,13 @@ export function MemosView() {
       content: newMemo,
       mood_emoji: selectedEmoji,
       mood_tags: [],
+      schedule_id: selectedScheduleId || undefined,
     })
 
     if (memo) {
       setMemos(prev => [memo, ...prev])
       setNewMemo('')
+      setSelectedScheduleId('')
     }
   }
 
@@ -64,6 +76,7 @@ export function MemosView() {
     setEditingId(memo.id)
     setEditContent(memo.content)
     setEditEmoji(memo.mood_emoji || '📝')
+    setEditScheduleId(memo.schedule_id || '')
   }
 
   const handleSaveEdit = async () => {
@@ -71,6 +84,7 @@ export function MemosView() {
     const updated = await updateMemo(editingId, {
       content: editContent.trim(),
       mood_emoji: editEmoji,
+      schedule_id: editScheduleId || undefined,
     })
     if (updated) {
       setMemos(prev => prev.map(m => m.id === updated.id ? updated : m))
@@ -96,6 +110,7 @@ export function MemosView() {
         ) : (
           memos.map((memo, index) => {
             const course = courses.find(c => c.id === memo.course_id)
+            const schedule = memo.schedule_id ? schedules.find(s => s.id === memo.schedule_id) : null
             return (
               <motion.div
                 key={memo.id}
@@ -117,6 +132,17 @@ export function MemosView() {
                           <button key={emoji} onClick={() => setEditEmoji(emoji)} className={`text-lg p-0.5 rounded-lg transition-colors ${editEmoji === emoji ? 'bg-[var(--border-light)]' : ''}`}>{emoji}</button>
                         ))}
                       </div>
+                      <select
+                        value={editScheduleId}
+                        onChange={(e) => setEditScheduleId(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2 text-sm"
+                        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                      >
+                        <option value="">不关联具体课时</option>
+                        {schedules.filter(s => s.course_id === memo.course_id).map(s => (
+                          <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
+                        ))}
+                      </select>
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
@@ -137,6 +163,11 @@ export function MemosView() {
                           {course && (
                             <span className="text-sm font-medium" style={{ color: course.color }}>
                               {course.name}
+                            </span>
+                          )}
+                          {schedule && (
+                            <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: `${course?.color || '#888'}26`, color: course?.color || '#888' }}>
+                              {getScheduleLabel(schedule)}
                             </span>
                           )}
                         </div>
@@ -206,12 +237,12 @@ export function MemosView() {
         </div>
       )}
 
-      <Modal open={showAddModal} onClose={() => setShowAddModal(false)} title="新增备忘">
+      <Modal open={showAddModal} onClose={() => { setShowAddModal(false); setSelectedScheduleId('') }} title="新增备忘">
         <div className="space-y-3">
           <div className="flex gap-2">
             <select
               value={selectedCourseId}
-              onChange={(e) => setSelectedCourseId(e.target.value)}
+              onChange={(e) => { setSelectedCourseId(e.target.value); setSelectedScheduleId('') }}
               className="flex-1 rounded-xl px-3 py-2 text-sm"
               style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
             >
@@ -227,6 +258,20 @@ export function MemosView() {
             >
               {EMOJI_OPTIONS.map(emoji => (
                 <option key={emoji} value={emoji}>{emoji}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>关联课时（可选）</label>
+            <select
+              value={selectedScheduleId}
+              onChange={(e) => setSelectedScheduleId(e.target.value)}
+              className="w-full rounded-xl px-3 py-2 text-sm"
+              style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              <option value="">不关联具体课时</option>
+              {schedules.filter(s => s.course_id === selectedCourseId).map(s => (
+                <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
               ))}
             </select>
           </div>

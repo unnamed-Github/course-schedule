@@ -60,6 +60,7 @@ export function WeekView() {
   const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [quickMemoContent, setQuickMemoContent] = useState('')
   const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')
+  const [quickAddScheduleId, setQuickAddScheduleId] = useState<string | undefined>(undefined)
 
   const loadData = () => {
     setLoadError(false)
@@ -170,7 +171,7 @@ export function WeekView() {
     getMemos().then(setMemos).catch(() => {})
   }, [])
 
-  const handleQuickAddAssignment = async (courseId: string) => {
+  const handleQuickAddAssignment = async (courseId: string, scheduleId?: string) => {
     if (!quickAssignTitle.trim() || !quickAssignDueDate) return
     const created = await createAssignment({
       title: quickAssignTitle.trim(),
@@ -178,6 +179,7 @@ export function WeekView() {
       due_date: quickAssignDueDate,
       description: '',
       status: 'pending',
+      schedule_id: scheduleId || undefined,
     })
     if (created) {
       setQuickAssignTitle('')
@@ -188,13 +190,14 @@ export function WeekView() {
     }
   }
 
-  const handleQuickAddMemo = async (courseId: string) => {
+  const handleQuickAddMemo = async (courseId: string, scheduleId?: string) => {
     if (!quickMemoContent.trim()) return
     const created = await createMemo({
       course_id: courseId,
       content: quickMemoContent.trim(),
       mood_emoji: quickMemoEmoji,
       mood_tags: [],
+      schedule_id: scheduleId || undefined,
     })
     if (created) {
       setQuickMemoContent('')
@@ -526,7 +529,7 @@ export function WeekView() {
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                           <button
-                                            onClick={(e) => { e.stopPropagation(); setShowQuickAssign(!showQuickAssign); setShowQuickMemo(false) }}
+                                            onClick={(e) => { e.stopPropagation(); setShowQuickAssign(!showQuickAssign); setShowQuickMemo(false); setQuickAddScheduleId(schedule.id) }}
                                             className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
                                             style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
                                           >
@@ -534,7 +537,7 @@ export function WeekView() {
                                             作业
                                           </button>
                                           <button
-                                            onClick={(e) => { e.stopPropagation(); setShowQuickMemo(!showQuickMemo); setShowQuickAssign(false) }}
+                                            onClick={(e) => { e.stopPropagation(); setShowQuickMemo(!showQuickMemo); setShowQuickAssign(false); setQuickAddScheduleId(schedule.id) }}
                                             className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium cursor-pointer"
                                             style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white' }}
                                           >
@@ -577,7 +580,7 @@ export function WeekView() {
                                           </div>
                                           <div className="flex gap-1 justify-end">
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleQuickAddAssignment(course.id) }}
+                                              onClick={(e) => { e.stopPropagation(); handleQuickAddAssignment(course.id, quickAddScheduleId) }}
                                               className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
                                               style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
                                             >
@@ -631,7 +634,7 @@ export function WeekView() {
                                           />
                                           <div className="flex gap-1 justify-end">
                                             <button
-                                              onClick={(e) => { e.stopPropagation(); handleQuickAddMemo(course.id) }}
+                                              onClick={(e) => { e.stopPropagation(); handleQuickAddMemo(course.id, quickAddScheduleId) }}
                                               className="px-2 py-1 rounded text-[10px] font-bold cursor-pointer"
                                               style={{ backgroundColor: 'rgba(255,255,255,0.3)', color: 'white' }}
                                             >
