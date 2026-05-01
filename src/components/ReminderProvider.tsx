@@ -15,6 +15,10 @@ interface ReminderContextType {
   nightEnabled: boolean
   ddlEnabled: boolean
   notificationPermission: NotificationPermission
+  lastWaterCheck: number
+  lastKegelCheck: number
+  checkWater: () => void
+  checkKegel: () => void
   toggleWater: () => void
   setWaterInterval: (v: number) => void
   toggleKegel: () => void
@@ -63,6 +67,10 @@ function formatRelativeTime(minutes: number): string {
   return `${Math.round(minutes / 1440)} 天`
 }
 
+function getTodayKey(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export function ReminderProvider({ children }: { children: ReactNode }) {
   const [waterEnabled, setWaterEnabled] = useState(() => getHealthReminderSetting('water_reminder_enabled') !== 'false')
   const [waterInterval, setWaterIntervalState] = useState(() => parseInt(getHealthReminderSetting('water_interval')) || 40)
@@ -71,6 +79,27 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const [nightEnabled, setNightEnabled] = useState(() => getHealthReminderSetting('night_reminder_enabled') !== 'false')
   const [ddlEnabled, setDdlEnabled] = useState(() => getHealthReminderSetting('ddl_reminder_enabled') !== 'false')
   const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission)
+
+  const [lastWaterCheck, setLastWaterCheck] = useState(() => {
+    try {
+      const stored = localStorage.getItem('health_last_water_check')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.date === getTodayKey()) return parsed.time as number
+      }
+    } catch {}
+    return 0
+  })
+  const [lastKegelCheck, setLastKegelCheck] = useState(() => {
+    try {
+      const stored = localStorage.getItem('health_last_kegel_check')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.date === getTodayKey()) return parsed.time as number
+      }
+    } catch {}
+    return 0
+  })
 
   const [permissionPromptDismissed, setPermissionPromptDismissed] = useState(() => {
     try { return localStorage.getItem('notification_prompt_dismissed') === '1' } catch { return false }
@@ -95,6 +124,24 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     ddlFiredRef.current.clear()
   }, [ddlEnabled])
+
+  const checkWater = useCallback(() => {
+    const now = Date.now()
+    setLastWaterCheck(now)
+    lastWaterRef.current = currentMinutes()
+    try {
+      localStorage.setItem('health_last_water_check', JSON.stringify({ date: getTodayKey(), time: now }))
+    } catch {}
+  }, [])
+
+  const checkKegel = useCallback(() => {
+    const now = Date.now()
+    setLastKegelCheck(now)
+    lastKegelDayRef.current = getTodayKey()
+    try {
+      localStorage.setItem('health_last_kegel_check', JSON.stringify({ date: getTodayKey(), time: now }))
+    } catch {}
+  }, [])
 
   const toggleWater = useCallback(() => {
     setWaterEnabled(v => {
@@ -171,7 +218,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
       }
 
       if (kegelEnabled) {
-        const today = new Date().toISOString().slice(0, 10)
+        const today = getTodayKey()
         if (lastKegelDayRef.current !== today) {
           const times = kegelTimes.split(',').map(t => t.trim()).filter(Boolean)
           for (const t of times) {
@@ -232,6 +279,10 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         nightEnabled,
         ddlEnabled,
         notificationPermission,
+        lastWaterCheck,
+        lastKegelCheck,
+        checkWater,
+        checkKegel,
         toggleWater,
         setWaterInterval,
         toggleKegel,
