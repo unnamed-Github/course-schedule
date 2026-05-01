@@ -3,6 +3,21 @@ import { supabase } from './supabase'
 let supabaseAvailable = true
 let supabaseCheckDone = false
 
+export const HEALTH_REMINDER_DEFAULTS = {
+  water_reminder_enabled: 'true',
+  water_interval: '40',
+  kegel_reminder_enabled: 'true',
+  kegel_times: '10:00,15:00,20:00',
+  night_reminder_enabled: 'true',
+  night_start: '23:30',
+  silent_start: '00:30',
+  silent_end: '08:00',
+}
+
+export function getHealthReminderSetting(key: string): string {
+  return getLocalSetting(key, (HEALTH_REMINDER_DEFAULTS as Record<string, string>)[key] ?? '')
+}
+
 async function checkSupabaseAvailability(): Promise<boolean> {
   if (supabaseCheckDone) return supabaseAvailable
   try {

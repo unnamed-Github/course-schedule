@@ -10,6 +10,7 @@ import { ImportExportPanel } from '@/components/ImportExportPanel'
 import { HolidayEditor } from '@/components/HolidayEditor'
 import { MakeupDayEditor } from '@/components/MakeupDayEditor'
 import { useSemesterConfig } from '@/hooks/useSemesterConfig'
+import { HealthReminderSettings } from '@/components/HealthReminderSettings'
 import { APP_VERSION } from '@/lib/version'
 
 export default function SettingsPage() {
@@ -70,6 +71,8 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <HealthReminderSettings />
 
       <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>学期信息</h3>

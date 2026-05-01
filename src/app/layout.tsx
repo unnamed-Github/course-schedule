@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { WarmthBannerProvider } from "@/components/WarmthBannerContext"
+import { ReminderProvider } from "@/components/ReminderProvider"
 import { TopBar } from "@/components/TopBar"
 import { PageTransition } from "@/components/PageTransition"
 import { ToastProvider } from "@/components/ToastProvider"
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
+          <ReminderProvider>
           <ToastProvider>
             <WarmthBannerProvider>
               <ViewProvider>
@@ -38,6 +40,7 @@ export default function RootLayout({
               </ViewProvider>
             </WarmthBannerProvider>
           </ToastProvider>
+          </ReminderProvider>
         </ThemeProvider>
       </body>
     </html>
