@@ -31,15 +31,14 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto card"
-            style={{ boxShadow: 'var(--shadow-xl)' }}
+            exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto glass-modal"
             role="dialog"
             aria-modal="true"
             aria-label={title || '对话框'}

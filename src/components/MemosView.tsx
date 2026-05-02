@@ -6,9 +6,7 @@ import { Course, Memo, CourseSchedule } from '@/lib/types'
 import { getCourses, getMemos, getSchedules, createMemo, deleteMemo, updateMemo } from '@/lib/data'
 import { Modal } from './Modal'
 import { Plus, StickyNote, X, Pencil } from 'lucide-react'
-import { DAY_LABELS, WEEK_TYPE_SHORT } from '@/lib/constants'
-
-const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
+import { DAY_LABELS, WEEK_TYPE_SHORT, EMOJI_OPTIONS } from '@/lib/constants'
 
 function getScheduleLabel(schedule: CourseSchedule): string {
   return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
@@ -102,7 +100,7 @@ export function MemosView() {
 
       <div className="space-y-3">
         {memos.length === 0 ? (
-          <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
+          <div className="text-center py-12 rounded-2xl glass">
             <div className="flex justify-center mb-2"><StickyNote size={32} strokeWidth={1.5} style={{ color: 'var(--text-secondary)', opacity: 0.4 }} /></div>
             <p style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>还没有备忘，快来记录吧！</p>
           </div>
@@ -116,8 +114,7 @@ export function MemosView() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
-                className="p-4 rounded-2xl flex gap-3"
-                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}
+                className="p-4 rounded-2xl flex gap-3 glass"
               >
                 <div
                   className="w-1 rounded-full flex-shrink-0"

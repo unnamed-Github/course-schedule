@@ -200,7 +200,7 @@ export function AssignmentsView() {
         <StatCard label="已过期" value={stats.overdue} color="var(--accent-danger)" />
       </div>
 
-      <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="rounded-2xl p-4 glass">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>快速添加作业</h3>
           <button
@@ -369,7 +369,7 @@ export function AssignmentsView() {
 
       <div className="space-y-3">
         {filteredAssignments.length === 0 ? (
-          <div className="text-center py-12 rounded-2xl" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
+          <div className="text-center py-12 rounded-2xl glass">
             <p style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>暂无作业</p>
           </div>
         ) : (
@@ -677,7 +677,7 @@ export function AssignmentsView() {
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="p-4 rounded-2xl text-left" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+    <div className="p-4 rounded-2xl text-left glass-strong">
       <div className="text-2xl font-bold mb-1" style={{ color }}>
         {value}
       </div>

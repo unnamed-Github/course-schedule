@@ -104,8 +104,7 @@ export function HealthChecklist() {
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl p-4"
-      style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+      className="rounded-2xl p-4 glass"
     >
       <div className="flex items-center gap-4">
         {waterEnabled && (

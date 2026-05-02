@@ -9,6 +9,7 @@ import { ToastProvider } from "@/components/ToastProvider"
 import { ViewProvider } from "@/components/ViewContext"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { FloatingSettingsButton } from "@/components/FloatingSettingsButton"
+import { GlassStyleInjector } from "@/components/GlassStyleInjector"
 
 export const metadata: Metadata = {
   title: "课表 · 竹",
@@ -22,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-primary)] to-[var(--glass-bg-strong)]">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:px-4 focus:py-2 focus:bg-[var(--accent-info)] focus:text-white focus:rounded-lg focus:shadow-lg"
@@ -30,6 +31,7 @@ export default function RootLayout({
           跳转到主要内容
         </a>
         <ThemeProvider>
+          <GlassStyleInjector />
           <ReminderProvider>
           <ToastProvider>
             <WarmthBannerProvider>

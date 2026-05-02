@@ -12,9 +12,7 @@ import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
 import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
 import { EMOJI_OPTIONS, DAY_NAMES } from '@/lib/constants'
-
-function addDays(d: Date, days: number) { const r = new Date(d); r.setDate(r.getDate() + days); return r }
-function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate() }
+import { addDays, isSameDay } from '@/lib/utils'
 
 export function DayView() {
   const { showToast } = useToast()

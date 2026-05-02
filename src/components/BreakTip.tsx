@@ -108,10 +108,9 @@ export function BreakTip() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl mb-2"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl mb-2 glass-strong"
           style={{
-            backgroundColor: 'rgba(245, 158, 11, 0.08)',
-            border: '1px solid rgba(245, 158, 11, 0.2)',
+            borderLeft: '3px solid #F59E0B',
           }}
         >
           <Lightbulb size={16} strokeWidth={1.8} style={{ color: '#F59E0B', flexShrink: 0 }} />

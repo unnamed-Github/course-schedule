@@ -39,13 +39,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-white shadow-lg pointer-events-auto"
+              transition={{ duration: 0.25 }}
+              className="px-4 py-2 rounded-xl text-sm font-medium pointer-events-auto glass-strong"
               style={{
-                backgroundColor:
+                color: 'var(--text-primary)',
+                borderLeft: `3px solid ${
                   t.type === 'success' ? 'var(--accent-success)' :
                   t.type === 'error' ? 'var(--accent-danger)' :
-                  'var(--accent-info)',
+                  'var(--accent-info)'
+                }`,
               }}
             >
               {t.message}

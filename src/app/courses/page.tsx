@@ -209,7 +209,7 @@ export default function CoursesPage() {
       </div>
 
       {showImport && importPreview.length > 0 && (
-        <div className="rounded-2xl p-4 mb-4" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+        <div className="rounded-2xl p-4 mb-4 glass">
           <h3 className="text-xs font-medium mb-2" style={{ color: 'var(--fg)' }}>导入预览 ({importPreview.length} 条)</h3>
           <div className="max-h-36 overflow-auto text-[10px]">
             <table className="w-full">
@@ -271,7 +271,7 @@ export default function CoursesPage() {
           return (
             <motion.div key={course.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
               <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.15 }}
-                className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+                className="rounded-2xl overflow-hidden glass card-interactive">
                 <div style={{ height: 4, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}88 100%)` }} />
                 <div className="p-4">
                   <div className="flex items-start justify-between">

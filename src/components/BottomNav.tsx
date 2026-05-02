@@ -20,11 +20,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-30 backdrop-blur-xl"
-      style={{
-        backgroundColor: 'var(--nav-glass-bg)',
-        borderTop: '1px solid var(--border-light)',
-      }}
+      className="fixed bottom-0 left-0 right-0 z-30 glass-nav"
     >
       <div className="flex items-center justify-around h-16 px-2 max-w-6xl mx-auto">
         {TABS.map((tab) => {

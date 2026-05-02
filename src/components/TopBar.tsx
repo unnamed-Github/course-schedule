@@ -36,8 +36,7 @@ export function TopBar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex flex-col backdrop-blur-xl"
-      style={{ backgroundColor: 'var(--nav-glass-bg)', borderBottom: '1px solid var(--border-light)' }}
+      className="sticky top-0 z-30 flex flex-col glass-nav"
     >
       <div className="h-12 flex items-center justify-between px-4 sm:px-6">
         <button

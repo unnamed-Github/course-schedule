@@ -11,24 +11,14 @@ import { SkeletonGrid } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
 import { ChevronLeft, ChevronRight, User, Clock, Trash2, RotateCcw, ClipboardList, Pin, Check, Square, StickyNote, Plus, Calendar } from 'lucide-react'
-
-const DAY_LABELS: Record<number, string> = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 7: '日' }
-const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
-const PERIOD_GROUP_DEFS = [
-  { label: '1-2节', start: 1, end: 2 },
-  { label: '3-4节', start: 3, end: 4 },
-  { label: '5-6节', start: 5, end: 6 },
-  { label: '7-8节', start: 7, end: 8 },
-  { label: '9-10节', start: 9, end: 10 },
-  { label: '11节', start: 11, end: 11 },
-]
+import { EMOJI_OPTIONS, DAY_MAP, PERIOD_GROUP_DEFS } from '@/lib/constants'
 
 const PERIOD_GROUPS = PERIOD_GROUP_DEFS.map((g) => ({
   ...g,
   time: `${PERIOD_TIMES[g.start].start}-${PERIOD_TIMES[g.end].end}`,
 }))
 
-function countdown(dueDate: string): string {
+function countdownDisplay(dueDate: string): string {
   const diff = new Date(dueDate).getTime() - Date.now()
   if (diff < 0) return '已逾期'
   const days = Math.floor(diff / 86400000)
@@ -75,7 +65,7 @@ export function WeekView() {
       })
   }
 
-  const loadOverrides = () => {
+  const loadOverrides = useCallback(() => {
     if (!weekRange) return
     const dateStrs: string[] = []
     const d = new Date(weekRange.start)
@@ -87,7 +77,7 @@ export function WeekView() {
     Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
       .then(results => setWeekOverrides(results.flat()))
       .catch(() => setWeekOverrides([]))
-  }
+  }, [weekRange])
 
   const {
     confirmCancelId,
@@ -114,18 +104,8 @@ export function WeekView() {
   }, [])
 
   useEffect(() => {
-    if (!weekRange) return
-    const dateStrs: string[] = []
-    const d = new Date(weekRange.start)
-    for (let i = 0; i < 7; i++) {
-      const current = new Date(d)
-      current.setDate(d.getDate() + i)
-      dateStrs.push(current.toISOString().split('T')[0])
-    }
-    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
-      .then(results => setWeekOverrides(results.flat()))
-      .catch(() => setWeekOverrides([]))
-  }, [weekRange])
+    loadOverrides()
+  }, [loadOverrides])
 
   useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
@@ -322,9 +302,9 @@ export function WeekView() {
                 return (
                   <div key={day} className="p-3 text-center">
                     <span className="text-sm font-semibold" style={{ color: day === currentDay ? 'var(--accent-info)' : 'var(--text-secondary)' }}>
-                      周{DAY_LABELS[day]}
+                      周{DAY_MAP[day]}
                       {day >= 6 && makeup && (
-                        <span className="ml-1 text-[10px]" style={{ color: 'var(--accent-warm)' }}>(补周{DAY_LABELS[makeup.replacesDayOfWeek]})</span>
+                        <span className="ml-1 text-[10px]" style={{ color: 'var(--accent-warm)' }}>(补周{DAY_MAP[makeup.replacesDayOfWeek]})</span>
                       )}
                     </span>
                   </div>
@@ -464,7 +444,7 @@ export function WeekView() {
                                                     {a.status === 'submitted' ? <Check size={10} strokeWidth={2.5} style={{ color: '#6EE7B7' }} /> : <Square size={10} strokeWidth={1.5} style={{ opacity: 0.5 }} />}
                                                     <span className="truncate flex-1">{a.title}</span>
                                                     {a.status === 'pending' && (
-                                                      <span style={{ color: isOverdue ? '#FCA5A5' : 'rgba(255,255,255,0.6)' }}>{countdown(a.due_date)}</span>
+                                                      <span style={{ color: isOverdue ? '#FCA5A5' : 'rgba(255,255,255,0.6)' }}>{countdownDisplay(a.due_date)}</span>
                                                     )}
                                                   </div>
                                                 )

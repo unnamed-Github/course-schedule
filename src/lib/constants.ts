@@ -1,4 +1,4 @@
-export const EMOJI_OPTIONS = ['😊', '🤔', '😴', '😤', '❤️', '✍️', '💡', '📖']
+export const EMOJI_OPTIONS = ['📝', '💡', '🤔', '😊', '😤', '💪', '🎉', '📖', '✨', '⚠️']
 
 export const DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -15,6 +15,15 @@ export const WEEK_TYPE_SHORT: Record<string, string> = {
   odd: '（单周）',
   even: '（双周）',
 }
+
+export const PERIOD_GROUP_DEFS = [
+  { label: '1-2节', start: 1, end: 2 },
+  { label: '3-4节', start: 3, end: 4 },
+  { label: '5-6节', start: 5, end: 6 },
+  { label: '7-8节', start: 7, end: 8 },
+  { label: '9-10节', start: 9, end: 10 },
+  { label: '11节', start: 11, end: 11 },
+]
 
 export function countdown(targetDate: string): { days: number; hours: number; minutes: number } {
   const now = new Date()

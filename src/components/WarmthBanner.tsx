@@ -200,10 +200,8 @@ export function WarmthBanner() {
         >
           {/* 第一层：问候横幅 - 薄荷绿背景，清爽 */}
           {message && (
-            <div className="relative flex items-center px-4 py-3 rounded-2xl overflow-hidden"
+            <div className="relative flex items-center px-4 py-3 rounded-2xl overflow-hidden glass-strong"
               style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-light)',
                 borderLeft: '4px solid var(--accent-warm)',
               }}
             >
@@ -230,10 +228,9 @@ export function WarmthBanner() {
 
           {/* 第二层：当前课程实时条 */}
           {currentCourseInfo && !currentCourseInfo.isCancelled && (
-            <div className="px-4 py-3 rounded-2xl"
+            <div className="px-4 py-3 rounded-2xl glass"
               style={{
-                backgroundColor: 'var(--bg-card)',
-                border: `2px solid ${currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color}`,
+                borderLeft: `3px solid ${currentCourseInfo.isEndedEarly ? '#10B981' : currentCourseInfo.course.color}`,
               }}
             >
               <div className="flex items-center justify-between mb-2">
@@ -287,10 +284,8 @@ export function WarmthBanner() {
 
           {/* 第三层：下一节课预告 */}
           {!currentCourseInfo && nextClassInfo && (
-            <div className="px-4 py-3 rounded-2xl"
+            <div className="px-4 py-3 rounded-2xl glass-strong"
               style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-light)',
                 borderLeft: `3px solid ${nextClassInfo.course.color}80`,
               }}
             >
@@ -313,12 +308,7 @@ export function WarmthBanner() {
 
           {/* 今天已无课 */}
           {!currentCourseInfo && !nextClassInfo && getTodayCourses(schedules).length > 0 && (
-            <div className="px-4 py-3 rounded-2xl"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                border: '1px solid var(--border-light)',
-              }}
-            >
+            <div className="px-4 py-3 rounded-2xl glass">
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 今天课已上完，好好休息吧 🌙
               </p>

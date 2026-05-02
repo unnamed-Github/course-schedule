@@ -11,12 +11,15 @@ import { ImportExportPanel } from './ImportExportPanel'
 import { HolidayEditor } from './HolidayEditor'
 import { MakeupDayEditor } from './MakeupDayEditor'
 import { useSemesterConfig } from '@/hooks/useSemesterConfig'
-import { Sun, Moon, CalendarDays } from 'lucide-react'
+import { Sun, Moon, CalendarDays, Sparkles } from 'lucide-react'
 import { APP_VERSION } from '@/lib/version'
+import { useGlassSettings, GLASS_DEFAULTS } from '@/hooks/useGlassSettings'
 
-type SettingsTab = 'display' | 'data'
+type SettingsTab = 'display' | 'data' | 'glass'
 
 export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClose: () => void }) {
+  const { settings: glass, updateSetting: updateGlass } = useGlassSettings()
+
   const { theme, toggle } = useTheme()
   const { isEnabled: warmthBannerEnabled, toggleEnabled: toggleWarmthBanner } = useWarmthBanner()
   const { showToast } = useToast()
@@ -68,6 +71,16 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
           }}
         >
           数据
+        </button>
+        <button
+          onClick={() => setActiveTab('glass')}
+          className="flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors duration-200 cursor-pointer focus-visible:shadow-[var(--focus-ring)]"
+          style={{
+            backgroundColor: activeTab === 'glass' ? 'var(--accent-primary)' : 'transparent',
+            color: activeTab === 'glass' ? 'white' : 'var(--text-secondary)',
+          }}
+        >
+          玻璃
         </button>
       </div>
 
@@ -143,6 +156,96 @@ export function SettingsModal({ open: isOpen, onClose }: { open: boolean; onClos
       {activeTab === 'data' && (
         <div className="space-y-4">
           <ImportExportPanel compact />
+        </div>
+      )}
+
+      {activeTab === 'glass' && (
+        <div className="space-y-5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <Sparkles size={16} strokeWidth={1.8} />
+              开启玻璃效果
+            </span>
+            <button
+              onClick={() => updateGlass('glass_enabled', String(!glass.enabled))}
+              className="w-11 h-6 rounded-full relative transition-colors"
+              style={{ backgroundColor: glass.enabled ? 'var(--accent-info)' : 'var(--border-light)' }}
+            >
+              <div className="w-5 h-5 rounded-full bg-white absolute top-0.5 transition-transform shadow-sm" style={{ left: glass.enabled ? 'calc(100% - 22px)' : '2px' }} />
+            </button>
+          </div>
+
+          {glass.enabled && (
+            <>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>模糊强度</span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{glass.blur}px</span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={80}
+                  value={glass.blur}
+                  onChange={(e) => updateGlass('glass_blur', e.target.value)}
+                  className="w-full accent-current"
+                  style={{ colorScheme: 'light' }}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>背景透明度</span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{glass.opacity}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={3}
+                  max={40}
+                  value={glass.opacity}
+                  onChange={(e) => updateGlass('glass_opacity', e.target.value)}
+                  className="w-full accent-current"
+                  style={{ colorScheme: 'light' }}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>色彩饱和度</span>
+                  <span className="text-xs font-mono" style={{ color: 'var(--text-primary)' }}>{glass.saturation.toFixed(1)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={30}
+                  step={1}
+                  value={Math.round(glass.saturation * 10)}
+                  onChange={(e) => updateGlass('glass_saturation', (Number(e.target.value) / 10).toFixed(1))}
+                  className="w-full accent-current"
+                  style={{ colorScheme: 'light' }}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    updateGlass('glass_blur', GLASS_DEFAULTS.glass_blur)
+                    updateGlass('glass_opacity', GLASS_DEFAULTS.glass_opacity)
+                    updateGlass('glass_saturation', GLASS_DEFAULTS.glass_saturation)
+                  }}
+                  className="btn-ghost text-xs"
+                >
+                  恢复默认
+                </button>
+              </div>
+            </>
+          )}
+
+          <div className="border-t pt-3" style={{ borderColor: 'var(--border-light)' }}>
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+              玻璃效果采用 iOS 26 Liquid Glass 风格。调整参数后，所有启用玻璃效果的组件将实时更新。在低性能设备上可关闭此效果以提升流畅度。
+            </p>
+          </div>
         </div>
       )}
     </Modal>

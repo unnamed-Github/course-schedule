@@ -43,6 +43,25 @@
   --holiday-cell: rgba(226, 232, 240, 0.5);
   --makeup-badge: rgba(8, 145, 178, 0.08);
   --drop-highlight: rgba(8, 145, 178, 0.06);
+
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-strong: rgba(255, 255, 255, 0.18);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-border-strong: rgba(255, 255, 255, 0.3);
+  --glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 50%);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02), inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  --glass-blur: blur(40px);
+  --glass-blur-light: blur(20px);
+  --glass-blur-heavy: blur(60px);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 }
 
 .dark {
@@ -75,6 +94,14 @@
   --holiday-cell: rgba(255, 255, 255, 0.04);
   --makeup-badge: rgba(34, 211, 238, 0.1);
   --drop-highlight: rgba(56, 189, 248, 0.08);
+
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border-strong: rgba(255, 255, 255, 0.15);
+  --glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
 }
 
 /*
@@ -189,13 +216,42 @@ body {
  * ─── Card ────────────────────────────────────────────────────
  */
 .card {
-  border-radius: 1rem;
+  border-radius: var(--radius-lg);
   background: var(--bg-card);
   border: 1px solid var(--border-light);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow var(--duration-normal) ease, border-color var(--duration-normal) ease, transform var(--duration-normal) ease;
 }
 .card:hover { box-shadow: var(--shadow-md); }
+
+.card-elevated {
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  transition: box-shadow var(--duration-normal) ease, transform var(--duration-normal) ease;
+}
+.card-elevated:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.card-interactive {
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: box-shadow var(--duration-normal) ease, border-color var(--duration-normal) ease, transform var(--duration-normal) ease;
+}
+.card-interactive:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+}
+.card-interactive:active {
+  transform: scale(0.985);
+}
 
 /*
  * ─── Scrollbar ───────────────────────────────────────────────
@@ -204,3 +260,100 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-medium); }
+
+/*
+ * ─── Liquid Glass ────────────────────────────────────────────
+ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: saturate(1.8) var(--glass-blur);
+  -webkit-backdrop-filter: saturate(1.8) var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  transform: translateZ(0);
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-highlight);
+  pointer-events: none;
+}
+
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: saturate(1.8) var(--glass-blur);
+  -webkit-backdrop-filter: saturate(1.8) var(--glass-blur);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  transform: translateZ(0);
+}
+
+.glass-strong::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-highlight);
+  pointer-events: none;
+}
+
+.glass-subtle {
+  background: var(--glass-bg-subtle);
+  backdrop-filter: saturate(1.5) var(--glass-blur-light);
+  -webkit-backdrop-filter: saturate(1.5) var(--glass-blur-light);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transform: translateZ(0);
+}
+
+.glass-nav {
+  background: var(--glass-bg-strong);
+  backdrop-filter: saturate(2) var(--glass-blur-heavy);
+  -webkit-backdrop-filter: saturate(2) var(--glass-blur-heavy);
+  border-color: var(--glass-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
+  transform: translateZ(0);
+}
+
+.glass-modal {
+  background: var(--glass-bg-strong);
+  backdrop-filter: saturate(1.8) var(--glass-blur);
+  -webkit-backdrop-filter: saturate(1.8) var(--glass-blur);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12), 0 8px 20px rgba(0, 0, 0, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.5);
+  position: relative;
+  transform: translateZ(0);
+}
+
+.glass-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-highlight);
+  pointer-events: none;
+}
+
+.glass-btn {
+  background: var(--glass-bg-strong);
+  backdrop-filter: saturate(1.5) var(--glass-blur-light);
+  -webkit-backdrop-filter: saturate(1.5) var(--glass-blur-light);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 0.5px 0 rgba(255, 255, 255, 0.3);
+  transform: translateZ(0);
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+
+.glass-btn:hover {
+  background: var(--glass-bg-strong);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), inset 0 0.5px 0 rgba(255, 255, 255, 0.4);
+}
+
+.glass-btn:active {
+  transform: translateZ(0) scale(0.97);
+}
