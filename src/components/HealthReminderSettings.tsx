@@ -29,7 +29,7 @@ export function HealthReminderSettings() {
   } = useReminder()
 
   return (
-    <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+    <div className="rounded-2xl p-5 glass-strong">
       <h3 className="text-sm font-medium mb-4" style={{ color: 'var(--text-primary)' }}>💚 健康提醒</h3>
 
       <div className="space-y-4">

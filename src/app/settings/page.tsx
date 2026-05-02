@@ -44,11 +44,11 @@ export default function SettingsPage() {
     <div className="max-w-lg mx-auto space-y-4">
       <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>⚙️ 设置</h2>
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <ImportExportPanel />
       </div>
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>外观</h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export default function SettingsPage() {
 
       <HealthReminderSettings />
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>学期信息</h3>
         <div className="space-y-2" style={{ color: 'var(--text-secondary)' }}>
           <div className="flex justify-between text-sm"><span>开学日期</span>
@@ -92,7 +92,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <HolidayEditor
           holidays={holidays}
           editingIdx={editingHolidayIdx}
@@ -111,7 +111,7 @@ export default function SettingsPage() {
         />
       </div>
 
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>关于</h3>
         <div className="space-y-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
           <p>课表 · 竹 v{APP_VERSION}</p>

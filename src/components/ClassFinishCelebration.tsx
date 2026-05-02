@@ -163,10 +163,9 @@ export function ClassFinishCelebration({ shouldCelebrate, courseName }: { should
             className="fixed top-16 left-1/2 -translate-x-1/2 z-[99] pointer-events-none"
           >
             <div
-              className="px-6 py-3 rounded-2xl text-center whitespace-nowrap"
-              style={{
-                backgroundColor: 'var(--bg-card)',
-                boxShadow: '0 4px 20px rgba(255, 215, 0, 0.3)',
+              className="px-6 py-3 rounded-2xl text-center whitespace-nowrap glass-modal"
+            style={{
+              boxShadow: '0 4px 20px rgba(255, 215, 0, 0.3)',
                 border: '1px solid rgba(255, 215, 0, 0.4)',
               }}
             >

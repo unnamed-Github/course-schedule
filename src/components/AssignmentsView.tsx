@@ -355,7 +355,7 @@ export function AssignmentsView() {
           ))}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="p-2 rounded-xl" style={{ color: 'var(--text-secondary)', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <button className="p-2 rounded-xl glass-btn" style={{ color: 'var(--text-secondary)' }}>
             <Settings size={18} strokeWidth={2} />
           </button>
           <button
@@ -385,8 +385,7 @@ export function AssignmentsView() {
                 key={assignment.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl overflow-hidden"
-                style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}
+                className="rounded-2xl overflow-hidden glass-strong"
               >
                 <div
                   className="p-4 cursor-pointer"

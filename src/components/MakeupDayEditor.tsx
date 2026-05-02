@@ -87,14 +87,14 @@ function MakeupEditForm({
         value={form.date}
         onChange={(e) => setForm({ ...form, date: e.target.value })}
         className="w-full rounded-lg px-2 py-1 text-xs"
-        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
       />
       <div className="flex gap-2">
         <select
           value={form.replacesDayOfWeek}
           onChange={(e) => setForm({ ...form, replacesDayOfWeek: parseInt(e.target.value) })}
           className="flex-1 rounded-lg px-2 py-1 text-xs"
-          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
         >
           {[1, 2, 3, 4, 5].map((d) => <option key={d} value={d}>补周{d}</option>)}
         </select>
@@ -102,7 +102,7 @@ function MakeupEditForm({
           value={form.weekType}
           onChange={(e) => setForm({ ...form, weekType: e.target.value as 'all' | 'odd' | 'even' })}
           className="flex-1 rounded-lg px-2 py-1 text-xs"
-          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
         >
           <option value="all">每周</option>
           <option value="odd">单周</option>

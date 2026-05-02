@@ -239,7 +239,7 @@ export default function CourseDetailPage() {
 
       {/* ======== HEADER CARD ======== */}
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+        className="rounded-2xl overflow-hidden glass-strong">
         <div style={{ height: 5, background: `linear-gradient(90deg, ${course.color} 0%, ${course.color}66 100%)` }} />
         <div className="p-5">
           <div className="flex items-start justify-between">
@@ -300,7 +300,7 @@ export default function CourseDetailPage() {
                           <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
                             {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
                           </select>
-                          <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
+                          <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs glass-subtle" style={{ border: '1px solid var(--border-light)' }} />
                           <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
                             <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
                           </select>
@@ -341,7 +341,7 @@ export default function CourseDetailPage() {
                       <select value={scheduleForm.end_period} onChange={(e) => setScheduleForm({ ...scheduleForm, end_period: parseInt(e.target.value) })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
                         {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((x) => <option key={x} value={x}>{x}节</option>)}
                       </select>
-                      <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }} />
+                      <input value={scheduleForm.location} onChange={(e) => setScheduleForm({ ...scheduleForm, location: e.target.value })} placeholder="教室" className="flex-1 rounded-lg px-2 py-1 text-xs glass-subtle" style={{ border: '1px solid var(--border-light)' }} />
                       <select value={scheduleForm.week_type} onChange={(e) => setScheduleForm({ ...scheduleForm, week_type: e.target.value as 'all' | 'odd' | 'even' })} className="rounded-lg px-2 py-1 text-xs" style={{ border: '1px solid var(--border-light)' }}>
                         <option value="all">每周</option><option value="odd">单周</option><option value="even">双周</option>
                       </select>
@@ -379,7 +379,7 @@ export default function CourseDetailPage() {
       </motion.div>
 
       {/* ======== MOOD ======== */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <h3 className="text-xs font-medium mb-3" style={{ color: 'var(--text-primary)' }}>心情统计</h3>
         {Object.keys(tagCounts).length > 0 ? (
           <div className="space-y-2">
@@ -407,7 +407,7 @@ export default function CourseDetailPage() {
       </div>
 
       {/* ======== ASSIGNMENTS ======== */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}><ClipboardList size={14} strokeWidth={1.8} />作业 ({assignments.length})</h3>
           <button onClick={() => setShowAssignmentForm(!showAssignmentForm)} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
@@ -415,9 +415,9 @@ export default function CourseDetailPage() {
 
         {showAssignmentForm && (
           <div className="mb-3 p-4 rounded-2xl space-y-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
-            <input placeholder="标题" value={assignmentForm.title} onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }} autoFocus className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
-            <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
-            <input type="datetime-local" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+            <input placeholder="标题" value={assignmentForm.title} onChange={(e) => setAssignmentForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => { if (e.key === 'Enter') handleAddAssignment() }} autoFocus className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+            <input placeholder="描述" value={assignmentForm.description} onChange={(e) => setAssignmentForm((f) => ({ ...f, description: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+            <input type="datetime-local" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
             <div className="flex flex-wrap gap-1">
               {DDL_REMINDER_OPTIONS.map(opt => (
                 <button
@@ -457,9 +457,9 @@ export default function CourseDetailPage() {
                 <div key={a.id} className="py-2.5 px-3 rounded-xl hover:bg-[var(--border-light)]/30 transition-colors">
                   {editingAssignmentId === a.id ? (
                     <div className="space-y-2">
-                      <input value={editAssignmentForm.title} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, title: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
-                      <input value={editAssignmentForm.description} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, description: e.target.value }))} placeholder="描述" className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
-                      <input type="datetime-local" value={editAssignmentForm.due_date} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+                      <input value={editAssignmentForm.title} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, title: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+                      <input value={editAssignmentForm.description} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, description: e.target.value }))} placeholder="描述" className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+                      <input type="datetime-local" value={editAssignmentForm.due_date} onChange={(e) => setEditAssignmentForm((f) => ({ ...f, due_date: e.target.value }))} className="w-full rounded-xl px-3 py-2 text-sm glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
                       <div className="flex flex-wrap gap-1">
                         {DDL_REMINDER_OPTIONS.map(opt => (
                           <button
@@ -513,7 +513,7 @@ export default function CourseDetailPage() {
       </div>
 
       {/* ======== MEMOS ======== */}
-      <div className="rounded-2xl p-5" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="rounded-2xl p-5 glass-strong">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}><Pin size={14} strokeWidth={1.8} />课堂备忘 ({memos.length})</h3>
           <button onClick={() => setShowMemoForm(!showMemoForm)} className="btn-ghost text-xs flex items-center gap-0.5"><Plus size={12} strokeWidth={2} />添加</button>
@@ -521,7 +521,7 @@ export default function CourseDetailPage() {
 
         {showMemoForm && (
           <div className="mb-3 p-4 rounded-2xl space-y-3" style={{ backgroundColor: 'var(--bg-primary)' }}>
-            <textarea placeholder="写下备忘..." value={memoForm.content} onChange={(e) => setMemoForm((f) => ({ ...f, content: e.target.value }))} rows={2} className="w-full rounded-xl px-3 py-2 text-sm resize-none" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }} />
+            <textarea placeholder="写下备忘..." value={memoForm.content} onChange={(e) => setMemoForm((f) => ({ ...f, content: e.target.value }))} rows={2} className="w-full rounded-xl px-3 py-2 text-sm resize-none glass-subtle" style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>心情:</span>
               {EMOJI_OPTIONS.map((emoji) => (

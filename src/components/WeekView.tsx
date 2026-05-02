@@ -266,8 +266,8 @@ export function WeekView() {
           <select
             value={weekNum}
             onChange={(e) => selectWeek(parseInt(e.target.value))}
-            className="rounded-lg px-2 py-1 text-sm font-medium cursor-pointer"
-            style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            className="rounded-lg px-2 py-1 text-sm font-medium cursor-pointer glass-subtle"
+            style={{ color: 'var(--text-primary)' }}
           >
             {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((w) => (
               <option key={w} value={w}>第 {w} 周</option>
@@ -295,7 +295,7 @@ export function WeekView() {
       <div className="overflow-x-auto">
         <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
           {/* 星期标题 */}
-          <div className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', backgroundColor: 'var(--bg-card)' }}>
+          <div className="grid glass" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)' }}>
             <div className="p-3" />
             {showDays.map((day) => {
                 const makeup = weekHolidays.makeups.get(day)
@@ -315,7 +315,7 @@ export function WeekView() {
           {/* 时间段行 */}
           {PERIOD_GROUPS.map((group) => (
             <div key={group.label} className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', minHeight: '90px' }}>
-              <div className="p-3 flex flex-col justify-center text-right" style={{ backgroundColor: 'var(--bg-card)' }}>
+              <div className="p-3 flex flex-col justify-center text-right glass">
                 <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{group.label}</span>
                 <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>{group.time}</span>
               </div>

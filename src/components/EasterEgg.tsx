@@ -46,8 +46,7 @@ export function EasterEgg() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="fixed bottom-20 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-sm z-50 rounded-2xl p-4 flex items-center justify-between"
-          style={{ backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-light)' }}
+          className="fixed bottom-20 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-sm z-50 rounded-2xl p-4 flex items-center justify-between glass-modal"
         >
           <div className="flex items-center gap-2">
             <span>🌊</span>

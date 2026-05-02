@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <div className="rounded-2xl p-8 w-full max-w-sm text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-xl)' }}>
+      <div className="rounded-2xl p-8 w-full max-w-sm text-center glass-strong">
         <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>课表 · 竹</h1>
         <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>输入密码以继续</p>
         <form onSubmit={handleSubmit} className="space-y-3">

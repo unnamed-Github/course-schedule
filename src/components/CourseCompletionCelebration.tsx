@@ -170,8 +170,7 @@ export function CourseCompletionCelebration({ courses, schedules }: { courses: C
             className="fixed inset-0 z-[99] flex items-center justify-center pointer-events-none"
           >
             <div
-              className="px-8 py-6 rounded-3xl text-center"
-              style={{ backgroundColor: 'var(--bg-card)', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border-light)' }}
+              className="px-8 py-6 rounded-3xl text-center glass-modal"
             >
               <p className="text-3xl mb-2" style={{ color: '#F59E0B' }}>
                 <Trophy size={36} strokeWidth={1.5} className="inline" />

@@ -152,7 +152,7 @@ export function DayView() {
 
       {/* 课程卡片 */}
       {sortedSchedules.length === 0 ? (
-        <div className="rounded-2xl p-12 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px dashed var(--border-light)' }}>
+        <div className="rounded-2xl p-12 text-center glass">
           <Sparkles size={28} strokeWidth={1.5} style={{ margin: '0 auto', marginBottom: '0.5rem', color: 'var(--text-secondary)', opacity: 0.5 }} />
           <p style={{ color: 'var(--text-secondary)' }}>今天没有课～好好休息吧</p>
         </div>
@@ -177,9 +177,8 @@ export function DayView() {
                 key={schedule.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl overflow-hidden"
+                className="rounded-2xl overflow-hidden glass-strong"
                 style={{
-                  backgroundColor: 'var(--bg-card)',
                   border: `2px solid ${isEndedEarly ? '#10B981' : isCurrent ? course.color : 'var(--border-light)'}`,
                   boxShadow: isCurrent ? 'var(--shadow-md)' : 'var(--shadow-sm)',
                   opacity: isCancelled ? 0.45 : 1,
@@ -269,8 +268,8 @@ export function DayView() {
                           {overrideEntry ? (
                             <button
                               onClick={() => handleRevertOverride(schedule.id, dateStr)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-                              style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer glass-subtle"
+                              style={{ color: 'var(--text-secondary)' }}
                             >
                               <RotateCcw size={14} strokeWidth={1.8} />
                               {overrideEntry.type === 'cancelled' ? '恢复本课' : '撤销下课'}
@@ -289,8 +288,8 @@ export function DayView() {
                                   </button>
                                   <button
                                     onClick={() => cancelConfirmation()}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer"
-                                    style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer glass-subtle"
+                                    style={{ color: 'var(--text-secondary)' }}
                                   >
                                     取消
                                   </button>

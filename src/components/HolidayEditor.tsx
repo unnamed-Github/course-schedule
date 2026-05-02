@@ -89,7 +89,7 @@ function HolidayEditForm({
         onChange={(e) => setForm({ ...form, name: e.target.value })}
         placeholder="假日名称"
         className="w-full rounded-lg px-2 py-1 text-xs"
-        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
       />
       <div className="flex gap-2">
         <input
@@ -97,14 +97,14 @@ function HolidayEditForm({
           value={form.start}
           onChange={(e) => setForm({ ...form, start: e.target.value })}
           className="flex-1 rounded-lg px-2 py-1 text-xs"
-          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
         />
         <input
           type="date"
           value={form.end}
           onChange={(e) => setForm({ ...form, end: e.target.value })}
           className="flex-1 rounded-lg px-2 py-1 text-xs"
-          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-card)' }}
+          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
         />
       </div>
       <div className="flex gap-1 justify-end">

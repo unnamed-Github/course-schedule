@@ -51,7 +51,7 @@ export function WeeklySummary() {
       {visible && (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.4 }}
           className="mt-6 mx-auto max-w-sm">
-          <div className="rounded-2xl p-6 text-center" style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-xl)' }}>
+          <div className="rounded-2xl p-6 text-center glass-strong">
             <p className="text-xs flex items-center justify-center gap-1.5" style={{ color: 'var(--text-secondary)' }}><Sparkles size={14} strokeWidth={1.8} />第{stats.week}周总结</p>
             <div className="flex items-center justify-center gap-4 mt-3">
               <div><span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.courses}</span><span className="text-xs ml-1" style={{ color: 'var(--text-secondary)' }}>节课</span></div>
