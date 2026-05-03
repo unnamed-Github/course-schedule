@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
 async function sha256(password: string): Promise<string> {
   const encoder = new TextEncoder()
   const data = encoder.encode(password)
@@ -20,8 +17,11 @@ export async function POST(request: NextRequest) {
 
     const inputHash = await sha256(password)
 
-    if (SERVICE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SERVICE_KEY)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (serviceKey && supabaseUrl) {
+      const supabase = createClient(supabaseUrl, serviceKey)
       const { data, error } = await supabase.from('site_config').select('value').eq('key', 'password_hash').single()
       if (!error && data && inputHash === data.value) {
         const response = NextResponse.json({ ok: true })
@@ -38,9 +38,9 @@ export async function POST(request: NextRequest) {
 
     const envPass = process.env.SITE_PASSWORD
     if (envPass && password === envPass) {
-      const inputHash = await sha256(password)
+      const hash = await sha256(password)
       const response = NextResponse.json({ ok: true })
-      response.cookies.set('auth_token', inputHash, {
+      response.cookies.set('auth_token', hash, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

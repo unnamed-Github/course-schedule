@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pkg = require('../../package.json') as { version: string }
+import pkg from '../../package.json'
 
 export const APP_VERSION = pkg.version
