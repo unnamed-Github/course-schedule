@@ -43,12 +43,11 @@ export function setWeatherCache(data: WeatherResponse) {
 }
 
 export async function fetchWeatherData(lat: number, lon: number): Promise<WeatherResponse> {
-  const cached = getWeatherCache()
-  if (cached) return cached
-
   const res = await fetch(`/api/weather?lat=${lat}&lon=${lon}`)
-  if (!res.ok) throw new Error('Weather fetch failed')
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(`[${res.status}] ${body.error || 'Weather fetch failed'}`)
+  }
   const data: WeatherResponse = await res.json()
-  setWeatherCache(data)
   return data
 }

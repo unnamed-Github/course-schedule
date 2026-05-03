@@ -12,7 +12,7 @@ interface ViewContextType {
 const ViewContext = createContext<ViewContextType | undefined>(undefined)
 
 export function ViewProvider({ children }: { children: ReactNode }) {
-  const [currentView, setCurrentView] = useState<ViewType>('week')
+  const [currentView, setCurrentView] = useState<ViewType>('day')
 
   return (
     <ViewContext.Provider value={{ currentView, setCurrentView }}>

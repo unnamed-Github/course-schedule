@@ -7,23 +7,12 @@ import { DayView } from './DayView'
 import CoursesPage from '@/app/courses/page'
 import { AssignmentsView } from './AssignmentsView'
 import { MemosView } from './MemosView'
-import { WarmthBanner } from './WarmthBanner'
-import { WeatherBanner } from './WeatherBanner'
-import { HealthChecklist } from './HealthChecklist'
-import { LateNightCare } from './LateNightCare'
-import { BreakTip } from './BreakTip'
 
 export function MainView() {
   const { currentView } = useView()
 
   return (
-    <div className="space-y-4">
-      <LateNightCare />
-      <WarmthBanner />
-      <WeatherBanner />
-      <HealthChecklist />
-      <BreakTip />
-
+    <div>
       <AnimatePresence mode="sync">
         <motion.div
           key={currentView}

@@ -9,8 +9,8 @@ import { SemesterCountdown } from './SemesterCountdown'
 import { FestivalEasterEgg } from './FestivalEasterEgg'
 
 const TABS: { id: ViewType; label: string }[] = [
-  { id: 'week', label: '周视图' },
   { id: 'day', label: '日视图' },
+  { id: 'week', label: '周视图' },
   { id: 'courses', label: '课程' },
   { id: 'assignments', label: '作业' },
   { id: 'memos', label: '备忘' },
@@ -40,7 +40,7 @@ export function TopBar() {
     >
       <div className="h-12 flex items-center justify-between px-4 sm:px-6">
         <button
-          onClick={() => setCurrentView('week')}
+          onClick={() => setCurrentView('day')}
           className="flex items-center gap-1.5 font-semibold text-lg rounded-lg px-1 -ml-1 transition-opacity hover:opacity-75 focus-visible:opacity-75 cursor-pointer"
           style={{ color: 'var(--accent-primary)', boxShadow: 'none' }}
         >

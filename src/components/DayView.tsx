@@ -10,9 +10,14 @@ import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
-import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw, BookOpen, ClipboardList, StickyNote } from 'lucide-react'
 import { EMOJI_OPTIONS, DAY_NAMES } from '@/lib/constants'
 import { addDays, isSameDay } from '@/lib/utils'
+import { WarmthBanner } from './WarmthBanner'
+import { WeatherBanner } from './WeatherBanner'
+import { HealthChecklist } from './HealthChecklist'
+import { BreakTip } from './BreakTip'
+import { LateNightCare } from './LateNightCare'
 
 export function DayView() {
   const { showToast } = useToast()
@@ -125,8 +130,33 @@ export function DayView() {
     )
   }
 
+  const todayStr = viewDate.toISOString().split('T')[0]
+
+  const todayAssignments = useMemo(() => {
+    return assignments
+      .filter((a) => a.due_date === todayStr && a.status === 'pending')
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+  }, [assignments, todayStr])
+
+  const todaySchedules = sortedSchedules
+  const todayScheduleIds = new Set(todaySchedules.map((s) => s.id))
+  const todayMemos = useMemo(() => {
+    return memos.filter((m) => m.schedule_id && todayScheduleIds.has(m.schedule_id))
+  }, [memos, todayScheduleIds])
+
+  const dailyStats = {
+    classes: todaySchedules.length,
+    assignments: todayAssignments.length,
+    memos: todayMemos.length,
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-4">
+    <div className="max-w-3xl mx-auto space-y-3">
+      <LateNightCare />
+      <WarmthBanner />
+      <WeatherBanner />
+      <BreakTip />
+
       {/* 日期导航 */}
       <div className="flex items-center justify-center gap-4">
         <button onClick={() => setViewDate(addDays(viewDate, -1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={20} strokeWidth={1.8} /></button>
@@ -136,7 +166,7 @@ export function DayView() {
           <input
             ref={dateInputRef}
             type="date"
-            value={viewDate.toISOString().split('T')[0]}
+            value={todayStr}
             onChange={(e) => { if (e.target.value) setViewDate(new Date(e.target.value + 'T00:00:00')) }}
             className="invisible absolute w-0 h-0"
           />
@@ -150,8 +180,30 @@ export function DayView() {
         </div>
       )}
 
-      {/* 课程卡片 */}
-      {sortedSchedules.length === 0 ? (
+      {/* 一日纵览统计 */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-2xl p-4 text-center glass-strong">
+          <BookOpen size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: 'var(--accent-info)' }} />
+          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.classes}</div>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>今日课程</div>
+        </div>
+        <div className="rounded-2xl p-4 text-center glass-strong">
+          <ClipboardList size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: dailyStats.assignments > 0 ? 'var(--accent-warm)' : 'var(--text-secondary)' }} />
+          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.assignments}</div>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>作业截止</div>
+        </div>
+        <div className="rounded-2xl p-4 text-center glass-strong">
+          <StickyNote size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: dailyStats.memos > 0 ? 'var(--accent-bamboo)' : 'var(--text-secondary)' }} />
+          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.memos}</div>
+          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>今日备忘</div>
+        </div>
+      </div>
+
+      {/* 健康打卡 */}
+      <HealthChecklist />
+
+      {/* 今日课程 */}
+      {todaySchedules.length === 0 ? (
         <div className="rounded-2xl p-12 text-center glass">
           <Sparkles size={28} strokeWidth={1.5} style={{ margin: '0 auto', marginBottom: '0.5rem', color: 'var(--text-secondary)', opacity: 0.5 }} />
           <p style={{ color: 'var(--text-secondary)' }}>今天没有课～好好休息吧</p>
@@ -314,6 +366,53 @@ export function DayView() {
               </motion.div>
             )
           })}
+        </div>
+      )}
+
+      {/* 今日作业速览 */}
+      {todayAssignments.length > 0 ? (
+        <div className="rounded-2xl p-4 glass">
+          <div className="flex items-center gap-2 mb-3">
+            <ClipboardList size={16} strokeWidth={1.5} style={{ color: 'var(--accent-warm)' }} />
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>今日截止作业</h3>
+          </div>
+          <div className="space-y-2">
+            {todayAssignments.slice(0, 3).map((a) => (
+              <div key={a.id} className="flex items-center justify-between text-sm">
+                <span style={{ color: 'var(--text-primary)' }}>{a.title}</span>
+                <span className="text-xs" style={{ color: 'var(--accent-danger)' }}>逾期</span>
+              </div>
+            ))}
+          </div>
+          {todayAssignments.length > 3 && (
+            <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>还有 {todayAssignments.length - 3} 项…</p>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl p-4 text-center glass">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>今天无作业截止 🎉</p>
+        </div>
+      )}
+
+      {/* 今日备忘速览 */}
+      {todayMemos.length > 0 ? (
+        <div className="rounded-2xl p-4 glass">
+          <div className="flex items-center gap-2 mb-3">
+            <StickyNote size={16} strokeWidth={1.5} style={{ color: 'var(--accent-bamboo)' }} />
+            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>今日备忘</h3>
+          </div>
+          <div className="space-y-2">
+            {todayMemos.slice(0, 3).map((m) => (
+              <div key={m.id} className="flex items-center gap-2 text-sm">
+                <span>{m.mood_emoji}</span>
+                <span style={{ color: 'var(--text-primary)' }}>{m.content}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl p-4 text-center glass">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>今天还没有备忘</p>
         </div>
       )}
     </div>

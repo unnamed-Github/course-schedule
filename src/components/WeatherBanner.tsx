@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WeatherResponse, WeatherData, UVData, AQIData, WeatherCondition, UVLevel, AQILevelCN, WEATHER_CITIES } from '@/lib/types'
-import { fetchWeatherData, getWeatherCity, getCachedCity, setCachedCity } from '@/lib/weather'
-import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
+import { fetchWeatherData, getWeatherCity, getCachedCity, setCachedCity, getWeatherCache, setWeatherCache } from '@/lib/weather'
+import { setSettingBoth } from '@/lib/user-settings'
 import {
   Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning,
-  CloudFog, Droplets, Wind, ChevronDown,
+  CloudFog, Droplets, Wind, ChevronDown, AlertCircle, Key, RefreshCw,
 } from 'lucide-react'
 
 const WEATHER_ICONS: Record<WeatherCondition, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
@@ -162,16 +162,16 @@ function UVProgressBar({ uv }: { uv: UVData }) {
 
 function AQIProgressBar({ aqi }: { aqi: AQIData }) {
   const colors = AQI_COLORS[aqi.level]
-  const percent = Math.min(100, (aqi.aqi / 300) * 100)
-
   const aqiSegments = [
-    { range: '0-50', color: AQI_COLORS.good.color },
-    { range: '51-100', color: AQI_COLORS.moderate.color },
-    { range: '101-150', color: AQI_COLORS.unhealthySensitive.color },
-    { range: '151-200', color: AQI_COLORS.unhealthy.color },
-    { range: '201-300', color: AQI_COLORS.veryUnhealthy.color },
-    { range: '300+', color: AQI_COLORS.hazardous.color },
+    { color: AQI_COLORS.good.color },
+    { color: AQI_COLORS.moderate.color },
+    { color: AQI_COLORS.unhealthySensitive.color },
+    { color: AQI_COLORS.unhealthy.color },
+    { color: AQI_COLORS.veryUnhealthy.color },
+    { color: AQI_COLORS.hazardous.color },
   ]
+
+  const shouldPulse = aqi.level !== 'good'
 
   return (
     <div className="space-y-1">
@@ -180,16 +180,16 @@ function AQIProgressBar({ aqi }: { aqi: AQIData }) {
         <motion.span
           className="text-sm font-bold"
           style={{ color: colors.color }}
-          animate={{ textShadow: aqi.level === 'good' ? 'none' : [`0 0 4px ${colors.glow}00`, `0 0 8px ${colors.glow}88`, `0 0 4px ${colors.glow}00`] }}
+          animate={shouldPulse ? { textShadow: [`0 0 4px ${colors.glow}00`, `0 0 8px ${colors.glow}88`, `0 0 4px ${colors.glow}00`] } : {}}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
           {aqi.aqi} <span className="text-[10px] font-medium">{colors.label}</span>
         </motion.span>
       </div>
       <div className="h-2 rounded-full flex overflow-hidden" style={{ gap: '1px', backgroundColor: 'var(--border-light)' }}>
-        {aqiSegments.map((seg) => (
+        {aqiSegments.map((seg, i) => (
           <div
-            key={seg.range}
+            key={i}
             className="flex-1 first:rounded-l-full last:rounded-r-full transition-opacity duration-500"
             style={{
               backgroundColor: seg.color,
@@ -205,33 +205,132 @@ function AQIProgressBar({ aqi }: { aqi: AQIData }) {
   )
 }
 
+function WeatherContent({ data }: { data: WeatherResponse }) {
+  const w = data.weather
+  const uv = data.uv
+  const aqi = data.aqi
+  const weatherColors = WEATHER_COLORS[w.condition]
+  const WeatherIcon = WEATHER_ICONS[w.condition]
+
+  return (
+    <div className="rounded-2xl glass-strong overflow-hidden relative"
+      style={{ borderLeft: `3px solid ${weatherColors.primary}` }}
+    >
+      <WeatherParticles condition={w.condition} color={weatherColors.primary} />
+
+      <div className="px-4 py-3 relative z-10">
+        <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+          <span style={{ color: weatherColors.primary }}>
+            <WeatherIcon size={22} strokeWidth={1.8} />
+          </span>
+          <div className="flex-1 min-w-0 flex items-center gap-2">
+            <span className="text-lg font-bold">{w.temp}°</span>
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              {w.description} · 体感 {w.feelsLike}°
+            </span>
+            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+              <Droplets size={10} strokeWidth={1.5} />{w.humidity}%
+            </span>
+            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+              <Wind size={10} strokeWidth={1.5} />{w.windSpeed} m/s
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+          <UVProgressBar uv={uv} />
+          <AQIProgressBar aqi={aqi} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NoAPIKeyBanner() {
+  return (
+    <div className="rounded-2xl glass-strong p-4 flex items-start gap-3"
+      style={{ borderLeft: '3px solid var(--accent-warm)' }}
+    >
+      <Key size={18} strokeWidth={1.8} style={{ color: 'var(--accent-warm)', flexShrink: 0, marginTop: 1 }} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>需要配置天气 API Key</p>
+        <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          前往 <a href="https://openweathermap.org/api" target="_blank" rel="noopener noreferrer" className="underline decoration-dotted" style={{ color: 'var(--accent-primary)' }}>openweathermap.org</a> 注册免费账号获取 API Key，然后添加到 <code className="text-[10px] px-1 py-0.5 rounded" style={{ backgroundColor: 'var(--border-light)' }}>.env.local</code>：
+        </p>
+        <code className="block mt-2 text-[10px] p-2 rounded-lg font-mono break-all" style={{ backgroundColor: 'var(--border-light)', color: 'var(--text-secondary)' }}>
+          OPENWEATHER_API_KEY=your_key_here
+        </code>
+      </div>
+    </div>
+  )
+}
+
+function ErrorBanner({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className="rounded-2xl glass-strong p-4 flex items-center gap-3"
+      style={{ borderLeft: '3px solid var(--accent-danger)' }}
+    >
+      <AlertCircle size={18} strokeWidth={1.8} style={{ color: 'var(--accent-danger)', flexShrink: 0 }} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>天气数据获取失败</p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{message}</p>
+      </div>
+      <button
+        onClick={onRetry}
+        className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg cursor-pointer text-white hover:opacity-80 transition-opacity"
+        style={{ backgroundColor: 'var(--accent-primary)' }}
+      >
+        <RefreshCw size={12} />
+        重试
+      </button>
+    </div>
+  )
+}
+
 export function WeatherBanner() {
   const [data, setData] = useState<WeatherResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [noApiKey, setNoApiKey] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showCityPicker, setShowCityPicker] = useState(false)
   const [cityName, setCityName] = useState(getCachedCity())
 
   const city = useMemo(() => getWeatherCity(), [])
 
-  useEffect(() => {
-    let cancelled = false
+  const loadData = useCallback(async (lat: number, lon: number) => {
     setLoading(true)
-    fetchWeatherData(city.lat, city.lon)
-      .then((d) => { if (!cancelled) setData(d) })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setLoading(false) })
+    setError(null)
+    setNoApiKey(false)
+
+    try {
+      const cached = getWeatherCache()
+      if (cached) setData(cached)
+
+      const d = await fetchWeatherData(lat, lon)
+      setData(d)
+      setWeatherCache(d)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Unknown error'
+      if (msg.includes('503') || msg.includes('not configured')) {
+        setNoApiKey(true)
+        setData(null)
+      } else {
+        setError(msg)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadData(city.lat, city.lon)
 
     const interval = setInterval(() => {
-      fetchWeatherData(city.lat, city.lon)
-        .then((d) => { if (!cancelled) setData(d) })
-        .catch(() => {})
+      loadData(city.lat, city.lon)
     }, 30 * 60 * 1000)
 
-    return () => {
-      cancelled = true
-      clearInterval(interval)
-    }
-  }, [city.lat, city.lon])
+    return () => clearInterval(interval)
+  }, [city.lat, city.lon, loadData])
 
   const handleCityChange = (name: string) => {
     const found = WEATHER_CITIES.find((c) => c.name === name)
@@ -239,25 +338,11 @@ export function WeatherBanner() {
     setCityName(name)
     setCachedCity(name)
     setSettingBoth('weather_city', name)
-    setLoading(true)
     setShowCityPicker(false)
-    fetchWeatherData(found.lat, found.lon)
-      .then((d) => setData(d))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    loadData(found.lat, found.lon)
   }
 
   const displayCity = WEATHER_CITIES.find((c) => c.name === cityName)?.name ?? WEATHER_CITIES[0].name
-
-  if (loading && !data) return null
-
-  const w = data?.weather
-  const uv = data?.uv
-  const aqi = data?.aqi
-  if (!w || !uv || !aqi) return null
-
-  const weatherColors = WEATHER_COLORS[w.condition]
-  const WeatherIcon = WEATHER_ICONS[w.condition]
 
   return (
     <motion.div
@@ -265,71 +350,53 @@ export function WeatherBanner() {
       animate={{ opacity: 1, y: 0 }}
       className="mb-4"
     >
-      <div className="rounded-2xl glass-strong overflow-hidden relative"
-        style={{
-          borderLeft: `3px solid ${weatherColors.primary}`,
-        }}
-      >
-        <WeatherParticles condition={w.condition} color={weatherColors.primary} />
+      <div className="relative">
+        {loading && !data && !noApiKey && !error && (
+          <div className="rounded-2xl glass-strong p-4">
+            <div className="h-5 w-32 rounded animate-pulse" style={{ backgroundColor: 'var(--border-light)' }} />
+          </div>
+        )}
 
-        <div className="px-4 py-3 relative z-10">
-          <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
-            <span style={{ color: weatherColors.primary }}>
-              <WeatherIcon size={22} strokeWidth={1.8} />
-            </span>
-            <div className="flex-1 min-w-0 flex items-center gap-2">
-              <span className="text-lg font-bold">{w.temp}°</span>
-              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                {w.description} · 体感 {w.feelsLike}°
-              </span>
-              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-                <Droplets size={10} strokeWidth={1.5} />{w.humidity}%
-              </span>
-              <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-                <Wind size={10} strokeWidth={1.5} />{w.windSpeed} m/s
-              </span>
-            </div>
+        {noApiKey && <NoAPIKeyBanner />}
+        {error && !noApiKey && <ErrorBanner message={error} onRetry={() => loadData(city.lat, city.lon)} />}
+        {data && !noApiKey && !error && <WeatherContent data={data} />}
 
-            <div className="relative">
-              <button
-                onClick={() => setShowCityPicker(!showCityPicker)}
-                className="flex items-center gap-1 text-xs font-medium rounded-lg px-2 py-1 hover:bg-[var(--border-light)] transition-colors cursor-pointer"
-                style={{ color: 'var(--text-secondary)' }}
+        <div className="absolute top-3 right-3 z-20">
+          <button
+            onClick={() => setShowCityPicker(!showCityPicker)}
+            className="flex items-center gap-1 text-xs font-medium rounded-lg px-2 py-1 cursor-pointer transition-colors"
+            style={{
+              backgroundColor: data ? 'transparent' : 'transparent',
+              color: 'var(--text-secondary)',
+            }}
+          >
+            {displayCity}
+            <ChevronDown size={12} />
+          </button>
+          <AnimatePresence>
+            {showCityPicker && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="absolute right-0 top-full mt-1 rounded-xl glass-strong p-1 min-w-[100px] shadow-lg"
               >
-                {displayCity}
-                <ChevronDown size={12} />
-              </button>
-              <AnimatePresence>
-                {showCityPicker && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-1 rounded-xl glass-strong p-1 min-w-[100px] z-20 shadow-lg"
+                {WEATHER_CITIES.map((c) => (
+                  <button
+                    key={c.name}
+                    onClick={() => handleCityChange(c.name)}
+                    className="block w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-[var(--border-light)] transition-colors cursor-pointer"
+                    style={{
+                      color: c.name === cityName ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontWeight: c.name === cityName ? 600 : 400,
+                    }}
                   >
-                    {WEATHER_CITIES.map((c) => (
-                      <button
-                        key={c.name}
-                        onClick={() => handleCityChange(c.name)}
-                        className="block w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-[var(--border-light)] transition-colors cursor-pointer"
-                        style={{
-                          color: c.name === cityName ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                          fontWeight: c.name === cityName ? 600 : 400,
-                        }}
-                      >
-                        {c.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
-            <UVProgressBar uv={uv} />
-            <AQIProgressBar aqi={aqi} />
-          </div>
+                    {c.name}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
