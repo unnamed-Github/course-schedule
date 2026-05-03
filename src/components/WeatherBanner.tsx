@@ -49,18 +49,19 @@ const AQI_COLORS: Record<AQILevelCN, { color: string; glow: string; label: strin
 
 function WeatherParticles({ condition, color }: { condition: WeatherCondition; color: string }) {
   const count = condition === 'clear' ? 6 : condition === 'rain' || condition === 'drizzle' ? 8 : condition === 'snow' ? 10 : 0
-  if (count === 0) return null
 
-  const particles = useMemo(() =>
-    Array.from({ length: count }, (_, i) => ({
+  const particles = useMemo(() => {
+    if (count === 0) return []
+    return Array.from({ length: count }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 3,
       size: 2 + Math.random() * 4,
       duration: 2 + Math.random() * 3,
-    })),
-    [count]
-  )
+    }))
+  }, [count])
+
+  if (count === 0) return null
 
   if (condition === 'rain' || condition === 'drizzle') {
     return (
