@@ -70,3 +70,50 @@ export interface ScheduleOverride {
   created_at?: string
 }
 
+export type WeatherCondition = 'clear' | 'clouds' | 'rain' | 'snow' | 'drizzle' | 'thunderstorm' | 'mist'
+
+export interface WeatherData {
+  temp: number
+  feelsLike: number
+  description: string
+  icon: string
+  humidity: number
+  windSpeed: number
+  condition: WeatherCondition
+}
+
+export type UVLevel = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme'
+
+export interface UVData {
+  index: number
+  level: UVLevel
+}
+
+export type AQILevelCN = 'good' | 'moderate' | 'unhealthySensitive' | 'unhealthy' | 'veryUnhealthy' | 'hazardous'
+
+export interface AQIData {
+  aqi: number
+  pm25: number
+  pm10: number
+  level: AQILevelCN
+}
+
+export interface WeatherResponse {
+  weather: WeatherData
+  uv: UVData
+  aqi: AQIData
+}
+
+export const WEATHER_CITIES: { name: string; lat: number; lon: number }[] = [
+  { name: '北京', lat: 39.9, lon: 116.4 },
+  { name: '上海', lat: 31.23, lon: 121.47 },
+  { name: '广州', lat: 23.13, lon: 113.26 },
+  { name: '深圳', lat: 22.54, lon: 114.06 },
+  { name: '杭州', lat: 30.27, lon: 120.15 },
+  { name: '成都', lat: 30.57, lon: 104.07 },
+  { name: '武汉', lat: 30.58, lon: 114.30 },
+  { name: '南京', lat: 32.06, lon: 118.80 },
+  { name: '西安', lat: 34.26, lon: 108.94 },
+  { name: '重庆', lat: 29.56, lon: 106.55 },
+]
+

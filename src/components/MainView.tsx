@@ -8,6 +8,7 @@ import CoursesPage from '@/app/courses/page'
 import { AssignmentsView } from './AssignmentsView'
 import { MemosView } from './MemosView'
 import { WarmthBanner } from './WarmthBanner'
+import { WeatherBanner } from './WeatherBanner'
 import { HealthChecklist } from './HealthChecklist'
 import { LateNightCare } from './LateNightCare'
 import { BreakTip } from './BreakTip'
@@ -19,6 +20,7 @@ export function MainView() {
     <div className="space-y-4">
       <LateNightCare />
       <WarmthBanner />
+      <WeatherBanner />
       <HealthChecklist />
       <BreakTip />
 
