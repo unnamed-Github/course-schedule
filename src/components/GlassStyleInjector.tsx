@@ -1,11 +1,28 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useGlassSettings } from "@/hooks/useGlassSettings"
 
+/**
+ * 客户端挂载后才注入动态 Glass CSS。
+ *
+ * 不能直接在 SSR 中渲染 <style> 标签，因为：
+ * - useGlassSettings() 在服务端返回默认值（无 localStorage）
+ * - 客户端水合后返回用户自定义值
+ * - 内容不同 → React #418 水合不匹配 → ErrorBoundary 捕获 → 重试循环 → #310
+ *
+ * 解决方案：SSR + 首帧客户端渲染返回 null，
+ * useEffect 触发 setMounted(true) 后二次渲染时才注入样式。
+ */
 export function GlassStyleInjector() {
-  const { settings } = useGlassSettings()
-  const { enabled, blur, opacity, saturation } = settings
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
+  const { settings } = useGlassSettings()
+
+  if (!mounted) return null
+
+  const { enabled, blur, opacity, saturation } = settings
   const o = opacity / 100
 
   if (!enabled) {
