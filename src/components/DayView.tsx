@@ -62,20 +62,24 @@ export function DayView() {
     onCloseDetail: () => setExpandedCourse(null),
   })
 
-  useEffect(() => { loadData() }, [])
-  useEffect(() => { loadOverrides() }, [viewDate])
-
   useEffect(() => {
+    loadData()
+
     const tick = () => { setCurrentPeriod(getCurrentPeriod(new Date())) }
-    tick(); const timer = setInterval(tick, 60000); return () => clearInterval(timer)
-  }, [])
+    tick()
+    const timer = setInterval(tick, 60000)
 
-  useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
+
+  useEffect(() => { loadOverrides() }, [viewDate])
 
   const courseMap = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses])
   const overrideMap = useMemo(() => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WeatherResponse, WeatherData, UVData, AQIData, WeatherCondition, UVLevel, AQILevelCN, WEATHER_CITIES } from '@/lib/types'
 import { fetchWeatherData, getWeatherCity, getCachedCity, setCachedCity, getWeatherCache, setWeatherCache, requestGeoPosition, getUseGeo, setUseGeo } from '@/lib/weather'
@@ -302,6 +302,8 @@ export function WeatherBanner() {
     return getCachedCity()
   })
 
+  const geoRef = useRef({ lat: 0, lon: 0, settled: false })
+
   const city = useMemo(() => getWeatherCity(), [])
 
   const loadData = useCallback(async (lat: number, lon: number) => {
@@ -335,7 +337,14 @@ export function WeatherBanner() {
     const init = async () => {
       if (useGeo) {
         const pos = await requestGeoPosition()
-        if (!cancelled && pos) {
+        if (cancelled) return
+        if (pos) {
+          if (geoRef.current.settled &&
+              geoRef.current.lat === pos.lat &&
+              geoRef.current.lon === pos.lon) {
+            return
+          }
+          geoRef.current = { lat: pos.lat, lon: pos.lon, settled: true }
           setGeoLat(pos.lat)
           setGeoLon(pos.lon)
           loadData(pos.lat, pos.lon)
@@ -350,8 +359,8 @@ export function WeatherBanner() {
     init()
 
     const interval = setInterval(() => {
-      if (useGeo && geoLat !== null && geoLon !== null) {
-        loadData(geoLat, geoLon)
+      if (useGeo && geoRef.current.settled) {
+        loadData(geoRef.current.lat, geoRef.current.lon)
       } else if (!useGeo) {
         loadData(city.lat, city.lon)
       }
@@ -361,7 +370,7 @@ export function WeatherBanner() {
       cancelled = true
       clearInterval(interval)
     }
-  }, [useGeo, geoLat, geoLon, city.lat, city.lon, loadData])
+  }, [useGeo, city.lat, city.lon, loadData])
 
   const handleGeoRequest = async () => {
     const pos = await requestGeoPosition()
