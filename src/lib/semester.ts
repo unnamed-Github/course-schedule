@@ -78,7 +78,10 @@ export function getWeekNumber(date: Date = new Date()): number {
   const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
   const diffMs = date.getTime() - startDay.getTime()
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  return Math.ceil((diffDays + 1) / 7)
+  const startDayOfWeek = startDay.getDay()
+  const daysToMonday = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1
+  const daysFromMonday = diffDays + daysToMonday
+  return Math.floor(daysFromMonday / 7) + 1
 }
 
 export function isOddWeek(date: Date = new Date()): boolean {
