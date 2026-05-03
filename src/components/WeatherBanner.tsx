@@ -3,11 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WeatherResponse, WeatherData, UVData, AQIData, WeatherCondition, UVLevel, AQILevelCN, WEATHER_CITIES } from '@/lib/types'
-import { fetchWeatherData, getWeatherCity, getCachedCity, setCachedCity, getWeatherCache, setWeatherCache } from '@/lib/weather'
+import { fetchWeatherData, getWeatherCity, getCachedCity, setCachedCity, getWeatherCache, setWeatherCache, requestGeoPosition, getUseGeo, setUseGeo } from '@/lib/weather'
 import { setSettingBoth } from '@/lib/user-settings'
 import {
   Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudLightning,
-  CloudFog, Droplets, Wind, ChevronDown, AlertCircle, Key, RefreshCw,
+  CloudFog, Droplets, Wind, ChevronDown, AlertCircle, Key, RefreshCw, MapPin,
 } from 'lucide-react'
 
 const WEATHER_ICONS: Record<WeatherCondition, React.ComponentType<{ size?: number; strokeWidth?: number }>> = {
@@ -293,7 +293,13 @@ export function WeatherBanner() {
   const [noApiKey, setNoApiKey] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showCityPicker, setShowCityPicker] = useState(false)
-  const [cityName, setCityName] = useState(getCachedCity())
+  const [geoLat, setGeoLat] = useState<number | null>(null)
+  const [geoLon, setGeoLon] = useState<number | null>(null)
+  const [useGeo, setUseGeoState] = useState(getUseGeo())
+  const [cityName, setCityName] = useState(() => {
+    if (getUseGeo()) return '__geo__'
+    return getCachedCity()
+  })
 
   const city = useMemo(() => getWeatherCity(), [])
 
@@ -323,18 +329,59 @@ export function WeatherBanner() {
   }, [])
 
   useEffect(() => {
-    loadData(city.lat, city.lon)
+    let cancelled = false
+
+    const init = async () => {
+      if (useGeo) {
+        const pos = await requestGeoPosition()
+        if (!cancelled && pos) {
+          setGeoLat(pos.lat)
+          setGeoLon(pos.lon)
+          loadData(pos.lat, pos.lon)
+          return
+        }
+      }
+      if (!cancelled && !useGeo) {
+        loadData(city.lat, city.lon)
+      }
+    }
+
+    init()
 
     const interval = setInterval(() => {
-      loadData(city.lat, city.lon)
+      if (useGeo && geoLat !== null && geoLon !== null) {
+        loadData(geoLat, geoLon)
+      } else if (!useGeo) {
+        loadData(city.lat, city.lon)
+      }
     }, 30 * 60 * 1000)
 
-    return () => clearInterval(interval)
-  }, [city.lat, city.lon, loadData])
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [useGeo, geoLat, geoLon, city.lat, city.lon, loadData])
+
+  const handleGeoRequest = async () => {
+    const pos = await requestGeoPosition()
+    if (pos) {
+      setUseGeo(true)
+      setUseGeoState(true)
+      setGeoLat(pos.lat)
+      setGeoLon(pos.lon)
+      setCityName('__geo__')
+      setShowCityPicker(false)
+      loadData(pos.lat, pos.lon)
+    }
+  }
 
   const handleCityChange = (name: string) => {
     const found = WEATHER_CITIES.find((c) => c.name === name)
     if (!found) return
+    setUseGeo(false)
+    setUseGeoState(false)
+    setGeoLat(null)
+    setGeoLon(null)
     setCityName(name)
     setCachedCity(name)
     setSettingBoth('weather_city', name)
@@ -342,7 +389,7 @@ export function WeatherBanner() {
     loadData(found.lat, found.lon)
   }
 
-  const displayCity = WEATHER_CITIES.find((c) => c.name === cityName)?.name ?? WEATHER_CITIES[0].name
+  const displayLabel = useGeo ? '当前位置' : (WEATHER_CITIES.find((c) => c.name === cityName)?.name ?? WEATHER_CITIES[0].name)
 
   return (
     <motion.div
@@ -358,19 +405,20 @@ export function WeatherBanner() {
         )}
 
         {noApiKey && <NoAPIKeyBanner />}
-        {error && !noApiKey && <ErrorBanner message={error} onRetry={() => loadData(city.lat, city.lon)} />}
+        {error && !noApiKey && <ErrorBanner message={error} onRetry={() => {
+          if (useGeo && geoLat !== null && geoLon !== null) loadData(geoLat, geoLon)
+          else loadData(city.lat, city.lon)
+        }} />}
         {data && !noApiKey && !error && <WeatherContent data={data} />}
 
         <div className="absolute top-3 right-3 z-20">
           <button
             onClick={() => setShowCityPicker(!showCityPicker)}
             className="flex items-center gap-1 text-xs font-medium rounded-lg px-2 py-1 cursor-pointer transition-colors"
-            style={{
-              backgroundColor: data ? 'transparent' : 'transparent',
-              color: 'var(--text-secondary)',
-            }}
+            style={{ color: 'var(--text-secondary)' }}
           >
-            {displayCity}
+            {useGeo && <MapPin size={10} />}
+            {displayLabel}
             <ChevronDown size={12} />
           </button>
           <AnimatePresence>
@@ -379,16 +427,28 @@ export function WeatherBanner() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="absolute right-0 top-full mt-1 rounded-xl glass-strong p-1 min-w-[100px] shadow-lg"
+                className="absolute right-0 top-full mt-1 rounded-xl glass-strong p-1 min-w-[120px] shadow-lg"
               >
+                <button
+                  onClick={handleGeoRequest}
+                  className="flex items-center gap-1.5 w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-[var(--border-light)] transition-colors cursor-pointer"
+                  style={{
+                    color: useGeo ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    fontWeight: useGeo ? 600 : 400,
+                    borderBottom: '1px solid var(--border-light)',
+                  }}
+                >
+                  <MapPin size={10} />
+                  使用当前位置
+                </button>
                 {WEATHER_CITIES.map((c) => (
                   <button
                     key={c.name}
                     onClick={() => handleCityChange(c.name)}
                     className="block w-full text-left px-3 py-1.5 text-xs rounded-lg hover:bg-[var(--border-light)] transition-colors cursor-pointer"
                     style={{
-                      color: c.name === cityName ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                      fontWeight: c.name === cityName ? 600 : 400,
+                      color: !useGeo && c.name === cityName ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      fontWeight: !useGeo && c.name === cityName ? 600 : 400,
                     }}
                   >
                     {c.name}

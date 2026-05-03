@@ -4,7 +4,30 @@ import { getLocalSetting, setLocalSetting } from './user-settings'
 const CACHE_KEY = 'weather_cache'
 const CACHE_TS_KEY = 'weather_cache_ts'
 const CACHE_CITY_KEY = 'weather_city_name'
+const CACHE_GEO_KEY = 'weather_use_geo'
 const CACHE_TTL = 30 * 60 * 1000
+
+export function requestGeoPosition(): Promise<{ lat: number; lon: number } | null> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      resolve(null)
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+    )
+  })
+}
+
+export function getUseGeo(): boolean {
+  return getLocalSetting(CACHE_GEO_KEY, '') === 'true'
+}
+
+export function setUseGeo(enabled: boolean) {
+  setLocalSetting(CACHE_GEO_KEY, enabled ? 'true' : 'false')
+}
 
 export function getWeatherCity(): { name: string; lat: number; lon: number } {
   const cityName = getLocalSetting('weather_city', '')
