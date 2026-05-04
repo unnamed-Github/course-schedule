@@ -84,6 +84,8 @@ export async function GET(request: NextRequest) {
       weather: {
         temp: Math.round(weatherJson.main.temp),
         feelsLike: Math.round(weatherJson.main.feels_like),
+        tempMin: Math.round(weatherJson.main.temp_min),
+        tempMax: Math.round(weatherJson.main.temp_max),
         description: weatherJson.weather?.[0]?.description ?? '',
         icon: weatherJson.weather?.[0]?.icon ?? '01d',
         humidity: weatherJson.main.humidity,

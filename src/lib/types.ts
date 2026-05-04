@@ -75,6 +75,8 @@ export type WeatherCondition = 'clear' | 'clouds' | 'rain' | 'snow' | 'drizzle' 
 export interface WeatherData {
   temp: number
   feelsLike: number
+  tempMin: number
+  tempMax: number
   description: string
   icon: string
   humidity: number

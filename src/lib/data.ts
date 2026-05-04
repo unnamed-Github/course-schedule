@@ -34,6 +34,10 @@ function invalidateCache(prefix: string) {
   for (const key of cache.keys()) { if (key.startsWith(prefix)) cache.delete(key) }
 }
 
+function emitDataChangedEvent(type: 'assignment' | 'memo') {
+  try { window.dispatchEvent(new CustomEvent('data-changed', { detail: { type } })) } catch {}
+}
+
 function genId(): string {
   const timestamp = Date.now().toString(36)
   const randomPart = Math.random().toString(36).substring(2, 10)
@@ -243,12 +247,14 @@ export async function createAssignment(input: Omit<Assignment, 'id' | 'created_a
     const { data, error } = await supabase.from('assignments').insert(record).select().single()
     if (error) { return null }
     invalidateCache('assignments')
+    emitDataChangedEvent('assignment')
     return data
   } catch (e) {
     markSupabaseUnavailable()
     const record = { ...input, id: genId(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     localStorage.assignments.push(record)
     invalidateCache('assignments')
+    emitDataChangedEvent('assignment')
     return record
   }
 }
@@ -259,13 +265,14 @@ export async function updateAssignment(id: string, updates: Partial<Assignment>)
     if (index !== -1) {
       localStorage.assignments[index] = { ...localStorage.assignments[index], ...updates, updated_at: new Date().toISOString() }
       invalidateCache('assignments')
+      emitDataChangedEvent('assignment')
       return localStorage.assignments[index]
     }
     return null
   }
   try {
     const { data } = await supabase.from('assignments').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
-    if (data) invalidateCache('assignments')
+    if (data) { invalidateCache('assignments'); emitDataChangedEvent('assignment') }
     return data
   } catch (e) {
     markSupabaseUnavailable()
@@ -273,6 +280,7 @@ export async function updateAssignment(id: string, updates: Partial<Assignment>)
     if (index !== -1) {
       localStorage.assignments[index] = { ...localStorage.assignments[index], ...updates, updated_at: new Date().toISOString() }
       invalidateCache('assignments')
+      emitDataChangedEvent('assignment')
       return localStorage.assignments[index]
     }
     return null
@@ -283,16 +291,18 @@ export async function deleteAssignment(id: string): Promise<boolean> {
   if (!isSupabaseAvailable()) {
     localStorage.assignments = localStorage.assignments.filter(a => a.id !== id)
     invalidateCache('assignments')
+    emitDataChangedEvent('assignment')
     return true
   }
   try {
     const { error } = await supabase.from('assignments').delete().eq('id', id)
-    if (!error) invalidateCache('assignments')
+    if (!error) { invalidateCache('assignments'); emitDataChangedEvent('assignment') }
     return !error
   } catch (e) {
     markSupabaseUnavailable()
     localStorage.assignments = localStorage.assignments.filter(a => a.id !== id)
     invalidateCache('assignments')
+    emitDataChangedEvent('assignment')
     return true
   }
 }
@@ -331,6 +341,7 @@ export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promis
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     localStorage.memos.push(record)
     invalidateCache('memos')
+    emitDataChangedEvent('memo')
     return record
   }
   try {
@@ -338,12 +349,14 @@ export async function createMemo(input: Omit<Memo, 'id' | 'created_at'>): Promis
     const { data, error } = await supabase.from('memos').insert(record).select().single()
     if (error) { return null }
     invalidateCache('memos')
+    emitDataChangedEvent('memo')
     return data
   } catch (e) {
     markSupabaseUnavailable()
     const record = { ...input, id: genId(), created_at: new Date().toISOString() }
     localStorage.memos.push(record)
     invalidateCache('memos')
+    emitDataChangedEvent('memo')
     return record
   }
 }
@@ -352,16 +365,18 @@ export async function deleteMemo(id: string): Promise<boolean> {
   if (!isSupabaseAvailable()) {
     localStorage.memos = localStorage.memos.filter(m => m.id !== id)
     invalidateCache('memos')
+    emitDataChangedEvent('memo')
     return true
   }
   try {
     const { error } = await supabase.from('memos').delete().eq('id', id)
-    if (!error) invalidateCache('memos')
+    if (!error) { invalidateCache('memos'); emitDataChangedEvent('memo') }
     return !error
   } catch (e) {
     markSupabaseUnavailable()
     localStorage.memos = localStorage.memos.filter(m => m.id !== id)
     invalidateCache('memos')
+    emitDataChangedEvent('memo')
     return true
   }
 }
@@ -372,13 +387,14 @@ export async function updateMemo(id: string, updates: Partial<Memo>): Promise<Me
     if (index !== -1) {
       localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
       invalidateCache('memos')
+      emitDataChangedEvent('memo')
       return localStorage.memos[index]
     }
     return null
   }
   try {
     const { data } = await supabase.from('memos').update(updates).eq('id', id).select().single()
-    if (data) invalidateCache('memos')
+    if (data) { invalidateCache('memos'); emitDataChangedEvent('memo') }
     return data
   } catch (e) {
     markSupabaseUnavailable()
@@ -386,6 +402,7 @@ export async function updateMemo(id: string, updates: Partial<Memo>): Promise<Me
     if (index !== -1) {
       localStorage.memos[index] = { ...localStorage.memos[index], ...updates }
       invalidateCache('memos')
+      emitDataChangedEvent('memo')
       return localStorage.memos[index]
     }
     return null

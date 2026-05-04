@@ -46,6 +46,16 @@ export function MemosView() {
       if (c.length > 0) setSelectedCourseId(c[0].id)
       setLoaded(true)
     })
+
+    const onDataChanged = () => {
+      Promise.all([getCourses(), getMemos(), getSchedules()]).then(([c, m, sc]) => {
+        setCourses(c)
+        setMemos(m)
+        setSchedules(sc)
+      })
+    }
+    window.addEventListener('data-changed', onDataChanged)
+    return () => window.removeEventListener('data-changed', onDataChanged)
   }, [])
 
   const courseMemoCounts = courses.reduce((acc, course) => {

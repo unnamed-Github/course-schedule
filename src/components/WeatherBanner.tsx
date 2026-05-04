@@ -213,6 +213,24 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
   const weatherColors = WEATHER_COLORS[w.condition]
   const WeatherIcon = WEATHER_ICONS[w.condition]
 
+  const comfortAdvice = (() => {
+    const t = w.feelsLike
+    const h = w.humidity
+    if (t >= 35) return { emoji: '🥵', text: '酷热，建议短袖短裤+防晒，多喝水' }
+    if (t >= 30) {
+      if (h >= 70) return { emoji: '😰', text: '闷热潮湿，穿速干轻薄面料' }
+      return { emoji: '☀️', text: '较热，短袖+遮阳帽，注意防晒' }
+    }
+    if (t >= 25) {
+      if (h >= 70) return { emoji: '💦', text: '暖湿，透气棉麻为主，备薄外套' }
+      return { emoji: '😎', text: '舒适温暖，短袖刚好' }
+    }
+    if (t >= 20) return { emoji: '👕', text: '宜人，短袖或薄长袖均可' }
+    if (t >= 15) return { emoji: '🧥', text: '微凉，建议薄外套或卫衣' }
+    if (t >= 10) return { emoji: '🧣', text: '偏冷，夹克/风衣+长裤' }
+    return { emoji: '🧤', text: '冷，厚外套+保暖层，注意防寒' }
+  })()
+
   return (
     <div className="rounded-2xl glass-strong overflow-hidden relative"
       style={{ borderLeft: `3px solid ${weatherColors.primary}` }}
@@ -224,10 +242,16 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
           <span style={{ color: weatherColors.primary }}>
             <WeatherIcon size={22} strokeWidth={1.8} />
           </span>
-          <div className="flex-1 min-w-0 flex items-center gap-2">
+          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
             <span className="text-lg font-bold">{w.temp}°</span>
-            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              {w.description} · 体感 {w.feelsLike}°
+            <span className="text-xs py-0.5 px-1.5 rounded font-medium" style={{
+              backgroundColor: w.tempMax - w.tempMin <= 2 ? 'var(--border-light)' : 'var(--glass-bg-strong)',
+              color: 'var(--text-secondary)'
+            }}>
+              {w.tempMin}° ~ {w.tempMax}°
+            </span>
+            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+              体感 {w.feelsLike}°
             </span>
             <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
               <Droplets size={10} strokeWidth={1.5} />{w.humidity}%
@@ -236,6 +260,11 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
               <Wind size={10} strokeWidth={1.5} />{w.windSpeed} m/s
             </span>
           </div>
+        </div>
+
+        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <span>{comfortAdvice.emoji}</span>
+          <span>{comfortAdvice.text}</span>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>

@@ -47,11 +47,11 @@ function formatCountdown(dueDate: string): string {
   const days = Math.floor(diff / 86400000)
 
   if (days > 0) {
-    return `提前 ${days} 天`
+    return `${days} 天后截止`
   } else if (hours > 0) {
-    return `提前 ${hours} 小时`
+    return `${hours} 小时后截止`
   } else if (minutes > 0) {
-    return `提前 ${minutes} 分钟`
+    return `${minutes} 分钟后截止`
   } else {
     return '即将截止'
   }
@@ -89,6 +89,16 @@ export function AssignmentsView() {
       setSchedules(sc)
       setLoaded(true)
     })
+
+    const onDataChanged = () => {
+      Promise.all([getCourses(), getAssignments(), getSchedules()]).then(([c, a, sc]) => {
+        setCourses(c)
+        setAssignments(a)
+        setSchedules(sc)
+      })
+    }
+    window.addEventListener('data-changed', onDataChanged)
+    return () => window.removeEventListener('data-changed', onDataChanged)
   }, [])
 
   const filteredAssignments = assignments.filter(a => {

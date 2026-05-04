@@ -110,8 +110,13 @@ export function WeekView() {
   useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
+    const onDataChanged = () => loadData()
     window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+    window.addEventListener('data-changed', onDataChanged)
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('data-changed', onDataChanged)
+    }
   }, [])
 
   useEffect(() => {

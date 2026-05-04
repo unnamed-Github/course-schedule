@@ -60,6 +60,14 @@ export default function CourseDetailPage() {
     getAssignments(courseId).then(setAssignments)
     getMemos(courseId).then(setMemos)
     setWeekNum(getWeekNumber())
+
+    const onDataChanged = () => {
+      getAssignments(courseId).then(setAssignments)
+      getMemos(courseId).then(setMemos)
+    }
+    window.addEventListener('data-changed', onDataChanged)
+
+    return () => window.removeEventListener('data-changed', onDataChanged)
   }, [courseId])
 
   const handleSaveEdit = async () => {
@@ -167,7 +175,9 @@ export default function CourseDetailPage() {
   }
   const handleEditAssignment = (a: Assignment) => {
     setEditingAssignmentId(a.id)
-    setEditAssignmentForm({ title: a.title, description: a.description || '', due_date: a.due_date.slice(0, 16), reminders: a.reminders || [] })
+    const d = new Date(a.due_date)
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+    setEditAssignmentForm({ title: a.title, description: a.description || '', due_date: local, reminders: a.reminders || [] })
   }
   const handleSaveEditAssignment = async () => {
     if (!editingAssignmentId || !editAssignmentForm.title.trim()) return
@@ -175,7 +185,7 @@ export default function CourseDetailPage() {
       const u = await updateAssignment(editingAssignmentId, {
         title: editAssignmentForm.title.trim(),
         description: editAssignmentForm.description.trim(),
-        due_date: editAssignmentForm.due_date,
+        due_date: new Date(editAssignmentForm.due_date).toISOString(),
         reminders: editAssignmentForm.reminders,
       })
       if (u) {
@@ -497,7 +507,7 @@ export default function CourseDetailPage() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
                           <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
-                          <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{a.due_date.slice(0, 16).replace('T', ' ')}</span>
+                          <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{new Date(a.due_date).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\//g, '-')}</span>
                         </div>
                       </div>
                       <div className="flex gap-1 flex-shrink-0">

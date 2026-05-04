@@ -53,7 +53,19 @@ export default function CoursesPage() {
       setCurrentDayOfWeek(d === 0 ? 7 : d)
       setCurrentPeriod(getCurrentPeriod(n))
     }, 60000)
-    return () => clearInterval(timer)
+
+    const onDataChanged = () => {
+      getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))))
+      getSchedules().then(setSchedules)
+      getAssignments().then(setAssignments)
+      getMemos().then(setMemos)
+    }
+    window.addEventListener('data-changed', onDataChanged)
+
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('data-changed', onDataChanged)
+    }
   }, [])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

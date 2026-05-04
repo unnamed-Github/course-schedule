@@ -71,11 +71,14 @@ export function DayView() {
 
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
+    const onDataChanged = () => loadData()
     window.addEventListener('storage', onStorage)
+    window.addEventListener('data-changed', onDataChanged)
 
     return () => {
       clearInterval(timer)
       window.removeEventListener('storage', onStorage)
+      window.removeEventListener('data-changed', onDataChanged)
     }
   }, [])
 
