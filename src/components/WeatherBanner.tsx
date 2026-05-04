@@ -357,12 +357,12 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
               <div className="flex items-baseline gap-2">
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
-                  <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
+                  <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
                 </div>
                 <span className="text-lg" style={{ color: 'var(--border-strong)' }}>/</span>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
-                  <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
+                  <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
                 </div>
                 <span className="text-sm font-medium px-2 py-0.5 rounded" style={{
                   backgroundColor: tomorrowWeatherColors.glow + '20',
