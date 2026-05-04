@@ -116,7 +116,13 @@ export function DayView() {
 
   const todayAssignments = useMemo(() => {
     return assignments
-      .filter((a) => a.due_date === todayStr && a.status === 'pending')
+      .filter((a) => {
+        const dueDate = new Date(a.due_date)
+        const dueDateStr = dueDate.getFullYear() + '-' +
+          String(dueDate.getMonth() + 1).padStart(2, '0') + '-' +
+          String(dueDate.getDate()).padStart(2, '0')
+        return dueDateStr === todayStr && a.status === 'pending'
+      })
       .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
   }, [assignments, todayStr])
 

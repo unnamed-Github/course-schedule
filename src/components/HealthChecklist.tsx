@@ -50,13 +50,14 @@ function computeNextKegelTime(kegelTimes: string, lastKegelCheck: number, now: n
   const lastKey = lastKegelCheck > 0 ? new Date(lastKegelCheck).toISOString().slice(0, 10) : ''
   if (lastKey === todayKey) return { nextTime: '', remainingSec: 0, allDone: true }
 
-  const nowMin = new Date(now).getHours() * 60 + new Date(now).getMinutes()
-  const times = kegelTimes.split(',').map(t => t.trim()).filter(Boolean).map(t => timeToMinutes(t)).sort((a, b) => a - b)
+  const nowDate = new Date(now)
+  const nowSec = nowDate.getHours() * 3600 + nowDate.getMinutes() * 60 + nowDate.getSeconds()
+  const times = kegelTimes.split(',').map(t => t.trim()).filter(Boolean).map(t => timeToMinutes(t) * 60).sort((a, b) => a - b)
 
   for (const t of times) {
-    if (nowMin < t) {
-      const remainingMin = t - nowMin
-      return { nextTime: formatKegelTime(t), remainingSec: remainingMin * 60, allDone: false }
+    if (nowSec < t) {
+      const remainingSec = t - nowSec
+      return { nextTime: formatKegelTime(Math.floor(t / 60)), remainingSec, allDone: false }
     }
   }
   return { nextTime: '', remainingSec: 0, allDone: true }

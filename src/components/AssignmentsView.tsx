@@ -22,6 +22,17 @@ function todayDateTimeLocal() {
   return d.toISOString().slice(0, 16)
 }
 
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).replace(/\//g, '-')
+}
+
 function formatCountdown(dueDate: string): string {
   const now = Date.now()
   const due = new Date(dueDate).getTime()
@@ -428,7 +439,7 @@ export function AssignmentsView() {
                         </div>
                         <div className="flex items-center justify-between mt-1">
                           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            {assignment.due_date.replace('T', ' ')}
+                            {formatDateTime(assignment.due_date)}
                           </p>
                           <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-success)26', color: 'var(--accent-success)' }}>
                             {formatCountdown(assignment.due_date)}

@@ -113,6 +113,13 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const ddlFiredRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('ddl_fired_keys')
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[]
+        ddlFiredRef.current = new Set(parsed)
+      }
+    } catch {}
     const load = () => {
       getAssignments().then(a => { assignmentsRef.current = a }).catch(() => {})
     }
@@ -123,6 +130,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     ddlFiredRef.current.clear()
+    try { localStorage.removeItem('ddl_fired_keys') } catch {}
   }, [ddlEnabled])
 
   const checkWater = useCallback(() => {

@@ -12,6 +12,17 @@ function getScheduleLabel(schedule: CourseSchedule): string {
   return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
 }
 
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).replace(/\//g, '-')
+}
+
 export function MemosView() {
   const [courses, setCourses] = useState<Course[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
@@ -186,7 +197,7 @@ export function MemosView() {
                       </div>
                       <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{memo.content}</p>
                       <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-                        {memo.created_at.replace('T', ' ')}
+                        {formatDateTime(memo.created_at)}
                       </p>
                     </>
                   )}
