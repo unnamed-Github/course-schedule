@@ -1,8 +1,8 @@
 import { WeatherResponse, WEATHER_CITIES } from './types'
 import { getLocalSetting, setLocalSetting } from './user-settings'
 
-const CACHE_KEY = 'weather_cache_v6'
-const CACHE_TS_KEY = 'weather_cache_ts_v6'
+const CACHE_KEY = 'weather_cache_v7'
+const CACHE_TS_KEY = 'weather_cache_ts_v7'
 const CACHE_CITY_KEY = 'weather_city_name'
 const CACHE_GEO_KEY = 'weather_use_geo'
 const CACHE_TTL = 30 * 60 * 1000

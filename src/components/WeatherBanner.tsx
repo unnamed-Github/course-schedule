@@ -284,12 +284,12 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[10px] font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
                 <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{w.tempMin}°</span>
               </div>
               <span className="text-lg" style={{ color: 'var(--border-strong)' }}>/</span>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-[10px] font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
                 <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{w.tempMax}°</span>
               </div>
               <span className="text-sm font-medium px-2 py-0.5 rounded" style={{
@@ -356,12 +356,12 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
               </div>
               <div className="flex items-baseline gap-2">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[10px] font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
                 </div>
                 <span className="text-lg" style={{ color: 'var(--border-strong)' }}>/</span>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-[10px] font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
+                  <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
                   <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
                 </div>
                 <span className="text-sm font-medium px-2 py-0.5 rounded" style={{

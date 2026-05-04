@@ -173,7 +173,7 @@ export async function GET(request: NextRequest) {
     const [weatherRes, aqiRes, forecastRes] = await Promise.all([
       fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn`, { signal: controller.signal }),
       fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
-      fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&cnt=16`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn&cnt=16`, { signal: controller.signal }),
     ])
 
     clearTimeout(timeout)
