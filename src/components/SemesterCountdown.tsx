@@ -36,14 +36,14 @@ export function SemesterCountdown() {
   useEffect(() => {
     if (!expanded) return
 
-    const handleClick = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setExpanded(false)
       }
     }
 
-    document.addEventListener('click', handleClick, true)
-    return () => document.removeEventListener('click', handleClick, true)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [expanded])
 
   const style = getCountdownStyle(days)
@@ -55,10 +55,7 @@ export function SemesterCountdown() {
   return (
     <div className="relative" ref={containerRef}>
       <button
-        onClick={(e) => {
-          e.stopPropagation()
-          setExpanded(!expanded)
-        }}
+        onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
         style={{ backgroundColor: style.bg, color: style.color }}
       >
@@ -73,8 +70,7 @@ export function SemesterCountdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            onClick={(e) => e.stopPropagation()}
-            className="absolute top-full right-0 z-50 mt-3 w-56 rounded-2xl p-4 shadow-lg glass-strong"
+            className="absolute top-full mt-2 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg glass-strong"
           >
             <p className="text-sm font-semibold mb-1" style={{ color: style.color }}>
               {style.label}
