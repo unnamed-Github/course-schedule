@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { WeatherCondition, UVLevel, AQILevelCN } from '@/lib/types'
 
-const API_KEY = process.env.OPENWEATHER_API_KEY
 const BASE = 'https://api.openweathermap.org'
 
 function mapCondition(id: number): WeatherCondition {
@@ -39,7 +38,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing lat/lon' }, { status: 400 })
   }
 
-  if (!API_KEY) {
+  const apiKey = process.env.OPENWEATHER_API_KEY
+  if (!apiKey) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 503 })
   }
 
@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const [weatherRes, uvRes, aqiRes] = await Promise.all([
-      fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=zh_cn`, { signal: controller.signal }),
-      fetch(`${BASE}/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${API_KEY}`, { signal: controller.signal }),
-      fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
     ])
     clearTimeout(timeout)
 

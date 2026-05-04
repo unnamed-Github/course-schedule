@@ -25,7 +25,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
       {open && (
         <motion.div
           ref={overlayRef}
-          className="fixed inset-0 z-40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center p-3 sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.92, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-            className="w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto glass-modal"
+            className="w-full max-w-md rounded-2xl p-4 sm:p-6 max-h-[85vh] overflow-y-auto glass-modal"
             role="dialog"
             aria-modal="true"
             aria-label={title || '对话框'}

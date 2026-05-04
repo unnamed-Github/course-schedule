@@ -155,7 +155,7 @@ export function DayView() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-3">
+    <div className="max-w-3xl mx-auto space-y-2.5 sm:space-y-3">
       <LateNightCare />
       <WarmthBanner />
       <WeatherBanner />
@@ -185,21 +185,21 @@ export function DayView() {
       )}
 
       {/* 一日纵览统计 */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-2xl p-4 text-center glass-strong">
-          <BookOpen size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: 'var(--accent-info)' }} />
-          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.classes}</div>
-          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>今日课程</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
+          <BookOpen size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--accent-info)' }} />
+          <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.classes}</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--text-secondary)' }}>今日课程</div>
         </div>
-        <div className="rounded-2xl p-4 text-center glass-strong">
-          <ClipboardList size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: dailyStats.assignments > 0 ? 'var(--accent-warm)' : 'var(--text-secondary)' }} />
-          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.assignments}</div>
-          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>作业截止</div>
+        <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
+          <ClipboardList size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: dailyStats.assignments > 0 ? 'var(--accent-warm)' : 'var(--text-secondary)' }} />
+          <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.assignments}</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--text-secondary)' }}>作业截止</div>
         </div>
-        <div className="rounded-2xl p-4 text-center glass-strong">
-          <StickyNote size={18} strokeWidth={1.5} className="mx-auto mb-1" style={{ color: dailyStats.memos > 0 ? 'var(--accent-bamboo)' : 'var(--text-secondary)' }} />
-          <div className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.memos}</div>
-          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>今日备忘</div>
+        <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
+          <StickyNote size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: dailyStats.memos > 0 ? 'var(--accent-bamboo)' : 'var(--text-secondary)' }} />
+          <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.memos}</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--text-secondary)' }}>今日备忘</div>
         </div>
       </div>
 
@@ -241,17 +241,17 @@ export function DayView() {
                 }}
               >
                 <div 
-                  className={`p-4 ${isCancelled ? '' : 'cursor-pointer'}`}
+                  className={`p-3 sm:p-4 ${isCancelled ? '' : 'cursor-pointer'}`}
                   onClick={() => { if (!isCancelled) setExpandedCourse(isExpanded ? null : schedule.id) }}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="flex flex-col items-center min-w-[60px]">
-                      <span className="text-sm font-semibold" style={{ 
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="flex flex-col items-center min-w-[52px] sm:min-w-[60px]">
+                      <span className="text-xs sm:text-sm font-semibold" style={{ 
                         color: isCurrent ? course.color : 'var(--text-primary)',
                         textDecoration: isCancelled ? 'line-through' : 'none',
                       }}>{startTime?.start}</span>
-                      <div className="w-px flex-1 min-h-[24px] my-1" style={{ backgroundColor: 'var(--border-light)' }} />
-                      <span className="text-xs" style={{ 
+                      <div className="w-px flex-1 min-h-[20px] sm:min-h-[24px] my-1" style={{ backgroundColor: 'var(--border-light)' }} />
+                      <span className="text-[10px] sm:text-xs" style={{ 
                         color: 'var(--text-secondary)',
                         textDecoration: isCancelled ? 'line-through' : 'none',
                       }}>{endTime?.end}</span>
@@ -260,8 +260,8 @@ export function DayView() {
                     <div className="w-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: course.color, marginTop: 2, marginBottom: 2, opacity: isCancelled ? 0.4 : 1 }} />
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-base font-semibold truncate" style={{ 
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-sm sm:text-base font-semibold truncate" style={{ 
                           color: 'var(--text-primary)',
                           textDecoration: isCancelled ? 'line-through' : 'none',
                         }}>{course.name}</h4>
@@ -277,9 +277,9 @@ export function DayView() {
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        {course.teacher !== '—' && <span className="flex items-center gap-1"><User size={13} strokeWidth={1.8} />{course.teacher}</span>}
-                        {schedule.location !== '—' && <span className="flex items-center gap-1"><MapPin size={13} strokeWidth={1.8} />{schedule.location}</span>}
+                      <div className="flex flex-wrap gap-x-2 sm:gap-x-3 gap-y-1 mt-1 text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        {course.teacher !== '—' && <span className="flex items-center gap-1"><User size={11} strokeWidth={1.8} />{course.teacher}</span>}
+                        {schedule.location !== '—' && <span className="flex items-center gap-1"><MapPin size={11} strokeWidth={1.8} />{schedule.location}</span>}
                         <span>第{schedule.start_period}-{schedule.end_period}节</span>
                       </div>
                     </div>

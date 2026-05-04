@@ -260,48 +260,50 @@ export function WeekView() {
   return (
     <div className="space-y-4">
       {/* 周切换 */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={18} strokeWidth={1.8} /></button>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button onClick={() => changeWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronLeft size={16} strokeWidth={1.8} /></button>
           <select
             value={weekNum}
             onChange={(e) => selectWeek(parseInt(e.target.value))}
-            className="rounded-lg px-2 py-1 text-sm font-medium cursor-pointer glass-subtle"
+            className="rounded-lg px-2 py-1 text-xs sm:text-sm font-medium cursor-pointer glass-subtle"
             style={{ color: 'var(--text-primary)' }}
           >
             {Array.from({ length: totalWeeks }, (_, i) => i + 1).map((w) => (
               <option key={w} value={w}>第 {w} 周</option>
             ))}
           </select>
-          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={18} strokeWidth={1.8} /></button>
-          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            第{weekNum}/{totalWeeks}周 · {weekRange ? `${weekRange.start.getMonth() + 1}/${weekRange.start.getDate()}—${weekRange.end.getMonth() + 1}/${weekRange.end.getDate()}` : ''}
-          </span>
+          <button onClick={() => changeWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--border-light)] transition-colors duration-200 cursor-pointer" style={{ color: 'var(--text-secondary)' }}><ChevronRight size={16} strokeWidth={1.8} /></button>
         </div>
-        <button
-          onClick={toggleHighlight}
-          className="px-3 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer"
-          style={{
-            backgroundColor: highlightEnabled ? 'var(--accent-warm)' : 'var(--bg-card)',
-            color: highlightEnabled ? 'white' : 'var(--text-secondary)',
-            border: `1px solid ${highlightEnabled ? 'var(--accent-warm)' : 'var(--border-light)'}`,
-          }}
-        >
-          {highlightEnabled ? '高亮开启' : '高亮关闭'}
-        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {weekRange ? `${weekRange.start.getMonth() + 1}/${weekRange.start.getDate()}—${weekRange.end.getMonth() + 1}/${weekRange.end.getDate()}` : ''}
+          </span>
+          <button
+            onClick={toggleHighlight}
+            className="px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-medium transition-colors cursor-pointer"
+            style={{
+              backgroundColor: highlightEnabled ? 'var(--accent-warm)' : 'var(--bg-card)',
+              color: highlightEnabled ? 'white' : 'var(--text-secondary)',
+              border: `1px solid ${highlightEnabled ? 'var(--accent-warm)' : 'var(--border-light)'}`,
+            }}
+          >
+            {highlightEnabled ? '高亮' : '关闭'}
+          </button>
+        </div>
       </div>
 
       {/* 课表网格 */}
       <div className="overflow-x-auto">
-        <div className="min-w-[640px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+        <div className="min-w-[520px] rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
           {/* 星期标题 */}
-          <div className="grid glass" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)' }}>
-            <div className="p-3" />
+          <div className="grid glass" style={{ gridTemplateColumns: `64px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)' }}>
+            <div className="p-2 sm:p-3" />
             {showDays.map((day) => {
                 const makeup = weekHolidays.makeups.get(day)
                 return (
-                  <div key={day} className="p-3 text-center">
-                    <span className="text-sm font-semibold" style={{ color: day === currentDay ? 'var(--accent-info)' : 'var(--text-secondary)' }}>
+                  <div key={day} className="p-2 sm:p-3 text-center">
+                    <span className="text-xs sm:text-sm font-semibold" style={{ color: day === currentDay ? 'var(--accent-info)' : 'var(--text-secondary)' }}>
                       周{DAY_MAP[day]}
                       {day >= 6 && makeup && (
                         <span className="ml-1 text-[10px]" style={{ color: 'var(--accent-warm)' }}>(补周{DAY_MAP[makeup.replacesDayOfWeek]})</span>
@@ -314,10 +316,10 @@ export function WeekView() {
 
           {/* 时间段行 */}
           {PERIOD_GROUPS.map((group) => (
-            <div key={group.label} className="grid" style={{ gridTemplateColumns: `100px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', minHeight: '90px' }}>
-              <div className="p-3 flex flex-col justify-center text-right glass">
-                <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{group.label}</span>
-                <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>{group.time}</span>
+            <div key={group.label} className="grid" style={{ gridTemplateColumns: `64px repeat(${showDays.length}, 1fr)`, borderBottom: '1px solid var(--border-light)', minHeight: '72px' }}>
+              <div className="p-2 sm:p-3 flex flex-col justify-center text-right glass">
+                <span className="text-[10px] sm:text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{group.label}</span>
+                <span className="text-[9px] sm:text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>{group.time}</span>
               </div>
 
               {showDays.map((day) => {
@@ -333,7 +335,7 @@ export function WeekView() {
                 })
 
                 return (
-                  <div key={day} className="p-2 flex flex-col gap-2" style={{ backgroundColor: holiday ? 'var(--holiday-cell)' : 'transparent' }}>
+                  <div key={day} className="p-1.5 sm:p-2 flex flex-col gap-1.5 overflow-hidden min-w-0" style={{ backgroundColor: holiday ? 'var(--holiday-cell)' : 'transparent' }}>
                     {holiday && makeup ? (
                       <div className="flex-1 flex items-center justify-center p-2 rounded-2xl" style={{ backgroundColor: 'var(--makeup-badge)' }}>
                         <span className="text-[10px] font-medium" style={{ color: 'var(--text-secondary)' }}>补课</span>
@@ -362,7 +364,7 @@ export function WeekView() {
                           <motion.div
                             key={schedule.id}
                             onClick={() => { if (!isCancelled) setExpandedSchedule(isExpanded ? null : schedule) }}
-                            className="rounded-2xl p-3 relative overflow-hidden"
+                            className="rounded-xl sm:rounded-2xl p-2 sm:p-3 relative overflow-hidden"
                             style={{
                               backgroundColor: course.color,
                               color: 'white',
@@ -375,8 +377,8 @@ export function WeekView() {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 flex-1">
-                                <div className="text-sm font-semibold truncate" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{course.name}</div>
-                                <div className="text-xs opacity-80 truncate mt-0.5" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{schedule.location !== '—' ? schedule.location : ''}</div>
+                                <div className="text-xs sm:text-sm font-semibold truncate" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{course.name}</div>
+                                <div className="text-[10px] sm:text-xs opacity-80 truncate mt-0.5" style={{ textDecoration: isCancelled ? 'line-through' : 'none' }}>{schedule.location !== '—' ? schedule.location : ''}</div>
                                 {isCancelled && (
                                   <div className="text-[10px] opacity-90 mt-1 font-medium">已取消</div>
                                 )}

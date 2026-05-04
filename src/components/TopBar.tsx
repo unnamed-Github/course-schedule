@@ -38,10 +38,10 @@ export function TopBar() {
     <header
       className="sticky top-0 z-30 flex flex-col glass-nav"
     >
-      <div className="h-12 flex items-center justify-between px-4 sm:px-6">
+      <div className="h-12 flex items-center justify-between px-3 sm:px-6">
         <button
           onClick={() => setCurrentView('day')}
-          className="flex items-center gap-1.5 font-semibold text-lg rounded-lg px-1 -ml-1 transition-opacity hover:opacity-75 focus-visible:opacity-75 cursor-pointer"
+          className="flex items-center gap-1 font-semibold text-base sm:text-lg rounded-lg px-1 -ml-1 transition-opacity hover:opacity-75 focus-visible:opacity-75 cursor-pointer"
           style={{ color: 'var(--accent-primary)', boxShadow: 'none' }}
         >
           <GraduationCap size={22} strokeWidth={1.8} />
@@ -68,14 +68,14 @@ export function TopBar() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-0.5 px-2 sm:px-4 pb-2 overflow-x-auto">
+      <div className="flex items-center justify-center gap-0.5 px-1 sm:px-4 pb-2 overflow-x-auto scrollbar-none">
         {TABS.map((tab) => {
           const isActive = currentView === tab.id
           return (
             <button
               key={tab.id}
               onClick={() => setCurrentView(tab.id)}
-              className="px-4 py-1.5 text-sm font-medium transition-all duration-200 whitespace-nowrap relative cursor-pointer rounded-lg focus-visible:shadow-[var(--focus-ring)]"
+              className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap relative cursor-pointer rounded-lg focus-visible:shadow-[var(--focus-ring)]"
               style={{
                 color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
                 fontWeight: isActive ? 600 : 400,

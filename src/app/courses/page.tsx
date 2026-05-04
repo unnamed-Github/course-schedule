@@ -194,17 +194,17 @@ export default function CoursesPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          课程管理 <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>共 {courses.length} 门课程</span>
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
+        <h2 className="text-lg sm:text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+          课程管理 <span className="text-xs sm:text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>共 {courses.length} 门课程</span>
         </h2>
-        <div className="flex items-center gap-2">
-          <label className="btn-ghost text-xs cursor-pointer">导入
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <label className="btn-ghost text-[11px] sm:text-xs cursor-pointer">导入
             <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="hidden" />
           </label>
-          <button onClick={() => exportToCSV(courses, schedules)} className="btn-ghost text-xs">CSV</button>
-          <button onClick={() => exportToExcel(courses, schedules)} className="btn-ghost text-xs">Excel</button>
-          <button onClick={() => setAddingCourse(true)} className="btn-primary text-xs">添加课程</button>
+          <button onClick={() => exportToCSV(courses, schedules)} className="btn-ghost text-[11px] sm:text-xs">CSV</button>
+          <button onClick={() => exportToExcel(courses, schedules)} className="btn-ghost text-[11px] sm:text-xs">Excel</button>
+          <button onClick={() => setAddingCourse(true)} className="btn-primary text-[11px] sm:text-xs">添加课程</button>
         </div>
       </div>
 

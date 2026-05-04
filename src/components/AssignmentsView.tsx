@@ -193,7 +193,7 @@ export function AssignmentsView() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
         <StatCard label="全部" value={stats.all} color="var(--text-secondary)" />
         <StatCard label="待提交" value={stats.pending} color="var(--accent-warm)" />
         <StatCard label="已提交" value={stats.submitted} color="var(--accent-success)" />
@@ -231,13 +231,13 @@ export function AssignmentsView() {
                     onChange={(e) => setNewTitle(e.target.value)}
                     onKeyDown={handleQuickAddKeyDown}
                     placeholder="作业标题..."
-                    className="flex-1 min-w-[160px] px-3 py-2 rounded-xl text-sm"
+                    className="flex-1 min-w-[120px] px-3 py-2 rounded-xl text-xs sm:text-sm"
                     style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                   />
                   <select
                     value={newCourseId}
                     onChange={(e) => { setNewCourseId(e.target.value); setNewScheduleId('') }}
-                    className="px-3 py-2 rounded-xl text-sm"
+                    className="px-3 py-2 rounded-xl text-xs sm:text-sm"
                     style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                   >
                     <option value="">选择课程</option>
@@ -247,7 +247,7 @@ export function AssignmentsView() {
                     type="datetime-local"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="px-3 py-2 rounded-xl text-sm"
+                    className="px-3 py-2 rounded-xl text-xs sm:text-sm"
                     style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                   />
                   <button
@@ -335,13 +335,13 @@ export function AssignmentsView() {
         </AnimatePresence>
       </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {(['all', 'pending', 'submitted', 'overdue'] as FilterType[]).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-all ${
+              className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                 filter === f ? 'shadow-sm' : ''
               }`}
               style={{
@@ -354,15 +354,15 @@ export function AssignmentsView() {
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button className="p-2 rounded-xl glass-btn" style={{ color: 'var(--text-secondary)' }}>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button className="p-2 rounded-xl glass-btn hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
             <Settings size={18} strokeWidth={2} />
           </button>
           <button
             onClick={() => setShowAddModal(true)}
-            className="btn-primary text-xs flex items-center gap-1"
+            className="btn-primary text-[10px] sm:text-xs flex items-center gap-1"
           >
-            <Plus size={16} strokeWidth={2} />添加作业
+            <Plus size={14} strokeWidth={2} />添加作业
           </button>
         </div>
       </div>
@@ -676,11 +676,11 @@ export function AssignmentsView() {
 
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="p-4 rounded-2xl text-left glass-strong">
-      <div className="text-2xl font-bold mb-1" style={{ color }}>
+    <div className="p-3 sm:p-4 rounded-2xl text-left glass-strong">
+      <div className="text-xl sm:text-2xl font-bold mb-0.5 sm:mb-1" style={{ color }}>
         {value}
       </div>
-      <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+      <div className="text-[11px] sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
         {label}
       </div>
     </div>

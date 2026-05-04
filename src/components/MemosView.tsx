@@ -94,8 +94,8 @@ export function MemosView() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>课堂备忘</h2>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />新增备忘</button>
+        <h2 className="text-lg sm:text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>课堂备忘</h2>
+        <button onClick={() => setShowAddModal(true)} className="btn-primary text-[10px] sm:text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />新增备忘</button>
       </div>
 
       <div className="space-y-3">
