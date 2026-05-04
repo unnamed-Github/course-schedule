@@ -164,7 +164,8 @@ export function WeekView() {
 
   const handleQuickAddAssignment = async (courseId: string, scheduleId?: string) => {
     if (!quickAssignTitle.trim() || !quickAssignDueDate) return
-    const dueMs = new Date(quickAssignDueDate + 'T23:59:00').getTime()
+    const [year, month, day] = quickAssignDueDate.split('-').map(Number)
+    const dueMs = new Date(year, month - 1, day, 23, 59).getTime()
     const created = await createAssignment({
       title: quickAssignTitle.trim(),
       course_id: courseId,

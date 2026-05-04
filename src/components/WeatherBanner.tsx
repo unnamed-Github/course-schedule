@@ -218,30 +218,51 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
     const hi = w.tempMax
     const lo = w.tempMin
     const h = w.humidity
-    let advice = ''
+    const uvHigh = uv.index >= 6
+    const parts: string[] = []
 
-    // 温差
-    if (range >= 15) advice += '昼夜温差大，早晚加外套；'
-    else if (range >= 8) advice += '早晚微凉，带件薄外套；'
+    // 防晒帽
+    if (uvHigh) {
+      parts.push('🧢 紫外线强，戴帽子防晒')
+    } else if (hi >= 28 && w.condition === 'clear') {
+      parts.push('🧢 大晴天，戴个帽子舒服些')
+    } else if (uv.index >= 3) {
+      parts.push('建议戴帽子防晒')
+    }
 
-    // 高温
-    if (hi >= 35) advice += '白天酷热，短袖短裤+防晒，多喝水'
-    else if (hi >= 30) {
-      if (h >= 70) advice += '闷热潮湿，穿速干轻薄面料'
-      else advice += '较热，短袖+遮阳帽'
-    } else if (hi >= 25) {
-      if (h >= 70) advice += '暖湿，透气棉麻为主'
-      else advice += '温暖舒适，短袖刚好'
-    } else if (hi >= 20) advice += '宜人，短袖或薄长袖均可'
-    else if (hi >= 15) advice += '微凉，建议薄外套或卫衣'
-    else if (hi >= 10) advice += '偏冷，夹克/风衣+长裤'
-    else advice += '冷，厚外套+保暖层'
+    // 皮肤衣（早晚凉需要）
+    if (lo <= 10) {
+      parts.push('🧥 早晚冷，带件薄外套（皮肤衣不够）')
+    } else if (lo <= 14) {
+      parts.push('🧥 早晚凉，带件皮肤衣')
+    } else if (range >= 10 && lo <= 18) {
+      parts.push('早晚有温差，备件皮肤衣')
+    }
 
-    // 雨
-    if (w.condition === 'rain' || w.condition === 'drizzle') advice += '，带伞'
-    else if (w.condition === 'thunderstorm') advice += '，雷暴天减少外出'
+    // 闷热/雨天提示
+    if (h >= 70 && hi >= 28) {
+      parts.push('💦 闷热潮湿，穿速干 T 恤')
+    }
+    if (w.condition === 'rain' || w.condition === 'drizzle') {
+      if (parts.length > 0 && parts[parts.length - 1].includes('伞')) {
+        // already has umbrella
+      } else {
+        parts.push('☔ 记得带伞')
+      }
+    } else if (w.condition === 'thunderstorm') {
+      parts.push('⚡ 雷暴天气，减少外出')
+    }
 
-    return advice
+    // 极热
+    if (hi >= 35) {
+      parts.push('🥵 酷热，多喝水，尽量减少暴晒')
+    }
+
+    if (parts.length === 0) {
+      parts.push('短袖就行，舒舒服服')
+    }
+
+    return parts
   })()
 
   return (
@@ -297,13 +318,12 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
           )}
         </div>
 
-        {/* 第三行：穿衣建议 */}
-        <div className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          <span className="inline-block mr-1">
-            {w.tempMax >= 30 ? '🥵' : w.tempMax >= 20 ? '👕' : w.tempMax >= 10 ? '🧥' : '🧤'}
-          </span>
-          {comfortAdvice}
-        </div>
+        {/* 第三行：穿啥建议 */}
+         <div className="mt-2 text-xs leading-relaxed space-y-0.5" style={{ color: 'var(--text-secondary)' }}>
+           {comfortAdvice.map((tip, i) => (
+             <div key={i}>{tip}</div>
+           ))}
+         </div>
 
         {/* 第四行：UV + AQI 双栏 */}
         <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>

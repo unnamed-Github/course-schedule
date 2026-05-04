@@ -13,6 +13,13 @@ import { ClipboardList, Pin, Check, Square, X, ChevronLeft, Plus, Pencil, Trash2
 
 export const dynamic = 'auto'
 
+function datetimeLocalToIso(dt: string): string {
+  const [date, time] = dt.split('T')
+  const [year, month, day] = date.split('-').map(Number)
+  const [hour, minute] = time.split(':').map(Number)
+  return new Date(year, month - 1, day, hour, minute).toISOString()
+}
+
 function countdown(dueDate: string): string {
   const diff = new Date(dueDate).getTime() - Date.now()
   if (diff < 0) return '已逾期'
@@ -140,7 +147,7 @@ export default function CourseDetailPage() {
   const handleAddAssignment = async () => {
     try {
       if (!assignmentForm.title || !assignmentForm.due_date) return
-      const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: new Date(assignmentForm.due_date).toISOString(), status: 'pending', reminders: assignmentForm.reminders.length > 0 ? assignmentForm.reminders : undefined })
+      const a = await createAssignment({ course_id: courseId, title: assignmentForm.title, description: assignmentForm.description, due_date: datetimeLocalToIso(assignmentForm.due_date), status: 'pending', reminders: assignmentForm.reminders.length > 0 ? assignmentForm.reminders : undefined })
       if (a) {
         setAssignments((prev) => [...prev, a])
         setAssignmentForm({ title: '', description: '', due_date: '', reminders: [] })
@@ -185,7 +192,7 @@ export default function CourseDetailPage() {
       const u = await updateAssignment(editingAssignmentId, {
         title: editAssignmentForm.title.trim(),
         description: editAssignmentForm.description.trim(),
-        due_date: new Date(editAssignmentForm.due_date).toISOString(),
+        due_date: datetimeLocalToIso(editAssignmentForm.due_date),
         reminders: editAssignmentForm.reminders,
       })
       if (u) {

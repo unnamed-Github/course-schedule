@@ -25,6 +25,13 @@ function todayDateTimeLocal() {
   return d.toISOString().slice(0, 16)
 }
 
+function datetimeLocalToIso(dt: string): string {
+  const [date, time] = dt.split('T')
+  const [year, month, day] = date.split('-').map(Number)
+  const [hour, minute] = time.split(':').map(Number)
+  return new Date(year, month - 1, day, hour, minute).toISOString()
+}
+
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('zh-CN', {
     year: 'numeric',
@@ -136,7 +143,7 @@ export function AssignmentsView() {
     const created = await createAssignment({
       title: newTitle.trim(),
       course_id: newCourseId,
-      due_date: new Date(newDueDate.replace('T', ' ') + '+08:00').toISOString(),
+      due_date: datetimeLocalToIso(newDueDate),
       description: newDesc.trim() || '',
       status: 'pending',
       schedule_id: newScheduleId || undefined,
@@ -150,6 +157,7 @@ export function AssignmentsView() {
       setNewDueDate(todayDateTimeLocal())
       setNewDesc('')
       setNewReminders([])
+      setShowAddModal(false)
     }
   }
 
@@ -165,7 +173,7 @@ export function AssignmentsView() {
     const created = await createAssignment({
       title: newTitle.trim(),
       course_id: newCourseId,
-      due_date: new Date(newDueDate).toISOString(),
+      due_date: datetimeLocalToIso(newDueDate),
       description: newDesc.trim() || '',
       status: 'pending',
       schedule_id: newScheduleId || undefined,
@@ -197,7 +205,7 @@ export function AssignmentsView() {
     if (!editingId || !editTitle.trim()) return
     const updated = await updateAssignment(editingId, {
       title: editTitle.trim(),
-      due_date: new Date(editDueDate).toISOString(),
+      due_date: datetimeLocalToIso(editDueDate),
       description: editDesc.trim(),
       schedule_id: editScheduleId || undefined,
       reminders: editReminders,
