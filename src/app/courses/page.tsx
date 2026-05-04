@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
+import { updateCourse, deleteCourse, createCourse, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
+import { useData } from '@/components/DataContext'
 import { getWeekNumber, getSemesterConfig, getDayDate, getCurrentPeriod, PERIOD_TIMES, isHoliday } from '@/lib/semester'
 import { exportToCSV, exportToExcel, parseImportFile } from '@/lib/export-utils'
 import { Modal } from '@/components/Modal'
@@ -15,10 +16,7 @@ const ALL_TAGS: MoodTag[] = ['⭐喜欢', '🥱苟住', '💪硬扛', '🌈期�
 
 export default function CoursesPage() {
   const { showToast } = useToast()
-  const [courses, setCourses] = useState<Course[]>([])
-  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [memos, setMemos] = useState<Memo[]>([])
+  const { courses, schedules, assignments, memos, setCourses, setSchedules, setAssignments, setMemos, reloadCourses, reloadSchedules } = useData()
   const [weekNum] = useState(() => getWeekNumber())
   const [currentDayOfWeek, setCurrentDayOfWeek] = useState(() => {
     const d = new Date().getDay()
@@ -40,11 +38,9 @@ export default function CoursesPage() {
   const [scheduleForm, setScheduleForm] = useState({ day_of_week: 1, start_period: 1, end_period: 2, location: '', week_type: 'all' as 'all' | 'odd' | 'even' })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const sortedCourses = [...courses].sort((a, b) => (a.order ?? 99) - (b.order ?? 99))
+
   useEffect(() => {
-    getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))))
-    getSchedules().then(setSchedules)
-    getAssignments().then(setAssignments)
-    getMemos().then(setMemos)
     const timer = setInterval(() => {
       const n = new Date()
       const d = n.getDay()
@@ -52,17 +48,8 @@ export default function CoursesPage() {
       setCurrentPeriod(getCurrentPeriod(n))
     }, 60000)
 
-    const onDataChanged = () => {
-      getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99))))
-      getSchedules().then(setSchedules)
-      getAssignments().then(setAssignments)
-      getMemos().then(setMemos)
-    }
-    window.addEventListener('data-changed', onDataChanged)
-
     return () => {
       clearInterval(timer)
-      window.removeEventListener('data-changed', onDataChanged)
     }
   }, [])
 
@@ -193,8 +180,8 @@ export default function CoursesPage() {
     if (skipCount > 0) parts.push(`跳过 ${skipCount} 条`)
     if (failCount > 0) parts.push(`失败 ${failCount} 条`)
     if (parts.length > 0) showToast(`导入完成：${parts.join('，')}`, successCount > 0 ? 'success' : 'error')
-    getCourses().then((c) => setCourses(c.sort((a, b) => (a.order ?? 99) - (b.order ?? 99)))).catch(() => {})
-    getSchedules().then(setSchedules).catch(() => {})
+    reloadCourses()
+    reloadSchedules()
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -206,7 +193,7 @@ export default function CoursesPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h2 className="text-lg sm:text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          课程管理 <span className="text-xs sm:text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>共 {courses.length} 门课程</span>
+          课程管理 <span className="text-xs sm:text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>共 {sortedCourses.length} 门课程</span>
         </h2>
         <div className="flex items-center gap-1.5 flex-wrap">
           <label className="btn-ghost text-[11px] sm:text-xs cursor-pointer">导入
@@ -235,7 +222,7 @@ export default function CoursesPage() {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {courses.map((course, index) => {
+        {sortedCourses.map((course, index) => {
           const allCourseSchedules = schedules
             .filter((s) => s.course_id === course.id)
             .sort((a, b) => a.day_of_week - b.day_of_week || a.start_period - b.start_period)
@@ -390,7 +377,7 @@ export default function CoursesPage() {
           )
         })}
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: courses.length * 0.1 }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: sortedCourses.length * 0.1 }}>
           <div className="rounded-2xl h-full min-h-[180px] flex items-center justify-center cursor-pointer hover:bg-[var(--border-light)] transition-colors duration-200"
             style={{ border: '2px dashed var(--border-light)' }}
             onClick={() => setAddingCourse(true)}
