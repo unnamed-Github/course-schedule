@@ -213,6 +213,12 @@ export default function CourseDetailPage() {
     }
   }
 
+  const tagCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    memos.forEach((m) => { m.mood_tags?.forEach((t) => { counts[t] = (counts[t] ?? 0) + 1 }) })
+    return counts
+  }, [memos])
+
   if (!course) return <div className="max-w-2xl mx-auto text-center py-20"><p style={{ color: 'var(--text-secondary)' }}>课程未找到</p></div>
 
   const perWeek = schedules.length
@@ -225,11 +231,6 @@ export default function CourseDetailPage() {
   const progressOffset = circumference - (progressRate / 100) * circumference
 
   const DAY_MAP: Record<number, string> = { 1: '周一', 2: '周二', 3: '周三', 4: '周四', 5: '周五' }
-  const tagCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
-    memos.forEach((m) => { m.mood_tags?.forEach((t) => { counts[t] = (counts[t] ?? 0) + 1 }) })
-    return counts
-  }, [memos])
 
   const sortedAssignments = [...assignments].sort((a, b) => a.due_date.localeCompare(b.due_date))
 

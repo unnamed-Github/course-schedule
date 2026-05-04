@@ -112,6 +112,26 @@ export function DayView() {
 
 
 
+  const todayStr = viewDate.toISOString().split('T')[0]
+
+  const todayAssignments = useMemo(() => {
+    return assignments
+      .filter((a) => a.due_date === todayStr && a.status === 'pending')
+      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+  }, [assignments, todayStr])
+
+  const todaySchedules = sortedSchedules
+  const todayScheduleIds = new Set(todaySchedules.map((s) => s.id))
+  const todayMemos = useMemo(() => {
+    return memos.filter((m) => m.schedule_id && todayScheduleIds.has(m.schedule_id))
+  }, [memos, todayScheduleIds])
+
+  const dailyStats = {
+    classes: todaySchedules.length,
+    assignments: todayAssignments.length,
+    memos: todayMemos.length,
+  }
+
   if (!loaded) {
     return (
       <div className="max-w-4xl mx-auto space-y-3 pt-4">
@@ -132,26 +152,6 @@ export function DayView() {
         <button onClick={loadData} className="btn-primary text-sm">重试</button>
       </div>
     )
-  }
-
-  const todayStr = viewDate.toISOString().split('T')[0]
-
-  const todayAssignments = useMemo(() => {
-    return assignments
-      .filter((a) => a.due_date === todayStr && a.status === 'pending')
-      .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
-  }, [assignments, todayStr])
-
-  const todaySchedules = sortedSchedules
-  const todayScheduleIds = new Set(todaySchedules.map((s) => s.id))
-  const todayMemos = useMemo(() => {
-    return memos.filter((m) => m.schedule_id && todayScheduleIds.has(m.schedule_id))
-  }, [memos, todayScheduleIds])
-
-  const dailyStats = {
-    classes: todaySchedules.length,
-    assignments: todayAssignments.length,
-    memos: todayMemos.length,
   }
 
   return (
