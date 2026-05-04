@@ -70,7 +70,11 @@ export function SemesterCountdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg glass-strong"
+            className="absolute top-full mt-2 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-light)',
+            }}
           >
             <p className="text-sm font-semibold mb-1" style={{ color: style.color }}>
               {style.label}
