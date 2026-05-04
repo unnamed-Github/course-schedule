@@ -14,11 +14,6 @@ function getScheduleLabel(schedule: CourseSchedule): string {
   return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
 }
 
-function todayDateString() {
-  const d = new Date()
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
-}
-
 function todayDateTimeLocal() {
   const d = new Date()
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
@@ -76,6 +71,7 @@ export function AssignmentsView() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [quickAddExpanded, setQuickAddExpanded] = useState(true)
   const [quickAddMoreExpanded, setQuickAddMoreExpanded] = useState(false)
+  // eslint-disable-next-line react-hooks/purity
   const [now, setNow] = useState(Date.now())
 
   const [newTitle, setNewTitle] = useState('')

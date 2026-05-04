@@ -344,28 +344,26 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
         {/* 第五行：明天预报（仅晚上9点后显示）*/}
         {isAfter9pm && tomorrow && TomorrowIcon && tomorrowWeatherColors && (
           <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded" style={{
-                  backgroundColor: 'var(--border-light)',
-                  color: 'var(--text-secondary)',
-                }}>
-                  明天
-                </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded flex-shrink-0" style={{
+                backgroundColor: 'var(--border-light)',
+                color: 'var(--text-secondary)',
+              }}>
+                明天
+              </span>
+              <div className="flex items-center gap-1" style={{ color: tomorrowWeatherColors.primary }}>
+                <TomorrowIcon size={16} strokeWidth={1.5} />
               </div>
-              <div className="flex items-center gap-1.5" style={{ color: tomorrowWeatherColors.primary }}>
-                <TomorrowIcon size={18} strokeWidth={1.5} />
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xs font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
-                <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-[9px] font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
+                <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
               </div>
               <span style={{ color: 'var(--border-strong)' }}>/</span>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
-                <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
+              <div className="flex items-baseline gap-0.5">
+                <span className="text-[9px] font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
+                <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
               </div>
-              <span className="text-xs font-medium px-2 py-0.5 rounded ml-2" style={{
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded ml-auto" style={{
                 backgroundColor: tomorrowWeatherColors.glow + '20',
                 color: tomorrowWeatherColors.primary,
               }}>

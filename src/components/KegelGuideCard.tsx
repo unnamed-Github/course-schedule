@@ -169,6 +169,7 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPortalRoot(document.body)
   }, [])
 

@@ -20,8 +20,11 @@ export default function CoursesPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
   const [weekNum] = useState(() => getWeekNumber())
-  const [currentDayOfWeek, setCurrentDayOfWeek] = useState(0)
-  const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
+  const [currentDayOfWeek, setCurrentDayOfWeek] = useState(() => {
+    const d = new Date().getDay()
+    return d === 0 ? 7 : d
+  })
+  const [currentPeriod, setCurrentPeriod] = useState<number | null>(() => getCurrentPeriod(new Date()))
   const [showImport, setShowImport] = useState(false)
   const [importPreview, setImportPreview] = useState<unknown[]>([])
   const [importing, setImporting] = useState(false)
@@ -42,10 +45,6 @@ export default function CoursesPage() {
     getSchedules().then(setSchedules)
     getAssignments().then(setAssignments)
     getMemos().then(setMemos)
-    const now = new Date()
-    const dow = now.getDay()
-    setCurrentDayOfWeek(dow === 0 ? 7 : dow)
-    setCurrentPeriod(getCurrentPeriod(now))
     const timer = setInterval(() => {
       const n = new Date()
       const d = n.getDay()

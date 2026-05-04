@@ -40,7 +40,8 @@ export default function CourseDetailPage() {
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
-  const [weekNum, setWeekNum] = useState(() => getWeekNumber())
+  const [weekNum] = useState(() => getWeekNumber())
+  // eslint-disable-next-line react-hooks/purity
   const [now, setNow] = useState(Date.now())
 
   const [editing, setEditing] = useState(false)
