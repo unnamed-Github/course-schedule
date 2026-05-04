@@ -532,6 +532,7 @@ export function WeatherBanner() {
   }
 
   const displayLabel = useGeo ? '当前位置' : (WEATHER_CITIES.find((c) => c.name === cityName)?.name ?? WEATHER_CITIES[0].name)
+  const debugInfo = useGeo ? `(${geoLat?.toFixed(3)}, ${geoLon?.toFixed(3)}` : `(${city.lat}, ${city.lon})`
 
   return (
     <motion.div
@@ -560,7 +561,7 @@ export function WeatherBanner() {
             style={{ color: 'var(--text-secondary)' }}
           >
             {useGeo && <MapPin size={10} />}
-            {displayLabel}
+            {displayLabel} {debugInfo}
             <ChevronDown size={12} />
           </button>
           <AnimatePresence>

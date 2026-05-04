@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSemesterConfig, getWeekNumber } from '@/lib/semester'
 import { Target } from 'lucide-react'
@@ -26,11 +26,24 @@ export function SemesterCountdown() {
   const [expanded, setExpanded] = useState(false)
   const [days, setDays] = useState(0)
   const [mounted, setMounted] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setDays(getDaysRemaining())
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setExpanded(false)
+      }
+    }
+    if (expanded) {
+      window.addEventListener('mousedown', handleClickOutside)
+      return () => window.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [expanded])
 
   const style = getCountdownStyle(days)
   const config = getSemesterConfig()
@@ -39,7 +52,7 @@ export function SemesterCountdown() {
   const progressPct = Math.min(100, Math.max(0, ((weekNum - 1) / totalWeeks) * 100))
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
@@ -56,7 +69,7 @@ export function SemesterCountdown() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg glass-strong"
+            className="absolute top-full mt-3 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg glass-strong"
           >
             <p className="text-sm font-semibold mb-1" style={{ color: style.color }}>
               {style.label}
