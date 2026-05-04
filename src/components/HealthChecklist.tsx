@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useReminder } from './ReminderProvider'
 import { Check } from 'lucide-react'
+import { KegelGuideCard } from './KegelGuideCard'
 
 interface WaterStatus {
   shouldDrink: boolean
@@ -87,6 +88,12 @@ export function HealthChecklist() {
   const [kegelStatus, setKegelStatus] = useState<KegelStatus>({ nextTime: '', remainingSec: 0, allDone: false })
   const [waterJustDone, setWaterJustDone] = useState(false)
   const [kegelJustDone, setKegelJustDone] = useState(false)
+  const [showKegelGuide, setShowKegelGuide] = useState(false)
+
+  const handleKegelCheck = useCallback(() => {
+    checkKegel()
+    setTimeout(() => setShowKegelGuide(true), 300)
+  }, [checkKegel])
 
   useEffect(() => {
     const update = () => {
@@ -169,7 +176,7 @@ export function HealthChecklist() {
               </p>
             </div>
             <button
-              onClick={checkKegel}
+              onClick={handleKegelCheck}
               className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all ${kegelJustDone ? 'scale-110' : ''}`}
               style={{
                 backgroundColor: kegelStatus.allDone || kegelJustDone ? 'var(--accent-success)' : 'transparent',
@@ -181,6 +188,7 @@ export function HealthChecklist() {
           </div>
         )}
       </div>
+      <KegelGuideCard open={showKegelGuide} onClose={() => setShowKegelGuide(false)} />
     </motion.div>
   )
 }

@@ -268,6 +268,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
             const key = `${a.id}_${rm}`
             if (now >= triggerMs && now < triggerMs + 30000 && !ddlFiredRef.current.has(key)) {
               ddlFiredRef.current.add(key)
+              try { localStorage.setItem('ddl_fired_keys', JSON.stringify(Array.from(ddlFiredRef.current))) } catch {}
               sendNotification('⏰ 作业截止提醒', `「${a.title}」将在 ${formatRelativeTime(rm)} 后截止\n请及时提交`)
               break
             }
