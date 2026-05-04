@@ -28,6 +28,7 @@ export function MemosView() {
   const [memos, setMemos] = useState<Memo[]>([])
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [quickMemo, setQuickMemo] = useState('')
   const [newMemo, setNewMemo] = useState('')
   const [selectedEmoji, setSelectedEmoji] = useState('📝')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
@@ -66,6 +67,24 @@ export function MemosView() {
   const sortedCourses = [...courses].sort((a, b) =>
     (courseMemoCounts[b.id] || 0) - (courseMemoCounts[a.id] || 0)
   )
+
+  const handleQuickAddMemo = async () => {
+    if (!quickMemo.trim()) return
+    const defaultCourseId = courses.length > 0 ? courses[0].id : ''
+    if (!defaultCourseId) return
+
+    const memo = await createMemo({
+      course_id: defaultCourseId,
+      content: quickMemo.trim(),
+      mood_emoji: '📝',
+      mood_tags: [],
+    })
+
+    if (memo) {
+      setMemos(prev => [memo, ...prev])
+      setQuickMemo('')
+    }
+  }
 
   const handleAddMemo = async () => {
     if (!newMemo.trim() || !selectedCourseId) return
@@ -117,6 +136,23 @@ export function MemosView() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg sm:text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>课堂备忘</h2>
         <button onClick={() => setShowAddModal(true)} className="btn-primary text-[10px] sm:text-xs flex items-center gap-1"><Plus size={14} strokeWidth={2} />新增备忘</button>
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={quickMemo}
+          onChange={(e) => setQuickMemo(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleQuickAddMemo() }}
+          placeholder="快速添加备忘..."
+          className="flex-1 rounded-xl px-3 py-2 text-sm"
+          style={{ backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+        />
+        <button
+          onClick={handleQuickAddMemo}
+          disabled={!quickMemo.trim()}
+          className="btn-primary text-sm disabled:opacity-50"
+        >
+          添加
+        </button>
       </div>
 
       <div className="space-y-3">
