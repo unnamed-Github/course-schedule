@@ -44,16 +44,17 @@ export function GlassStyleInjector() {
     )
   }
 
-  const gBg = `rgba(255, 255, 255, ${o})`
-  const gBgStrong = `rgba(255, 255, 255, ${Math.min(o * 1.5, 0.3)})`
-  const gBgSubtle = `rgba(255, 255, 255, ${Math.min(o * 0.4, 0.08)})`
-  const gBgNav = `rgba(255, 255, 255, ${Math.min(o * 1.5, 0.22)})`
-  const gBgModal = `rgba(255, 255, 255, ${Math.min(o * 1.8, 0.28)})`
-  const gBorder = `rgba(255, 255, 255, ${0.15 + o * 0.3})`
-  const gBorderStrong = `rgba(255, 255, 255, ${0.2 + o * 0.5})`
-  const gShadow = `0 8px 32px rgba(0, 0, 0, ${0.04 + o * 0.1}), 0 2px 8px rgba(0, 0, 0, ${0.02 + o * 0.05}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.4 + o * 0.8})`
-  const gShadowModal = `0 25px 60px rgba(0, 0, 0, ${0.08 + o * 0.1}), 0 8px 20px rgba(0, 0, 0, ${0.04 + o * 0.05}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.4 + o})`
-  const gShadowNav = `0 1px 3px rgba(0, 0, 0, ${0.03 + o * 0.04}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.3 + o * 0.3})`
+  const lightOpacityFactor = 0.6
+  const gBg = `rgba(255, 255, 255, ${o * lightOpacityFactor})`
+  const gBgStrong = `rgba(255, 255, 255, ${Math.min(o * 1.2, 0.6)})`
+  const gBgSubtle = `rgba(255, 255, 255, ${Math.min(o * 0.5, 0.2)})`
+  const gBgNav = `rgba(255, 255, 255, ${Math.min(o * 1.3, 0.7)})`
+  const gBgModal = `rgba(255, 255, 255, ${Math.min(o * 1.4, 0.8)})`
+  const gBorder = `rgba(0, 0, 0, ${0.08 + o * 0.15})`
+  const gBorderStrong = `rgba(0, 0, 0, ${0.12 + o * 0.2})`
+  const gShadow = `0 8px 32px rgba(0, 0, 0, ${0.06 + o * 0.12}), 0 2px 8px rgba(0, 0, 0, ${0.03 + o * 0.06}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.5 + o * 0.5})`
+  const gShadowModal = `0 25px 60px rgba(0, 0, 0, ${0.12 + o * 0.15}), 0 8px 20px rgba(0, 0, 0, ${0.06 + o * 0.08}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.6 + o * 0.4})`
+  const gShadowNav = `0 1px 3px rgba(0, 0, 0, ${0.04 + o * 0.06}), inset 0 0.5px 0 rgba(255, 255, 255, ${0.4 + o * 0.4})`
 
   const dO = o * 0.5
   const dBg = `rgba(255, 255, 255, ${dO})`
