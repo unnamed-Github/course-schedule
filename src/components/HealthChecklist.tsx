@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { useReminder } from './ReminderProvider'
 import { Check } from 'lucide-react'
@@ -34,16 +34,16 @@ function formatCountdown(seconds: number): string {
   return `${s}秒`
 }
 
-function computeWaterStatus(waterInterval: number, lastWaterCheck: number, now: number, gracePeriod: boolean): WaterStatus {
+function computeWaterStatus(waterInterval: number, lastWaterCheck: number, now: number): WaterStatus {
   if (lastWaterCheck === 0) {
-    return { remainingSec: waterInterval * 60, progress: 0, shouldDrink: !gracePeriod }
+    return { remainingSec: waterInterval * 60, progress: 0, shouldDrink: false }
   }
   const intervalMs = waterInterval * 60000
   const elapsed = now - lastWaterCheck
   const remainingMs = Math.max(0, intervalMs - elapsed)
   const remainingSec = Math.ceil(remainingMs / 1000)
   const progress = Math.min(1, elapsed / intervalMs)
-  return { remainingSec, progress, shouldDrink: remainingSec <= 0 && !gracePeriod }
+  return { remainingSec, progress, shouldDrink: remainingSec <= 0 }
 }
 
 function timeToMinutes(time: string): number {
@@ -100,7 +100,6 @@ export function HealthChecklist() {
   const [waterJustDone, setWaterJustDone] = useState(false)
   const [kegelJustDone, setKegelJustDone] = useState(false)
   const [showKegelGuide, setShowKegelGuide] = useState(false)
-  const mountTimeRef = useRef(Date.now())
 
   const handleKegelClick = useCallback(() => {
     if (kegelStatus.checkedToday) {
@@ -114,8 +113,7 @@ export function HealthChecklist() {
   useEffect(() => {
     const update = () => {
       const now = Date.now()
-      const inGrace = now - mountTimeRef.current < 5 * 60 * 1000
-      setWaterStatus(computeWaterStatus(waterInterval, lastWaterCheck, now, inGrace))
+      setWaterStatus(computeWaterStatus(waterInterval, lastWaterCheck, now))
       setKegelStatus(computeKegelStatus(kegelTimes, lastKegelCheck, now))
       setWaterJustDone(lastWaterCheck > 0 && now - lastWaterCheck < 2000)
       setKegelJustDone(lastKegelCheck > 0 && now - lastKegelCheck < 2000)

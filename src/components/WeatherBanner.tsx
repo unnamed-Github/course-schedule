@@ -277,9 +277,15 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
           </span>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {w.tempMin}°<span className="text-sm font-normal" style={{ color: 'var(--text-tertiary)' }}> ~ </span>{w.tempMax}°
-              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
+                <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{w.tempMin}°</span>
+              </div>
+              <span className="text-lg" style={{ color: 'var(--border-strong)' }}>/</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
+                <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{w.tempMax}°</span>
+              </div>
               <span className="text-sm font-medium px-2 py-0.5 rounded" style={{
                 backgroundColor: weatherColors.glow + '20',
                 color: weatherColors.primary,
@@ -287,9 +293,6 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
                 {w.description}
               </span>
             </div>
-            <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-              今日最低 {w.tempMin}° / 最高 {w.tempMax}°
-            </p>
           </div>
         </div>
 
