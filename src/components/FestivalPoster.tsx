@@ -17,9 +17,14 @@ export function FestivalPoster() {
     return () => window.removeEventListener('festival-poster:show', show)
   }, [show])
 
+  const localToday = () => {
+    const d = new Date()
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+  }
+
   useEffect(() => {
     if (!festival) return
-    const today = new Date().toISOString().split('T')[0]
+    const today = localToday()
     const key = `festival_poster_shown_${today}`
     try {
       if (localStorage.getItem(key)) return
@@ -30,9 +35,8 @@ export function FestivalPoster() {
 
   const handleClose = () => {
     setVisible(false)
-    const today = new Date().toISOString().split('T')[0]
     try {
-      localStorage.setItem(`festival_poster_shown_${today}`, '1')
+      localStorage.setItem(`festival_poster_shown_${localToday()}`, '1')
     } catch {}
   }
 

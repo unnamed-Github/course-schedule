@@ -46,8 +46,10 @@ export function DayView() {
       })
   }
 
+  const localDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+
   const loadOverrides = () => {
-    const dateStr = viewDate.toISOString().split('T')[0]
+    const dateStr = localDate(viewDate)
     getScheduleOverrides(dateStr).then(setOverrides).catch(() => setOverrides([]))
   }
 
@@ -115,7 +117,7 @@ export function DayView() {
 
 
 
-  const todayStr = viewDate.toISOString().split('T')[0]
+  const todayStr = localDate(viewDate)
 
   const todayAssignments = useMemo(() => {
     return assignments
@@ -226,7 +228,7 @@ export function DayView() {
           {sortedSchedules.map((schedule) => {
             const course = courseMap.get(schedule.course_id)
             if (!course) return null
-            const dateStr = viewDate.toISOString().split('T')[0]
+            const dateStr = localDate(viewDate)
             const overrideEntry = overrideMap.get(schedule.id)
             const isCancelled = overrideEntry?.type === 'cancelled'
             const isEndedEarly = overrideEntry?.type === 'ended_early'

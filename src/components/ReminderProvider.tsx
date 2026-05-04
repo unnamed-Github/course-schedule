@@ -68,7 +68,8 @@ function formatRelativeTime(minutes: number): string {
 }
 
 function getTodayKey(): string {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 }
 
 export function ReminderProvider({ children }: { children: ReactNode }) {
@@ -125,7 +126,12 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     }
     load()
     const timer = setInterval(load, 120000)
-    return () => clearInterval(timer)
+    const onDataChanged = () => load()
+    window.addEventListener('data-changed', onDataChanged)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('data-changed', onDataChanged)
+    }
   }, [])
 
   useEffect(() => {

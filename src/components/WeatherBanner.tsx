@@ -212,23 +212,36 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
   const aqi = data.aqi
   const weatherColors = WEATHER_COLORS[w.condition]
   const WeatherIcon = WEATHER_ICONS[w.condition]
+  const range = w.tempMax - w.tempMin
 
   const comfortAdvice = (() => {
-    const t = w.feelsLike
+    const hi = w.tempMax
+    const lo = w.tempMin
     const h = w.humidity
-    if (t >= 35) return { emoji: '🥵', text: '酷热，建议短袖短裤+防晒，多喝水' }
-    if (t >= 30) {
-      if (h >= 70) return { emoji: '😰', text: '闷热潮湿，穿速干轻薄面料' }
-      return { emoji: '☀️', text: '较热，短袖+遮阳帽，注意防晒' }
-    }
-    if (t >= 25) {
-      if (h >= 70) return { emoji: '💦', text: '暖湿，透气棉麻为主，备薄外套' }
-      return { emoji: '😎', text: '舒适温暖，短袖刚好' }
-    }
-    if (t >= 20) return { emoji: '👕', text: '宜人，短袖或薄长袖均可' }
-    if (t >= 15) return { emoji: '🧥', text: '微凉，建议薄外套或卫衣' }
-    if (t >= 10) return { emoji: '🧣', text: '偏冷，夹克/风衣+长裤' }
-    return { emoji: '🧤', text: '冷，厚外套+保暖层，注意防寒' }
+    let advice = ''
+
+    // 温差
+    if (range >= 15) advice += '昼夜温差大，早晚加外套；'
+    else if (range >= 8) advice += '早晚微凉，带件薄外套；'
+
+    // 高温
+    if (hi >= 35) advice += '白天酷热，短袖短裤+防晒，多喝水'
+    else if (hi >= 30) {
+      if (h >= 70) advice += '闷热潮湿，穿速干轻薄面料'
+      else advice += '较热，短袖+遮阳帽'
+    } else if (hi >= 25) {
+      if (h >= 70) advice += '暖湿，透气棉麻为主'
+      else advice += '温暖舒适，短袖刚好'
+    } else if (hi >= 20) advice += '宜人，短袖或薄长袖均可'
+    else if (hi >= 15) advice += '微凉，建议薄外套或卫衣'
+    else if (hi >= 10) advice += '偏冷，夹克/风衣+长裤'
+    else advice += '冷，厚外套+保暖层'
+
+    // 雨
+    if (w.condition === 'rain' || w.condition === 'drizzle') advice += '，带伞'
+    else if (w.condition === 'thunderstorm') advice += '，雷暴天减少外出'
+
+    return advice
   })()
 
   return (
@@ -238,35 +251,61 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
       <WeatherParticles condition={w.condition} color={weatherColors.primary} />
 
       <div className="px-4 py-3 relative z-10">
-        <div className="flex items-center gap-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+        {/* 第一行：天气图标 + 今日温度区间 + 描述 */}
+        <div className="flex items-center gap-3">
           <span style={{ color: weatherColors.primary }}>
-            <WeatherIcon size={22} strokeWidth={1.8} />
+            <WeatherIcon size={26} strokeWidth={1.5} />
           </span>
-          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-            <span className="text-lg font-bold">{w.temp}°</span>
-            <span className="text-xs py-0.5 px-1.5 rounded font-medium" style={{
-              backgroundColor: w.tempMax - w.tempMin <= 2 ? 'var(--border-light)' : 'var(--glass-bg-strong)',
-              color: 'var(--text-secondary)'
-            }}>
-              {w.tempMin}° ~ {w.tempMax}°
-            </span>
-            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-              体感 {w.feelsLike}°
-            </span>
-            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-              <Droplets size={10} strokeWidth={1.5} />{w.humidity}%
-            </span>
-            <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-              <Wind size={10} strokeWidth={1.5} />{w.windSpeed} m/s
-            </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {w.tempMin}° <span className="text-sm font-normal" style={{ color: 'var(--text-tertiary)' }}>/</span> {w.tempMax}°
+              </span>
+              <span className="text-sm font-medium px-2 py-0.5 rounded" style={{
+                backgroundColor: weatherColors.glow + '20',
+                color: weatherColors.primary,
+              }}>
+                {w.description}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-2 flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-secondary)' }}>
-          <span>{comfortAdvice.emoji}</span>
-          <span>{comfortAdvice.text}</span>
+        {/* 第二行：体感 / 湿度 / 风力 */}
+        <div className="flex items-center gap-3 mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+          <span className="flex items-center gap-1">
+            <span style={{ color: 'var(--text-tertiary)' }}>体感</span>
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{w.feelsLike}°</span>
+          </span>
+          <span className="text-[10px]" style={{ color: 'var(--border-strong)' }}>|</span>
+          <span className="flex items-center gap-1">
+            <Droplets size={12} strokeWidth={1.5} />
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{w.humidity}%</span>
+          </span>
+          <span className="text-[10px]" style={{ color: 'var(--border-strong)' }}>|</span>
+          <span className="flex items-center gap-1">
+            <Wind size={12} strokeWidth={1.5} />
+            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{w.windSpeed} m/s</span>
+          </span>
+          {range >= 10 && (
+            <>
+              <span className="text-[10px]" style={{ color: 'var(--border-strong)' }}>|</span>
+              <span className="flex items-center gap-1" style={{ color: 'var(--accent-warm)' }}>
+                <span>↕</span>温差{range}°
+              </span>
+            </>
+          )}
         </div>
 
+        {/* 第三行：穿衣建议 */}
+        <div className="mt-2 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          <span className="inline-block mr-1">
+            {w.tempMax >= 30 ? '🥵' : w.tempMax >= 20 ? '👕' : w.tempMax >= 10 ? '🧥' : '🧤'}
+          </span>
+          {comfortAdvice}
+        </div>
+
+        {/* 第四行：UV + AQI 双栏 */}
         <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
           <UVProgressBar uv={uv} />
           <AQIProgressBar aqi={aqi} />
@@ -393,7 +432,7 @@ export function WeatherBanner() {
       } else if (!useGeo) {
         loadData(city.lat, city.lon)
       }
-    }, 30 * 60 * 1000)
+    }, 60 * 60 * 1000)
 
     return () => {
       cancelled = true

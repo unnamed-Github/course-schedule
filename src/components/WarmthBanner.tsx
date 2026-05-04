@@ -43,8 +43,10 @@ export function WarmthBanner() {
   const [overrides, setOverrides] = useState<ScheduleOverride[]>([])
   const [viewDate, setViewDate] = useState(new Date())
 
+  const localDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+
   const loadOverrides = () => {
-    const dateStr = viewDate.toISOString().split('T')[0]
+    const dateStr = localDate(viewDate)
     getScheduleOverrides(dateStr).then(setOverrides).catch(() => setOverrides([]))
   }
 
@@ -97,7 +99,7 @@ export function WarmthBanner() {
   }, [currentPeriod, schedules, courses, currentTime, overrideMap])
 
   const handleEarlyEnd = async (scheduleId: string) => {
-    const dateStr = new Date().toISOString().split('T')[0]
+    const dateStr = localDate(new Date())
     const result = await createScheduleOverride({ schedule_id: scheduleId, date: dateStr, type: 'ended_early' })
     if (result) {
       showToast('已标记提前下课', 'success')
@@ -108,7 +110,7 @@ export function WarmthBanner() {
   }
 
   const handleRevertEarlyEnd = async (scheduleId: string) => {
-    const dateStr = new Date().toISOString().split('T')[0]
+    const dateStr = localDate(new Date())
     const ok = await deleteScheduleOverride(scheduleId, dateStr)
     if (ok) {
       showToast('已恢复', 'success')

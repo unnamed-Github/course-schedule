@@ -16,6 +16,11 @@ export function WarmthBannerProvider({ children }: { children: ReactNode }) {
   const [isEnabled, setIsEnabled] = useState(true)
   const [isHiddenToday, setIsHiddenToday] = useState(false)
 
+  const localDate = () => {
+    const d = new Date()
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+  }
+
   useEffect(() => {
     try {
       const savedEnabled = getLocalSetting('warmthBannerEnabled', 'true')
@@ -23,7 +28,7 @@ export function WarmthBannerProvider({ children }: { children: ReactNode }) {
         setIsEnabled(false)
       }
 
-      const today = new Date().toISOString().slice(0, 10)
+      const today = localDate()
       const hiddenDate = getLocalSetting('warmthBannerHidden', '')
       if (hiddenDate === today) {
         setIsHiddenToday(true)
@@ -41,8 +46,7 @@ export function WarmthBannerProvider({ children }: { children: ReactNode }) {
 
   const hideToday = () => {
     setIsHiddenToday(true)
-    const today = new Date().toISOString().slice(0, 10)
-    setSettingBoth('warmthBannerHidden', today)
+    setSettingBoth('warmthBannerHidden', localDate())
   }
 
   return (

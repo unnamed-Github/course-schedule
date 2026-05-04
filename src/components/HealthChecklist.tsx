@@ -46,8 +46,10 @@ function timeToMinutes(time: string): number {
 }
 
 function computeNextKegelTime(kegelTimes: string, lastKegelCheck: number, now: number): KegelStatus {
-  const todayKey = new Date(now).toISOString().slice(0, 10)
-  const lastKey = lastKegelCheck > 0 ? new Date(lastKegelCheck).toISOString().slice(0, 10) : ''
+  const d = new Date(now)
+  const todayKey = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+  const d2 = lastKegelCheck > 0 ? new Date(lastKegelCheck) : null
+  const lastKey = d2 ? d2.getFullYear() + '-' + String(d2.getMonth() + 1).padStart(2, '0') + '-' + String(d2.getDate()).padStart(2, '0') : ''
   if (lastKey === todayKey) return { nextTime: '', remainingSec: 0, allDone: true }
 
   const nowDate = new Date(now)

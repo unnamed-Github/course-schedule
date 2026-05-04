@@ -107,15 +107,15 @@ export interface WeatherResponse {
 }
 
 export const WEATHER_CITIES: { name: string; lat: number; lon: number }[] = [
-  { name: '北京', lat: 39.9, lon: 116.4 },
-  { name: '上海', lat: 31.23, lon: 121.47 },
-  { name: '广州', lat: 23.13, lon: 113.26 },
-  { name: '深圳', lat: 22.54, lon: 114.06 },
-  { name: '杭州', lat: 30.27, lon: 120.15 },
-  { name: '成都', lat: 30.57, lon: 104.07 },
-  { name: '武汉', lat: 30.58, lon: 114.30 },
-  { name: '南京', lat: 32.06, lon: 118.80 },
-  { name: '西安', lat: 34.26, lon: 108.94 },
-  { name: '重庆', lat: 29.56, lon: 106.55 },
+  { name: '北京大学', lat: 39.99, lon: 116.31 },
+  { name: '复旦大学', lat: 31.30, lon: 121.50 },
+  { name: '中山大学', lat: 23.10, lon: 113.30 },
+  { name: '南方科技大学', lat: 22.58, lon: 113.99 },
+  { name: '浙江大学', lat: 30.26, lon: 120.13 },
+  { name: '四川大学', lat: 30.63, lon: 104.09 },
+  { name: '武汉大学', lat: 30.54, lon: 114.36 },
+  { name: '南京大学', lat: 32.06, lon: 118.78 },
+  { name: '西安交大', lat: 34.24, lon: 108.98 },
+  { name: '重庆大学', lat: 29.57, lon: 106.47 },
 ]
 

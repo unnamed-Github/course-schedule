@@ -14,7 +14,10 @@ function getScheduleLabel(schedule: CourseSchedule): string {
   return `${DAY_LABELS[schedule.day_of_week]} ${schedule.start_period}-${schedule.end_period}节${WEEK_TYPE_SHORT[schedule.week_type]}`
 }
 
-function todayDateString() { return new Date().toISOString().slice(0, 10) }
+function todayDateString() {
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+}
 
 function todayDateTimeLocal() {
   const d = new Date()
@@ -133,7 +136,7 @@ export function AssignmentsView() {
     const created = await createAssignment({
       title: newTitle.trim(),
       course_id: newCourseId,
-      due_date: newDueDate,
+      due_date: new Date(newDueDate.replace('T', ' ') + '+08:00').toISOString(),
       description: newDesc.trim() || '',
       status: 'pending',
       schedule_id: newScheduleId || undefined,
@@ -162,7 +165,7 @@ export function AssignmentsView() {
     const created = await createAssignment({
       title: newTitle.trim(),
       course_id: newCourseId,
-      due_date: newDueDate,
+      due_date: new Date(newDueDate).toISOString(),
       description: newDesc.trim() || '',
       status: 'pending',
       schedule_id: newScheduleId || undefined,
@@ -183,7 +186,8 @@ export function AssignmentsView() {
   const handleEdit = (assignment: Assignment) => {
     setEditingId(assignment.id)
     setEditTitle(assignment.title)
-    setEditDueDate(assignment.due_date.slice(0, 16))
+    const d = new Date(assignment.due_date)
+    setEditDueDate(new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16))
     setEditDesc(assignment.description || '')
     setEditScheduleId(assignment.schedule_id || '')
     setEditReminders(assignment.reminders || [])
@@ -193,7 +197,7 @@ export function AssignmentsView() {
     if (!editingId || !editTitle.trim()) return
     const updated = await updateAssignment(editingId, {
       title: editTitle.trim(),
-      due_date: editDueDate,
+      due_date: new Date(editDueDate).toISOString(),
       description: editDesc.trim(),
       schedule_id: editScheduleId || undefined,
       reminders: editReminders,

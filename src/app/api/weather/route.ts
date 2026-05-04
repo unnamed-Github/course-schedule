@@ -3,6 +3,16 @@ import type { WeatherCondition, UVLevel, AQILevelCN } from '@/lib/types'
 
 const BASE = 'https://api.openweathermap.org'
 
+/**
+ * 服务端内存缓存。
+ *
+ * 同一个 lat,lon 组合在 TTL 内只请求一次 OpenWeatherMap。
+ * 免费 API 限额 1000 次/天，3 次请求/刷新 × 每 15min = 约 288 次/天/城市。
+ * 多人访问同一城市时缓存可大幅降低实际调用量。
+ */
+const cache = new Map<string, { data: unknown; ts: number }>()
+const CACHE_TTL = 15 * 60 * 1000 // 15 分钟
+
 function mapCondition(id: number): WeatherCondition {
   if (id >= 200 && id < 300) return 'thunderstorm'
   if (id >= 300 && id < 400) return 'drizzle'
@@ -43,6 +53,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'API key not configured' }, { status: 503 })
   }
 
+  // 坐标取 4 位小数做缓存 key，避免浮点差异
+  const cacheKey = `${parseFloat(lat).toFixed(3)},${parseFloat(lon).toFixed(3)}`
+  const cached = cache.get(cacheKey)
+  if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    const headers = new Headers()
+    headers.set('X-Cache', 'HIT')
+    headers.set('Cache-Control', `public, max-age=${Math.floor(CACHE_TTL / 1000)}`)
+    return NextResponse.json(cached.data, { headers })
+  }
+
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 10000)
 
@@ -70,7 +90,6 @@ export async function GET(request: NextRequest) {
     const uvIndex = uvJson.value ?? 0
     const aqiData = aqiJson.list?.[0]
     const aqiRaw = aqiData?.main?.aqi ?? 1
-    const level = mapAQILevel(aqiRaw)
 
     const cnAqi = (() => {
       if (aqiRaw <= 1) return Math.round(aqiRaw * 50)
@@ -80,7 +99,7 @@ export async function GET(request: NextRequest) {
       return Math.round(200 + (aqiRaw - 4) * 100)
     })()
 
-    return NextResponse.json({
+    const result = {
       weather: {
         temp: Math.round(weatherJson.main.temp),
         feelsLike: Math.round(weatherJson.main.feels_like),
@@ -93,8 +112,15 @@ export async function GET(request: NextRequest) {
         condition,
       },
       uv: { index: uvIndex, level: mapUVLevel(uvIndex) },
-      aqi: { aqi: cnAqi, pm25: Math.round(aqiData?.components?.pm2_5 ?? 0), pm10: Math.round(aqiData?.components?.pm10 ?? 0), level },
-    })
+      aqi: { aqi: cnAqi, pm25: Math.round(aqiData?.components?.pm2_5 ?? 0), pm10: Math.round(aqiData?.components?.pm10 ?? 0), level: mapAQILevel(aqiRaw) },
+    }
+
+    cache.set(cacheKey, { data: result, ts: Date.now() })
+
+    const headers = new Headers()
+    headers.set('X-Cache', 'MISS')
+    headers.set('Cache-Control', `public, max-age=${Math.floor(CACHE_TTL / 1000)}`)
+    return NextResponse.json(result, { headers })
   } catch {
     return NextResponse.json({ error: 'Weather fetch failed' }, { status: 502 })
   }

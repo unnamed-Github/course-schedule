@@ -46,7 +46,10 @@ export function WeekView() {
 
   const [showQuickAssign, setShowQuickAssign] = useState(false)
   const [quickAssignTitle, setQuickAssignTitle] = useState('')
-  const [quickAssignDueDate, setQuickAssignDueDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [quickAssignDueDate, setQuickAssignDueDate] = useState(() => {
+    const d = new Date()
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+  })
   const [quickReminders, setQuickReminders] = useState<number[]>([])
   const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [quickMemoContent, setQuickMemoContent] = useState('')
@@ -65,6 +68,8 @@ export function WeekView() {
       })
   }
 
+  const localDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+
   const loadOverrides = useCallback(() => {
     if (!weekRange) return
     const dateStrs: string[] = []
@@ -72,7 +77,7 @@ export function WeekView() {
     for (let i = 0; i < 7; i++) {
       const current = new Date(d)
       current.setDate(d.getDate() + i)
-      dateStrs.push(current.toISOString().split('T')[0])
+      dateStrs.push(localDate(current))
     }
     Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
       .then(results => setWeekOverrides(results.flat()))
@@ -159,10 +164,11 @@ export function WeekView() {
 
   const handleQuickAddAssignment = async (courseId: string, scheduleId?: string) => {
     if (!quickAssignTitle.trim() || !quickAssignDueDate) return
+    const dueMs = new Date(quickAssignDueDate + 'T23:59:00').getTime()
     const created = await createAssignment({
       title: quickAssignTitle.trim(),
       course_id: courseId,
-      due_date: quickAssignDueDate,
+      due_date: new Date(dueMs).toISOString(),
       description: '',
       status: 'pending',
       schedule_id: scheduleId || undefined,
@@ -222,7 +228,7 @@ export function WeekView() {
       const dow = current.getDay() || 7
       holidays.set(dow, isHoliday(current))
       makeups.set(dow, getMakeupInfo(current))
-      dayDateMap.set(dow, current.toISOString().split('T')[0])
+      dayDateMap.set(dow, localDate(current))
     }
     return { holidays, makeups, dayDateMap }
   }, [weekRange])
