@@ -27,12 +27,12 @@ export function SemesterCountdown() {
   const [expanded, setExpanded] = useState(false)
   const [days, setDays] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const buttonRef = useRef<HTMLButtonElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 })
 
   const updatePosition = useCallback(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
       setPopupPosition({
         top: rect.bottom + 8,
         left: rect.right - 224
@@ -47,7 +47,7 @@ export function SemesterCountdown() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setExpanded(false)
       }
     }
@@ -69,9 +69,8 @@ export function SemesterCountdown() {
   const progressPct = Math.min(100, Math.max(0, ((weekNum - 1) / totalWeeks) * 100))
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
-        ref={buttonRef}
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
         style={{ backgroundColor: style.bg, color: style.color }}
