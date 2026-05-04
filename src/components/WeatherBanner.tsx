@@ -210,9 +210,15 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
   const w = data.weather
   const uv = data.uv
   const aqi = data.aqi
+  const tomorrow = data.tomorrow
   const weatherColors = WEATHER_COLORS[w.condition]
   const WeatherIcon = WEATHER_ICONS[w.condition]
   const range = w.tempMax - w.tempMin
+
+  const now = new Date()
+  const isAfter9pm = now.getHours() >= 21
+  const tomorrowWeatherColors = tomorrow ? WEATHER_COLORS[tomorrow.condition] : null
+  const TomorrowIcon = tomorrow ? WEATHER_ICONS[tomorrow.condition] : null
 
   const comfortAdvice = (() => {
     const hi = w.tempMax
@@ -334,6 +340,40 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
           <UVProgressBar uv={uv} />
           <AQIProgressBar aqi={aqi} />
         </div>
+
+        {/* 第五行：明天预报（仅晚上9点后显示）*/}
+        {isAfter9pm && tomorrow && TomorrowIcon && tomorrowWeatherColors && (
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded" style={{
+                  backgroundColor: 'var(--border-light)',
+                  color: 'var(--text-secondary)',
+                }}>
+                  明天
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5" style={{ color: tomorrowWeatherColors.primary }}>
+                <TomorrowIcon size={18} strokeWidth={1.5} />
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs font-medium" style={{ color: 'var(--accent-info)' }}>最低</span>
+                <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMin}°</span>
+              </div>
+              <span style={{ color: 'var(--border-strong)' }}>/</span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xs font-medium" style={{ color: 'var(--accent-warm)' }}>最高</span>
+                <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{tomorrow.tempMax}°</span>
+              </div>
+              <span className="text-xs font-medium px-2 py-0.5 rounded ml-2" style={{
+                backgroundColor: tomorrowWeatherColors.glow + '20',
+                color: tomorrowWeatherColors.primary,
+              }}>
+                {tomorrow.description}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

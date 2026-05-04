@@ -20,8 +20,8 @@ function datetimeLocalToIso(dt: string): string {
   return new Date(year, month - 1, day, hour, minute).toISOString()
 }
 
-function countdown(dueDate: string): string {
-  const diff = new Date(dueDate).getTime() - Date.now()
+function countdown(dueDate: string, now: number): string {
+  const diff = new Date(dueDate).getTime() - now
   if (diff < 0) return '已逾期'
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(hours / 24)
@@ -40,7 +40,8 @@ export default function CourseDetailPage() {
   const [schedules, setSchedules] = useState<CourseSchedule[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [memos, setMemos] = useState<Memo[]>([])
-  const [weekNum, setWeekNum] = useState(0)
+  const [weekNum, setWeekNum] = useState(() => getWeekNumber())
+  const [now, setNow] = useState(Date.now())
 
   const [editing, setEditing] = useState(false)
   const [editForm, setEditForm] = useState({ name: '', teacher: '', classroom: '', color: '', week_type: 'all' as 'all' | 'odd' | 'even' })
@@ -66,7 +67,6 @@ export default function CourseDetailPage() {
     getSchedules(courseId).then(setSchedules)
     getAssignments(courseId).then(setAssignments)
     getMemos(courseId).then(setMemos)
-    setWeekNum(getWeekNumber())
 
     const onDataChanged = () => {
       getAssignments(courseId).then(setAssignments)
@@ -76,6 +76,11 @@ export default function CourseDetailPage() {
 
     return () => window.removeEventListener('data-changed', onDataChanged)
   }, [courseId])
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   const handleSaveEdit = async () => {
     try {
@@ -469,8 +474,8 @@ export default function CourseDetailPage() {
         ) : (
           <div className="space-y-0.5">
             {sortedAssignments.map((a) => {
-              const isOverdue = new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
-              const isNear = !isOverdue && new Date(a.due_date).getTime() - Date.now() < 86400000 && a.status === 'pending'
+              const isOverdue = new Date(a.due_date).getTime() < now && a.status === 'pending'
+              const isNear = !isOverdue && new Date(a.due_date).getTime() - now < 86400000 && a.status === 'pending'
               return (
                 <div key={a.id} className="py-2.5 px-3 rounded-xl hover:bg-[var(--border-light)]/30 transition-colors">
                   {editingAssignmentId === a.id ? (
@@ -513,7 +518,7 @@ export default function CourseDetailPage() {
                           <p className={`text-sm truncate ${a.status === 'submitted' ? 'opacity-40' : ''}`} style={{ color: 'var(--text-primary)' }}>{a.title}{a.status === 'submitted' && <Check size={12} strokeWidth={2.5} style={{ color: 'var(--accent-success)', display: 'inline', marginLeft: '4px', verticalAlign: '-2px' }} />}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-0.5 ml-[10px]">
-                          <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date)}</span>
+                          <span className="text-[10px]" style={{ color: isOverdue ? 'var(--accent-danger)' : isNear ? 'var(--accent-warm)' : 'var(--text-secondary)' }}>{countdown(a.due_date, now)}</span>
                           <span className="text-[10px]" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>{new Date(a.due_date).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/\//g, '-')}</span>
                         </div>
                       </div>

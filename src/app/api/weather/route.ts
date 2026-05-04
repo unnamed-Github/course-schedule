@@ -1,12 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import type { WeatherCondition, UVLevel, AQILevelCN } from '@/lib/types'
+import type { WeatherCondition, UVLevel, AQILevelCN, WeatherData } from '@/lib/types'
 
 const BASE = 'https://api.openweathermap.org'
+
+interface OWMWeatherResponse {
+  weather?: { id: number; description: string; icon: string }[]
+  main: { temp: number; feels_like: number; temp_min: number; temp_max: number; humidity: number }
+  wind?: { speed: number }
+  clouds?: { all: number }
+  dt: number
+}
+
+interface OWMAQIResponse {
+  list?: { components: { pm2_5: number; pm10: number } }[]
+}
+
+interface OWMForecastItem {
+  dt_txt: string
+  main: { temp: number; temp_min: number; temp_max: number; feels_like: number; humidity: number }
+  weather: { id: number; description: string; icon: string }[]
+  wind: { speed: number }
+}
+
+interface OWMForecastResponse {
+  list: OWMForecastItem[]
+}
+
+interface WeatherAPIResult {
+  weather: {
+    temp: number
+    feelsLike: number
+    tempMin: number
+    tempMax: number
+    description: string
+    icon: string
+    humidity: number
+    windSpeed: number
+    condition: WeatherCondition
+  }
+  uv: { index: number; level: UVLevel }
+  aqi: { aqi: number; pm25: number; pm10: number; level: AQILevelCN }
+}
 
 /**
  * 服务端内存缓存 — 同坐标 15min TTL 内只请求一次上游 API。
  */
-const cache = new Map<string, { data: unknown; ts: number }>()
+const cache = new Map<string, { data: WeatherAPIResult; ts: number }>()
 const CACHE_TTL = 15 * 60 * 1000
 
 // ── 天气 │ 条件映射 ──────────────────────────────────────────
@@ -134,7 +173,7 @@ export async function GET(request: NextRequest) {
     const [weatherRes, aqiRes, forecastRes] = await Promise.all([
       fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn`, { signal: controller.signal }),
       fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
-      fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&cnt=8`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&cnt=16`, { signal: controller.signal }),
     ])
 
     clearTimeout(timeout)
@@ -147,9 +186,9 @@ export async function GET(request: NextRequest) {
     }
 
     const [weatherJson, aqiJson, forecastJson] = await Promise.all([
-      weatherRes.json() as any,
-      aqiRes.json() as any,
-      forecastRes.ok ? forecastRes.json() as any : null,
+      weatherRes.json() as Promise<OWMWeatherResponse>,
+      aqiRes.json() as Promise<OWMAQIResponse>,
+      forecastRes.ok ? forecastRes.json() as Promise<OWMForecastResponse> : Promise.resolve(null),
     ])
 
     // ── 天气 ──
@@ -164,14 +203,39 @@ export async function GET(request: NextRequest) {
     // 今日真实高低温：从 3h forecast 中提取今天所有时段的 min/max
     let todayLo = Math.round(weatherJson.main.temp_min)
     let todayHi = Math.round(weatherJson.main.temp_max)
+    let tomorrowWeather: WeatherData | undefined
     if (forecastJson?.list?.length) {
       const todayStr = new Date().toISOString().slice(0, 10)
       const todayTemps = forecastJson.list
-        .filter((item: any) => (item.dt_txt as string).startsWith(todayStr))
-        .flatMap((item: any) => [item.main.temp_min, item.main.temp_max])
+        .filter((item) => item.dt_txt.startsWith(todayStr))
+        .flatMap((item) => [item.main.temp_min, item.main.temp_max])
       if (todayTemps.length > 0) {
         todayLo = Math.round(Math.min(...todayTemps))
         todayHi = Math.round(Math.max(...todayTemps))
+      }
+
+      // 明天预报：取明天所有时段
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 1)
+      const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+      const tomorrowItems = forecastJson.list.filter((item) =>
+        item.dt_txt.startsWith(tomorrowStr)
+      )
+      if (tomorrowItems.length > 0) {
+        const midIdx = Math.floor(tomorrowItems.length / 2)
+        const midItem = tomorrowItems[midIdx]
+        const tomorrowTemps = tomorrowItems.flatMap((item) => [item.main.temp_min, item.main.temp_max])
+        tomorrowWeather = {
+          temp: Math.round(midItem.main.temp),
+          feelsLike: Math.round(midItem.main.feels_like),
+          tempMin: Math.round(Math.min(...tomorrowTemps)),
+          tempMax: Math.round(Math.max(...tomorrowTemps)),
+          description: midItem.weather[0].description,
+          icon: midItem.weather[0].icon,
+          humidity: midItem.main.humidity,
+          windSpeed: Math.round(midItem.wind.speed),
+          condition: mapCondition(midItem.weather[0].id)
+        }
       }
     }
 
@@ -223,6 +287,7 @@ export async function GET(request: NextRequest) {
         pm10: Math.round(pm10),
         level: cnAqiLevel(cnAqi),
       },
+      tomorrow: tomorrowWeather,
     }
 
     cache.set(cacheKey, { data: result, ts: Date.now() })

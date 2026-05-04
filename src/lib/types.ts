@@ -104,6 +104,7 @@ export interface WeatherResponse {
   weather: WeatherData
   uv: UVData
   aqi: AQIData
+  tomorrow?: WeatherData
 }
 
 export const WEATHER_CITIES: { name: string; lat: number; lon: number }[] = [

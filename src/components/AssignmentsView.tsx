@@ -43,8 +43,7 @@ function formatDateTime(iso: string): string {
   }).replace(/\//g, '-')
 }
 
-function formatCountdown(dueDate: string): string {
-  const now = Date.now()
+function formatCountdown(dueDate: string, now: number): string {
   const due = new Date(dueDate).getTime()
   const diff = due - now
 
@@ -77,6 +76,7 @@ export function AssignmentsView() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [quickAddExpanded, setQuickAddExpanded] = useState(true)
   const [quickAddMoreExpanded, setQuickAddMoreExpanded] = useState(false)
+  const [now, setNow] = useState(Date.now())
 
   const [newTitle, setNewTitle] = useState('')
   const [newCourseId, setNewCourseId] = useState('')
@@ -111,10 +111,15 @@ export function AssignmentsView() {
     return () => window.removeEventListener('data-changed', onDataChanged)
   }, [])
 
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
   const filteredAssignments = assignments.filter(a => {
     if (filter === 'all') return true
     if (filter === 'overdue') {
-      return new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+      return new Date(a.due_date).getTime() < now && a.status === 'pending'
     }
     return a.status === filter
   })
@@ -124,7 +129,7 @@ export function AssignmentsView() {
     pending: assignments.filter(a => a.status === 'pending').length,
     submitted: assignments.filter(a => a.status === 'submitted').length,
     overdue: assignments.filter(a =>
-      new Date(a.due_date).getTime() < Date.now() && a.status === 'pending'
+      new Date(a.due_date).getTime() < now && a.status === 'pending'
     ).length,
   }
 
@@ -409,8 +414,8 @@ export function AssignmentsView() {
           filteredAssignments.map(assignment => {
             const course = getCourse(assignment.course_id)
             const schedule = assignment.schedule_id ? schedules.find(s => s.id === assignment.schedule_id) : null
-            const isOverdue = new Date(assignment.due_date).getTime() < Date.now() && assignment.status === 'pending'
-            const isNear = !isOverdue && new Date(assignment.due_date).getTime() - Date.now() < 86400000 && assignment.status === 'pending'
+            const isOverdue = new Date(assignment.due_date).getTime() < now && assignment.status === 'pending'
+            const isNear = !isOverdue && new Date(assignment.due_date).getTime() - now < 86400000 && assignment.status === 'pending'
             const isExpanded = expandedId === assignment.id
 
             return (
@@ -464,7 +469,7 @@ export function AssignmentsView() {
                             {formatDateTime(assignment.due_date)}
                           </p>
                           <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--accent-success)26', color: 'var(--accent-success)' }}>
-                            {formatCountdown(assignment.due_date)}
+                            {formatCountdown(assignment.due_date, now)}
                           </span>
                         </div>
                       </div>

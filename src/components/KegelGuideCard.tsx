@@ -172,6 +172,15 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
     setPortalRoot(document.body)
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   if (!portalRoot) return null
 
   return createPortal(
