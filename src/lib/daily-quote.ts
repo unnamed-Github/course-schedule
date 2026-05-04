@@ -109,9 +109,9 @@ const GENERAL_QUOTES: Quote[] = [
 const FESTIVAL_QUOTES: Record<string, Quote[]> = {
   newyear: [
     { text: '辞旧迎新，万象更新。', author: '古语' },
+    { text: '雄关漫道真如铁，而今迈步从头越。', author: '毛泽东' },
     { text: '每一个不曾起舞的日子，都是对生命的辜负。', author: '尼采' },
-    { text: '未来属于那些相信梦想之美的人。', author: '埃莉诺·罗斯福' },
-    { text: '新年快乐，旧的烦恼就留在旧的一年吧。', author: '佚名' },
+    { text: '数风流人物，还看今朝。', author: '毛泽东' },
   ],
   valentine: [
     { text: '爱是耐心，爱是善良。', author: '哥林多前书' },
@@ -120,35 +120,39 @@ const FESTIVAL_QUOTES: Record<string, Quote[]> = {
     { text: '喜欢一个人，大概就是想把今天看到的所有好东西都告诉他。', author: '佚名' },
   ],
   labor: [
-    { text: '工作的时候，也别忘了窗外的云。', author: '佚名' },
-    { text: '休息是劳动的调味品。', author: '普鲁塔克' },
-    { text: '今天不劳动，今天只享受劳动的果实。', author: '佚名' },
-    { text: '劳动最光荣，不劳动最快乐。', author: '佚名' },
+    { text: '劳动最光荣，工作的时候也别忘了窗外的云。', author: '佚名' },
+    { text: '不劳者不得食。', author: '列宁' },
+    { text: '只有劳动才能使人幸福。', author: '高尔基' },
+    { text: '劳动者创造世界。', author: '马克思' },
+    { text: '人的一生应当这样度过：当他回首往事时，不因虚度年华而悔恨。', author: '奥斯特洛夫斯基' },
   ],
   youth: [
-    { text: '年轻不是一段时间，而是一种状态。', author: '佚名' },
-    { text: '愿你出走半生，归来仍是少年。', author: '佚名' },
-    { text: '仍有少年气，眼里有光，脚下有风。', author: '佚名' },
+    { text: '世界是你们的，也是我们的，但归根结底是你们的。', author: '毛泽东' },
+    { text: '青年如初春，如朝日，如百卉之萌动。', author: '陈独秀' },
+    { text: '愿中国青年都摆脱冷气，只是向上走。', author: '鲁迅' },
+    { text: '以青春之我，创建青春之国家。', author: '李大钊' },
   ],
   children: [
+    { text: '儿童是祖国的花朵，是民族的未来和希望。', author: '佚名' },
+    { text: '好好学习，天天向上。', author: '毛泽东' },
     { text: '所有大人都曾是小孩，只是很少有人记得。', author: '圣埃克苏佩里' },
-    { text: '保持好奇心，就是保持年轻。', author: '佚名' },
-    { text: '不想长大也没关系，你的童真有人懂。', author: '佚名' },
   ],
   teacher: [
     { text: '师者，所以传道授业解惑也。', author: '韩愈' },
-    { text: '教育的根是苦的，但果实是甜的。', author: '亚里士多德' },
+    { text: '教育者，非为已往，非为现在，而专为将来。', author: '蔡元培' },
     { text: '一棵树摇动另一棵树，一朵云推动另一朵云。', author: '雅斯贝尔斯' },
   ],
   national: [
-    { text: '此心安处是吾乡。', author: '苏轼' },
-    { text: '山河远阔，人间烟火。', author: '佚名' },
-    { text: '祖国很大，大到可以容纳每个人的梦想。', author: '佚名' },
+    { text: '中华人民共和国成立了！', author: '毛泽东' },
+    { text: '我是中国人民的儿子，我深情地爱着我的祖国和人民。', author: '邓小平' },
+    { text: '此生无悔入华夏，来世还做中国人。', author: '佚名' },
+    { text: '山河无恙，烟火寻常，可是你如愿的眺望。', author: '佚名' },
+    { text: '大道之行也，天下为公。', author: '《礼记》' },
   ],
   womensday: [
+    { text: '妇女能顶半边天。', author: '毛泽东' },
     { text: '每一位认真生活的女性，都值得被看见。', author: '佚名' },
-    { text: '妈妈的手，既能缝补衣裳，也能撑起半边天。', author: '佚名' },
-    { text: '劳动让女人更自由。', author: '佚名' },
+    { text: '在革命斗争中，没有妇女的酵素，就不可能有伟大的社会变革。', author: '马克思' },
   ],
   halloween: [
     { text: '面对恐惧才能战胜恐惧。', author: '纳尔逊·曼德拉' },
@@ -165,6 +169,7 @@ const FESTIVAL_QUOTES: Record<string, Quote[]> = {
     { text: '所有的告别都是为了更好的相遇。', author: '佚名' },
   ],
   qingming: [
+    { text: '为有牺牲多壮志，敢教日月换新天。', author: '毛泽东' },
     { text: '清明时节雨纷纷，路上行人欲断魂。', author: '杜牧' },
     { text: '慎终追远，民德归厚矣。', author: '论语' },
   ],
@@ -368,15 +373,27 @@ export function getDailyQuote(ctx: QuoteContext = {}): Quote {
   const day = date.getDate()
   const hour = date.getHours()
 
+  const festivalKey = getFestivalKey(month, day)
+
+  // 节日当天：仅展示节日相关语录，不混入通用/季节/时段内容
+  if (festivalKey && FESTIVAL_QUOTES[festivalKey]) {
+    const qs = FESTIVAL_QUOTES[festivalKey]
+    return qs[Math.floor(Math.random() * qs.length)]
+  }
+
+  // ctx.festival 兜底（调用方显式传入的节日，如 getTodayFestival 返回了但不在 getFestivalKey 映射中）
+  if (ctx.festival) {
+    const qs = GENERAL_QUOTES.filter(
+      (q) => q.author === '佚名' && q.text.length <= 20
+    )
+    if (qs.length > 0) return qs[Math.floor(Math.random() * qs.length)]
+    return { text: `${ctx.festival.emoji} ${ctx.festival.greeting}`, author: '今日' }
+  }
+
   const candidates: { quote: Quote; weight: number }[] = []
 
   if (ctx.holiday) {
     for (const q of HOLIDAY_QUOTES) candidates.push({ quote: q, weight: 10 })
-  }
-
-  const festivalKey = getFestivalKey(month, day)
-  if (festivalKey && FESTIVAL_QUOTES[festivalKey]) {
-    for (const q of FESTIVAL_QUOTES[festivalKey]) candidates.push({ quote: q, weight: 8 })
   }
 
   const season = ctx.season ?? getSeason(month)

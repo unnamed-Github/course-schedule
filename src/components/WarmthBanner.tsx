@@ -9,6 +9,7 @@ import { Course, CourseSchedule, ScheduleOverride } from '@/lib/types'
 import { useWarmthBanner } from './WarmthBannerContext'
 import { Clock, X, CheckCircle2, RotateCcw } from 'lucide-react'
 import { useFestivalGreeting } from './FestivalEasterEgg'
+import { getTodayFestival } from '@/lib/festivals'
 import { useToast } from './ToastProvider'
 import { getDailyQuote, type QuoteContext } from '@/lib/daily-quote'
 import { useClassFinish, ClassFinishCelebration } from './ClassFinishCelebration'
@@ -168,6 +169,7 @@ export function WarmthBanner() {
   const dailyQuote = useMemo(() => {
     const now = new Date()
     const holiday = isHoliday(now)
+    const festival = getTodayFestival(now)
     const weekNum = getWeekNumber(now)
     const config = getSemesterConfig()
     const totalTeaching = config.teachingWeeks
@@ -180,6 +182,7 @@ export function WarmthBanner() {
 
     return getDailyQuote({
       date: now,
+      festival: festival ? { emoji: festival.emoji, greeting: festival.greeting } : null,
       holiday: holiday ? { name: holiday.name } : null,
       semesterPhase,
       isWeekend: now.getDay() === 0 || now.getDay() === 6,
