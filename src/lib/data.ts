@@ -433,6 +433,31 @@ export async function getScheduleOverrides(date: string): Promise<ScheduleOverri
   }
 }
 
+export async function getScheduleOverridesBatch(startDate: string, endDate: string): Promise<ScheduleOverride[]> {
+  const cacheKey = `overrides_batch_${startDate}_${endDate}`
+  const cached = getCached<ScheduleOverride[]>(cacheKey)
+  if (cached) return cached
+  if (!isSupabaseAvailable()) {
+    const result = localStorage.scheduleOverrides.filter(o => o.date >= startDate && o.date <= endDate)
+    setCache(cacheKey, result)
+    return result
+  }
+  try {
+    const { data } = await supabase.from('schedule_overrides').select('*').gte('date', startDate).lte('date', endDate)
+    const result = data ?? []
+    setCache(cacheKey, result)
+    for (const o of result) {
+      setCache(`overrides_${o.date}`, result.filter(r => r.date === o.date))
+    }
+    return result
+  } catch (e) {
+    markSupabaseUnavailable()
+    const result = localStorage.scheduleOverrides.filter(o => o.date >= startDate && o.date <= endDate)
+    setCache(cacheKey, result)
+    return result
+  }
+}
+
 export async function createScheduleOverride(input: { schedule_id: string; date: string; type: 'cancelled' | 'ended_early' }): Promise<ScheduleOverride | null> {
   if (!isSupabaseAvailable()) {
     const existingIndex = localStorage.scheduleOverrides.findIndex(o => o.schedule_id === input.schedule_id && o.date === input.date)

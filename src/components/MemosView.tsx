@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Course, Memo, CourseSchedule } from '@/lib/types'
-import { getCourses, getMemos, getSchedules, createMemo, deleteMemo, updateMemo } from '@/lib/data'
+import { createMemo, deleteMemo, updateMemo } from '@/lib/data'
+import { useData } from './DataContext'
 import { Modal } from './Modal'
 import { Plus, StickyNote, X, Pencil } from 'lucide-react'
 import { DAY_LABELS, WEEK_TYPE_SHORT, EMOJI_OPTIONS } from '@/lib/constants'
@@ -24,10 +25,7 @@ function formatDateTime(iso: string): string {
 }
 
 export function MemosView() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [memos, setMemos] = useState<Memo[]>([])
-  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const { courses, memos, schedules, setMemos, loaded } = useData()
   const [quickMemo, setQuickMemo] = useState('')
   const [newMemo, setNewMemo] = useState('')
   const [selectedEmoji, setSelectedEmoji] = useState('📝')
@@ -40,24 +38,10 @@ export function MemosView() {
   const [editScheduleId, setEditScheduleId] = useState<string>('')
 
   useEffect(() => {
-    Promise.all([getCourses(), getMemos(), getSchedules()]).then(([c, m, sc]) => {
-      setCourses(c)
-      setMemos(m)
-      setSchedules(sc)
-      if (c.length > 0) setSelectedCourseId(c[0].id)
-      setLoaded(true)
-    })
-
-    const onDataChanged = () => {
-      Promise.all([getCourses(), getMemos(), getSchedules()]).then(([c, m, sc]) => {
-        setCourses(c)
-        setMemos(m)
-        setSchedules(sc)
-      })
+    if (courses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(courses[0].id)
     }
-    window.addEventListener('data-changed', onDataChanged)
-    return () => window.removeEventListener('data-changed', onDataChanged)
-  }, [])
+  }, [courses, selectedCourseId])
 
   const courseMemoCounts = courses.reduce((acc, course) => {
     acc[course.id] = memos.filter(m => m.course_id === course.id).length

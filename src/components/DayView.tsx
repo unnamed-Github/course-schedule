@@ -3,7 +3,8 @@
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, createAssignment, createMemo, getScheduleOverrides } from '@/lib/data'
+import { getScheduleOverrides, createAssignment, createMemo } from '@/lib/data'
+import { useData } from './DataContext'
 import { getLocalSetting } from '@/lib/user-settings'
 import { getTodayCourses, getCurrentPeriod } from '@/lib/schedule'
 import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
@@ -21,30 +22,13 @@ import { LateNightCare } from './LateNightCare'
 
 export function DayView() {
   const { showToast } = useToast()
-  const [courses, setCourses] = useState<Course[]>([])
-  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [memos, setMemos] = useState<Memo[]>([])
+  const { courses, schedules, assignments, memos, loaded, loadError, reload } = useData()
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [viewDate, setViewDate] = useState(new Date())
-  const [loaded, setLoaded] = useState(false)
-  const [loadError, setLoadError] = useState(false)
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const [overrides, setOverrides] = useState<ScheduleOverride[]>([])
   const dateInputRef = useRef<HTMLInputElement>(null)
-
-  const loadData = () => {
-    setLoadError(false)
-    Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
-      .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
-      .catch((e) => {
-        console.error('DayView load failed:', e)
-        setLoadError(true)
-        setLoaded(true)
-        showToast('加载失败，请检查网络', 'error')
-      })
-  }
 
   const localDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 
@@ -65,22 +49,17 @@ export function DayView() {
   })
 
   useEffect(() => {
-    loadData()
-
     const tick = () => { setCurrentPeriod(getCurrentPeriod(new Date())) }
     tick()
     const timer = setInterval(tick, 60000)
 
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
-    const onDataChanged = () => loadData()
     window.addEventListener('storage', onStorage)
-    window.addEventListener('data-changed', onDataChanged)
 
     return () => {
       clearInterval(timer)
       window.removeEventListener('storage', onStorage)
-      window.removeEventListener('data-changed', onDataChanged)
     }
   }, [])
 
@@ -160,7 +139,7 @@ export function DayView() {
     return (
       <div className="max-w-4xl mx-auto pt-12 text-center space-y-4">
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>加载失败，请检查网络连接</p>
-        <button onClick={loadData} className="btn-primary text-sm">重试</button>
+        <button onClick={reload} className="btn-primary text-sm">重试</button>
       </div>
     )
   }

@@ -183,7 +183,7 @@ export function HealthChecklist() {
         {kegelEnabled && (
           <div className="flex-1 flex items-center gap-3 min-w-0">
             <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-sm"
-              style={{ backgroundColor: kegelIsDone ? 'rgba(16,185,129,0.12)' : 'rgba(168,85,247,0.12)' }}
+              style={{ backgroundColor: kegelIsDone ? 'rgba(16,185,129,0.12)' : 'rgba(139, 92, 246, 0.12)' }}
             >
               💪
             </div>

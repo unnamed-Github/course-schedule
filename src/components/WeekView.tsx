@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride, DDL_REMINDER_OPTIONS } from '@/lib/types'
-import { getCourses, getSchedules, getAssignments, getMemos, getScheduleOverrides, createAssignment, createMemo } from '@/lib/data'
+import { getScheduleOverridesBatch, createAssignment, createMemo, getAssignments, getMemos } from '@/lib/data'
+import { useData } from './DataContext'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
 import { getCurrentPeriod, getWeekNumber, getWeekDateRange, isHoliday, getMakeupInfo } from '@/lib/schedule'
 import { PERIOD_TIMES, getSemesterConfig } from '@/lib/semester'
@@ -30,17 +31,12 @@ function countdownDisplay(dueDate: string): string {
 
 export function WeekView() {
   const { showToast } = useToast()
-  const [courses, setCourses] = useState<Course[]>([])
-  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [memos, setMemos] = useState<Memo[]>([])
+  const { courses, schedules, assignments, memos, loaded, loadError, reload, reloadAssignments, reloadMemos } = useData()
   const [weekNum, setWeekNum] = useState(0)
   const [weekRange, setWeekRange] = useState<{ start: Date; end: Date } | null>(null)
   const [currentPeriod, setCurrentPeriod] = useState<number | null>(null)
   const [currentDay, setCurrentDay] = useState<number>(0)
   const [expandedSchedule, setExpandedSchedule] = useState<CourseSchedule | null>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [loadError, setLoadError] = useState(false)
   const [highlightEnabled, setHighlightEnabled] = useState(true)
   const [weekOverrides, setWeekOverrides] = useState<ScheduleOverride[]>([])
 
@@ -56,31 +52,14 @@ export function WeekView() {
   const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')
   const [quickAddScheduleId, setQuickAddScheduleId] = useState<string | undefined>(undefined)
 
-  const loadData = () => {
-    setLoadError(false)
-    Promise.all([getCourses(), getSchedules(), getAssignments(), getMemos()])
-      .then(([c, sc, a, m]) => { setCourses(c); setSchedules(sc); setAssignments(a); setMemos(m); setLoaded(true) })
-      .catch((e) => {
-        console.error('WeekView load failed:', e)
-        setLoadError(true)
-        setLoaded(true)
-        showToast('加载失败，请检查网络', 'error')
-      })
-  }
-
   const localDate = (d: Date) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 
   const loadOverrides = useCallback(() => {
     if (!weekRange) return
-    const dateStrs: string[] = []
-    const d = new Date(weekRange.start)
-    for (let i = 0; i < 7; i++) {
-      const current = new Date(d)
-      current.setDate(d.getDate() + i)
-      dateStrs.push(localDate(current))
-    }
-    Promise.all(dateStrs.map(ds => getScheduleOverrides(ds).catch(() => [] as ScheduleOverride[])))
-      .then(results => setWeekOverrides(results.flat()))
+    const startDate = localDate(weekRange.start)
+    const endDate = localDate(weekRange.end)
+    getScheduleOverridesBatch(startDate, endDate)
+      .then(setWeekOverrides)
       .catch(() => setWeekOverrides([]))
   }, [weekRange])
 
@@ -96,7 +75,6 @@ export function WeekView() {
   })
 
   useEffect(() => {
-    loadData()
     const wn = getWeekNumber()
     setWeekNum(wn)
     setWeekRange(getWeekDateRange(wn))
@@ -115,12 +93,9 @@ export function WeekView() {
   useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
-    const onDataChanged = () => loadData()
     window.addEventListener('storage', onStorage)
-    window.addEventListener('data-changed', onDataChanged)
     return () => {
       window.removeEventListener('storage', onStorage)
-      window.removeEventListener('data-changed', onDataChanged)
     }
   }, [])
 
@@ -155,12 +130,12 @@ export function WeekView() {
   }, [highlightEnabled])
 
   const refreshAssignments = useCallback(() => {
-    getAssignments().then(setAssignments).catch(() => {})
-  }, [])
+    reloadAssignments()
+  }, [reloadAssignments])
 
   const refreshMemos = useCallback(() => {
-    getMemos().then(setMemos).catch(() => {})
-  }, [])
+    reloadMemos()
+  }, [reloadMemos])
 
   const handleQuickAddAssignment = async (courseId: string, scheduleId?: string) => {
     if (!quickAssignTitle.trim() || !quickAssignDueDate) return
@@ -264,7 +239,7 @@ export function WeekView() {
     return (
       <div className="py-16 text-center space-y-4">
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>加载失败，请检查网络连接</p>
-        <button onClick={loadData} className="btn-primary text-sm">重试</button>
+        <button onClick={reload} className="btn-primary text-sm">重试</button>
       </div>
     )
   }

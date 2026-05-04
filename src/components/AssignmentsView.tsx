@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Course, Assignment, CourseSchedule, DDL_REMINDER_OPTIONS } from '@/lib/types'
-import { getCourses, getAssignments, getSchedules, updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
+import { updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
+import { useData } from './DataContext'
 import { Modal } from './Modal'
 import { Bell, AlertTriangle, Check, Plus, Pencil, Trash2, ChevronDown, Settings } from 'lucide-react'
 import { DAY_LABELS, WEEK_TYPE_SHORT } from '@/lib/constants'
@@ -62,12 +63,9 @@ function formatCountdown(dueDate: string, now: number): string {
 }
 
 export function AssignmentsView() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [schedules, setSchedules] = useState<CourseSchedule[]>([])
+  const { courses, assignments, schedules, setAssignments, loaded } = useData()
   const [filter, setFilter] = useState<FilterType>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [loaded, setLoaded] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [quickAddExpanded, setQuickAddExpanded] = useState(true)
   const [quickAddMoreExpanded, setQuickAddMoreExpanded] = useState(false)
@@ -87,25 +85,6 @@ export function AssignmentsView() {
   const [editDesc, setEditDesc] = useState('')
   const [editScheduleId, setEditScheduleId] = useState('')
   const [editReminders, setEditReminders] = useState<number[]>([])
-
-  useEffect(() => {
-    Promise.all([getCourses(), getAssignments(), getSchedules()]).then(([c, a, sc]) => {
-      setCourses(c)
-      setAssignments(a)
-      setSchedules(sc)
-      setLoaded(true)
-    })
-
-    const onDataChanged = () => {
-      Promise.all([getCourses(), getAssignments(), getSchedules()]).then(([c, a, sc]) => {
-        setCourses(c)
-        setAssignments(a)
-        setSchedules(sc)
-      })
-    }
-    window.addEventListener('data-changed', onDataChanged)
-    return () => window.removeEventListener('data-changed', onDataChanged)
-  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000)

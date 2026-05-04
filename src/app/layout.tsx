@@ -7,6 +7,7 @@ import { TopBar } from "@/components/TopBar"
 import { PageTransition } from "@/components/PageTransition"
 import { ToastProvider } from "@/components/ToastProvider"
 import { ViewProvider } from "@/components/ViewContext"
+import { DataProvider } from "@/components/DataContext"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { FloatingSettingsButton } from "@/components/FloatingSettingsButton"
 import { GlassStyleInjector } from "@/components/GlassStyleInjector"
@@ -36,6 +37,7 @@ export default function RootLayout({
           <ToastProvider>
             <WarmthBannerProvider>
               <ViewProvider>
+              <DataProvider>
                 <TopBar />
                 <main id="main-content" className="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-24 sm:pb-8">
                   <ErrorBoundary>
@@ -45,7 +47,8 @@ export default function RootLayout({
                   </ErrorBoundary>
                 </main>
                 <FloatingSettingsButton />
-              </ViewProvider>
+              </DataProvider>
+            </ViewProvider>
             </WarmthBannerProvider>
           </ToastProvider>
           </ReminderProvider>

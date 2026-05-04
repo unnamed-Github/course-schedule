@@ -85,9 +85,9 @@ function KegelTimer() {
             className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
             style={{ backgroundColor: 'rgba(16,185,129,0.15)' }}
           >
-            <Check size={32} strokeWidth={3} style={{ color: '#10B981' }} />
+            <Check size={32} strokeWidth={3} style={{ color: 'var(--accent-success)' }} />
           </motion.div>
-          <p className="text-sm font-semibold" style={{ color: '#10B981' }}>完成！10 次一组 🎉</p>
+          <p className="text-sm font-semibold" style={{ color: 'var(--accent-success)' }}>完成！10 次一组 🎉</p>
           <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>每天记得做 3 组哦</p>
           <button
             onClick={reset}
@@ -105,7 +105,7 @@ function KegelTimer() {
               <circle cx="48" cy="48" r="40" fill="none" stroke="var(--border-light)" strokeWidth="6" />
               <motion.circle
                 cx="48" cy="48" r="40" fill="none"
-                stroke={phase === 'contract' ? '#8B5CF6' : '#10B981'}
+                stroke={phase === 'contract' ? '#8B5CF6' : 'var(--accent-success)'}
                 strokeWidth="6"
                 strokeLinecap="round"
                 strokeDasharray={`${((5 - seconds) / 5) * 251.2} 251.2`}
@@ -113,7 +113,7 @@ function KegelTimer() {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-2xl font-bold" style={{
-                color: phase === 'contract' ? '#8B5CF6' : phase === 'relax' ? '#10B981' : 'var(--text-primary)',
+                color: phase === 'contract' ? '#8B5CF6' : phase === 'relax' ? 'var(--accent-success)' : 'var(--text-primary)',
               }}>
                 {seconds}
               </span>
@@ -151,8 +151,8 @@ function KegelTimer() {
             </span>
             {count > 0 && (
               <>
-                <span style={{ color: 'var(--border-strong)' }}>|</span>
-                <span style={{ color: phase === 'contract' ? '#8B5CF6' : '#10B981' }}>
+                <span style={{ color: 'var(--border-medium)' }}>|</span>
+                <span style={{ color: phase === 'contract' ? '#8B5CF6' : 'var(--accent-success)' }}>
                   {phase === 'contract' ? '收紧中…' : phase === 'relax' ? '放松中…' : ''}
                 </span>
               </>
@@ -169,7 +169,6 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPortalRoot(document.body)
   }, [])
 
@@ -196,7 +195,7 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
           onClick={(e) => {
             if (e.target === e.currentTarget) onClose()
           }}
-          style={{ backgroundColor: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)' }}
         >
           <motion.div
             initial={{ scale: 0.92, opacity: 0, y: 20 }}
@@ -205,22 +204,25 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
             transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
             className="w-full max-w-sm rounded-2xl overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 30%, #ede9fe 100%)',
-              boxShadow: '0 20px 60px rgba(139, 92, 246, 0.15), 0 4px 20px rgba(0,0,0,0.08)',
+              background: 'var(--bg-card)',
+              boxShadow: 'var(--shadow-xl)',
+              border: '1px solid var(--border-light)',
             }}
           >
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">💪</span>
-                  <h3 className="text-lg font-bold" style={{ color: '#5B21B6' }}>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                     {showTimer ? '跟着节奏做' : '提肛运动指引'}
                   </h3>
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/50 transition-colors"
-                  style={{ color: '#9333EA' }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+                  style={{ color: 'var(--text-tertiary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--border-light)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   <X size={16} strokeWidth={2} />
                 </button>
@@ -243,13 +245,13 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
                           style={{ backgroundColor: 'rgba(139, 92, 246, 0.12)' }}>
                           {step.emoji}
                         </span>
-                        <span className="text-sm pt-1" style={{ color: '#4C1D95' }}>{step.text}</span>
+                        <span className="text-sm pt-1" style={{ color: 'var(--text-primary)' }}>{step.text}</span>
                       </motion.div>
                     ))}
                   </div>
 
                   <div className="rounded-xl p-3 mb-4" style={{ backgroundColor: 'rgba(139, 92, 246, 0.08)' }}>
-                    <p className="text-xs leading-relaxed" style={{ color: '#6D28D9' }}>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                       💡 <strong>小提示：</strong>坚持提肛有助于预防痔疮、改善盆腔血液循环，久坐必做！
                     </p>
                   </div>
