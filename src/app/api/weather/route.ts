@@ -131,9 +131,10 @@ export async function GET(request: NextRequest) {
   const timeout = setTimeout(() => controller.abort(), 10000)
 
   try {
-    const [weatherRes, aqiRes] = await Promise.all([
+    const [weatherRes, aqiRes, forecastRes] = await Promise.all([
       fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn`, { signal: controller.signal }),
       fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
+      fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&cnt=8`, { signal: controller.signal }),
     ])
 
     clearTimeout(timeout)
@@ -145,9 +146,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const [weatherJson, aqiJson] = await Promise.all([
+    const [weatherJson, aqiJson, forecastJson] = await Promise.all([
       weatherRes.json() as any,
       aqiRes.json() as any,
+      forecastRes.ok ? forecastRes.json() as any : null,
     ])
 
     // ── 天气 ──
@@ -158,6 +160,20 @@ export async function GET(request: NextRequest) {
     const clouds: number = weatherJson.clouds?.all ?? 0
     const dt: number = weatherJson.dt ?? Math.floor(Date.now() / 1000)
     const uvIndex = estimateUVI(latNum, clouds, dt)
+
+    // 今日真实高低温：从 3h forecast 中提取今天所有时段的 min/max
+    let todayLo = Math.round(weatherJson.main.temp_min)
+    let todayHi = Math.round(weatherJson.main.temp_max)
+    if (forecastJson?.list?.length) {
+      const todayStr = new Date().toISOString().slice(0, 10)
+      const todayTemps = forecastJson.list
+        .filter((item: any) => (item.dt_txt as string).startsWith(todayStr))
+        .flatMap((item: any) => [item.main.temp_min, item.main.temp_max])
+      if (todayTemps.length > 0) {
+        todayLo = Math.round(Math.min(...todayTemps))
+        todayHi = Math.round(Math.max(...todayTemps))
+      }
+    }
 
     // ── AQI 中国标准计算 ──
     const aqiData = aqiJson.list?.[0]
@@ -192,8 +208,8 @@ export async function GET(request: NextRequest) {
       weather: {
         temp: Math.round(weatherJson.main.temp),
         feelsLike: Math.round(weatherJson.main.feels_like),
-        tempMin: Math.round(weatherJson.main.temp_min),
-        tempMax: Math.round(weatherJson.main.temp_max),
+        tempMin: todayLo,
+        tempMax: todayHi,
         description: weatherJson.weather?.[0]?.description ?? '',
         icon: weatherJson.weather?.[0]?.icon ?? '01d',
         humidity: weatherJson.main.humidity,

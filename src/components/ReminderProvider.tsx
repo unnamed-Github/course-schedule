@@ -17,6 +17,7 @@ interface ReminderContextType {
   notificationPermission: NotificationPermission
   lastWaterCheck: number
   lastKegelCheck: number
+  waterCountToday: number
   checkWater: () => void
   checkKegel: () => void
   uncheckKegel: () => void
@@ -96,6 +97,16 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     } catch {}
     return 0
   })
+  const [waterCountToday, setWaterCountToday] = useState(() => {
+    try {
+      const stored = localStorage.getItem('health_water_count')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed.date === getTodayKey()) return parsed.count as number
+      }
+    } catch {}
+    return 0
+  })
   const [lastKegelCheck, setLastKegelCheck] = useState(() => {
     try {
       const stored = localStorage.getItem('health_last_kegel_check')
@@ -151,6 +162,13 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.setItem('health_last_water_check', JSON.stringify({ date: getTodayKey(), time: now }))
     } catch {}
+    setWaterCountToday(prev => {
+      const next = prev + 1
+      try {
+        localStorage.setItem('health_water_count', JSON.stringify({ date: getTodayKey(), count: next }))
+      } catch {}
+      return next
+    })
   }, [])
 
   const checkKegel = useCallback(() => {
@@ -309,6 +327,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         notificationPermission,
         lastWaterCheck,
         lastKegelCheck,
+        waterCountToday,
         checkWater,
         checkKegel,
         uncheckKegel,
