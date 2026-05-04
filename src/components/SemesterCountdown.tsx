@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getSemesterConfig, getWeekNumber } from '@/lib/semester'
 import { Target } from 'lucide-react'
@@ -26,7 +27,18 @@ export function SemesterCountdown() {
   const [expanded, setExpanded] = useState(false)
   const [days, setDays] = useState(0)
   const [mounted, setMounted] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 })
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPopupPosition({
+        top: rect.bottom + 8,
+        left: rect.right - 224
+      })
+    }
+  }, [])
 
   useEffect(() => {
     setDays(getDaysRemaining())
@@ -35,15 +47,20 @@ export function SemesterCountdown() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
         setExpanded(false)
       }
     }
     if (expanded) {
+      updatePosition()
       window.addEventListener('mousedown', handleClickOutside)
-      return () => window.removeEventListener('mousedown', handleClickOutside)
+      window.addEventListener('resize', updatePosition)
+      return () => {
+        window.removeEventListener('mousedown', handleClickOutside)
+        window.removeEventListener('resize', updatePosition)
+      }
     }
-  }, [expanded])
+  }, [expanded, updatePosition])
 
   const style = getCountdownStyle(days)
   const config = getSemesterConfig()
@@ -52,8 +69,9 @@ export function SemesterCountdown() {
   const progressPct = Math.min(100, Math.max(0, ((weekNum - 1) / totalWeeks) * 100))
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer"
         style={{ backgroundColor: style.bg, color: style.color }}
@@ -63,13 +81,19 @@ export function SemesterCountdown() {
       </button>
 
       <AnimatePresence>
-        {expanded && (
+        {expanded && typeof document !== 'undefined' && createPortal(
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-3 right-0 z-50 w-56 rounded-2xl p-4 shadow-lg glass-strong"
+            className="fixed z-[9999] w-56 rounded-2xl p-4 shadow-lg"
+            style={{
+              top: popupPosition.top,
+              left: popupPosition.left,
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border-light)'
+            }}
           >
             <p className="text-sm font-semibold mb-1" style={{ color: style.color }}>
               {style.label}
@@ -89,7 +113,8 @@ export function SemesterCountdown() {
                 />
               </div>
             </div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
     </div>
