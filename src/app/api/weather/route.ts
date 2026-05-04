@@ -20,10 +20,49 @@ function mapCondition(id: number): WeatherCondition {
   return 'clouds'
 }
 
-// ── UV │ 合理区间校验 ────────────────────────────────────────
+// ── UV │ 太阳几何估算 ────────────────────────────────────────
+
+/**
+ * 基于云量、纬度、时间的 UV 指数估算。
+ * 免费 API 的 /uvi 端点不开放，用此函数替代。
+ * 
+ * @param lat   纬度（度）
+ * @param clouds 云覆盖率 0-100（来自 weather.clouds.all）
+ * @param dt     Unix 时间戳（秒，来自 weather.dt）
+ * @returns      估算 UV 指数（0-14+）
+ */
+function estimateUVI(lat: number, clouds: number, dt: number): number {
+  const date = new Date(dt * 1000)
+  const year = date.getFullYear()
+  const startOfYear = new Date(year, 0, 0)
+  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86400000)
+
+  // 太阳赤纬（度）
+  const declination = 23.45 * Math.sin(((360 / 365) * (dayOfYear - 81) * Math.PI) / 180)
+
+  // 时角（度）— 相对太阳正午
+  const hoursLocal = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getTimezoneOffset() / -60
+  const hourAngle = (hoursLocal - 12) * 15
+
+  // 太阳仰角（度）
+  const latRad = (lat * Math.PI) / 180
+  const decRad = (declination * Math.PI) / 180
+  const haRad  = (hourAngle * Math.PI) / 180
+  const sinElev = Math.sin(latRad) * Math.sin(decRad) + Math.cos(latRad) * Math.cos(decRad) * Math.cos(haRad)
+  const elevation = Math.asin(Math.max(-1, Math.min(1, sinElev))) * (180 / Math.PI)
+
+  if (elevation < 0) return 0
+
+  // 晴空 UV：12 × sin(θ)^1.3（海平面经验公式）
+  const clearSkyUVI = 12 * Math.pow(Math.sin((elevation * Math.PI) / 180), 1.3)
+
+  // 云衰减：每 10% 云量降低约 7.5% UV
+  const cloudFactor = 1 - 0.75 * (clouds / 100)
+
+  return Math.round(Math.max(0, clearSkyUVI * cloudFactor) * 10) / 10
+}
+
 function mapUVLevel(index: number): UVLevel {
-  // 免费 API 的 uvi 端点可能返回不可靠数据（如夜间 >10）
-  // 实际臭氧层下 UV 指数极少超过 12（珠峰顶 ~16）
   const clamped = Math.max(0, Math.min(index, 14))
   if (clamped <= 2) return 'low'
   if (clamped <= 5) return 'moderate'
@@ -92,23 +131,10 @@ export async function GET(request: NextRequest) {
   const timeout = setTimeout(() => controller.abort(), 10000)
 
   try {
-    // 免费 API 的 /uvi 端点不稳定，单独 try/catch
-    let uvIndex = 0
     const [weatherRes, aqiRes] = await Promise.all([
       fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=zh_cn`, { signal: controller.signal }),
       fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal }),
     ])
-
-    // UV 端点可能 404/401（免费 key 不开放），失败不阻塞
-    try {
-      const uvRes = await fetch(`${BASE}/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${apiKey}`, { signal: controller.signal })
-      if (uvRes.ok) {
-        const uvJson = await uvRes.json()
-        uvIndex = uvJson.value ?? 0
-      }
-    } catch {
-      // UV 降级：用天气 ID 粗略估算
-    }
 
     clearTimeout(timeout)
 
@@ -127,14 +153,11 @@ export async function GET(request: NextRequest) {
     // ── 天气 ──
     const weatherId: number = weatherJson.weather?.[0]?.id ?? 800
 
-    // UV 降级：API 失败时根据天气 ID 估算
-    // 800=晴→高, 801-804=多云→中, 5xx=雨→低, 其他→中
-    if (uvIndex === 0) {
-      if (weatherId === 800) uvIndex = 7
-      else if (weatherId >= 801 && weatherId <= 804) uvIndex = 4
-      else if (weatherId >= 500 && weatherId < 600) uvIndex = 1
-      else uvIndex = 3
-    }
+    // UV 指数基于太阳几何 + 云量估算（免费 API 不开放 /uvi 端点）
+    const latNum = parseFloat(lat)
+    const clouds: number = weatherJson.clouds?.all ?? 0
+    const dt: number = weatherJson.dt ?? Math.floor(Date.now() / 1000)
+    const uvIndex = estimateUVI(latNum, clouds, dt)
 
     // ── AQI 中国标准计算 ──
     const aqiData = aqiJson.list?.[0]

@@ -82,6 +82,7 @@ export function HealthChecklist() {
     lastKegelCheck,
     checkWater,
     checkKegel,
+    uncheckKegel,
   } = useReminder()
 
   const [waterStatus, setWaterStatus] = useState<WaterStatus>({ remainingSec: 0, progress: 0, shouldDrink: false })
@@ -91,9 +92,13 @@ export function HealthChecklist() {
   const [showKegelGuide, setShowKegelGuide] = useState(false)
 
   const handleKegelCheck = useCallback(() => {
-    checkKegel()
-    setTimeout(() => setShowKegelGuide(true), 300)
-  }, [checkKegel])
+    if (kegelStatus.allDone) {
+      uncheckKegel()
+    } else {
+      checkKegel()
+      setTimeout(() => setShowKegelGuide(true), 300)
+    }
+  }, [checkKegel, uncheckKegel, kegelStatus.allDone])
 
   useEffect(() => {
     const update = () => {

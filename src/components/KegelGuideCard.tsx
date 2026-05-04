@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Play, Pause, RotateCcw, Check } from 'lucide-react'
 
@@ -165,12 +166,19 @@ function KegelTimer() {
 
 export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
   const [showTimer, setShowTimer] = useState(false)
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
-  return (
+  useEffect(() => {
+    setPortalRoot(document.body)
+  }, [])
+
+  if (!portalRoot) return null
+
+  return createPortal(
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -249,6 +257,7 @@ export function KegelGuideCard({ open, onClose }: KegelGuideCardProps) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    portalRoot
   )
 }

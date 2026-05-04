@@ -244,13 +244,11 @@ function WeatherContent({ data }: { data: WeatherResponse }) {
       parts.push('💦 闷热潮湿，穿速干 T 恤')
     }
     if (w.condition === 'rain' || w.condition === 'drizzle') {
-      if (parts.length > 0 && parts[parts.length - 1].includes('伞')) {
-        // already has umbrella
-      } else {
-        parts.push('☔ 记得带伞')
-      }
+      parts.push('☔ 记得带伞')
     } else if (w.condition === 'thunderstorm') {
       parts.push('⚡ 雷暴天气，减少外出')
+    } else if (uv.index >= 6 && (w.condition === 'clear' || w.condition === 'clouds')) {
+      parts.push('☀️ 紫外线强，建议带伞遮阳')
     }
 
     // 极热

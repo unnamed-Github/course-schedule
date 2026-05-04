@@ -19,6 +19,7 @@ interface ReminderContextType {
   lastKegelCheck: number
   checkWater: () => void
   checkKegel: () => void
+  uncheckKegel: () => void
   toggleWater: () => void
   setWaterInterval: (v: number) => void
   toggleKegel: () => void
@@ -76,7 +77,11 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   const [waterEnabled, setWaterEnabled] = useState(() => getHealthReminderSetting('water_reminder_enabled') !== 'false')
   const [waterInterval, setWaterIntervalState] = useState(() => parseInt(getHealthReminderSetting('water_interval')) || 40)
   const [kegelEnabled, setKegelEnabled] = useState(() => getHealthReminderSetting('kegel_reminder_enabled') !== 'false')
-  const [kegelTimes, setKegelTimesState] = useState(() => getHealthReminderSetting('kegel_times') || '10:00,15:00,20:00')
+  const [kegelTimes, setKegelTimesState] = useState(() => {
+    const stored = getHealthReminderSetting('kegel_times') || ''
+    if (stored && stored !== '10:00,15:00,20:00') return stored
+    return '09:55,15:55,19:50'
+  })
   const [nightEnabled, setNightEnabled] = useState(() => getHealthReminderSetting('night_reminder_enabled') !== 'false')
   const [ddlEnabled, setDdlEnabled] = useState(() => getHealthReminderSetting('ddl_reminder_enabled') !== 'false')
   const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission)
@@ -154,6 +159,14 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     lastKegelDayRef.current = getTodayKey()
     try {
       localStorage.setItem('health_last_kegel_check', JSON.stringify({ date: getTodayKey(), time: now }))
+    } catch {}
+  }, [])
+
+  const uncheckKegel = useCallback(() => {
+    setLastKegelCheck(0)
+    lastKegelDayRef.current = ''
+    try {
+      localStorage.removeItem('health_last_kegel_check')
     } catch {}
   }, [])
 
@@ -298,6 +311,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         lastKegelCheck,
         checkWater,
         checkKegel,
+        uncheckKegel,
         toggleWater,
         setWaterInterval,
         toggleKegel,
