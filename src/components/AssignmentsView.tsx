@@ -68,7 +68,6 @@ export function AssignmentsView() {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [quickAddExpanded, setQuickAddExpanded] = useState(true)
-  const [quickAddMoreExpanded, setQuickAddMoreExpanded] = useState(false)
   // eslint-disable-next-line react-hooks/purity
   const [now, setNow] = useState(Date.now())
 
@@ -274,111 +273,85 @@ export function AssignmentsView() {
                   </button>
                 </div>
 
-                <div>
-                  <button
-                    onClick={() => setQuickAddMoreExpanded(!quickAddMoreExpanded)}
-                    className="text-xs flex items-center gap-1"
-                    style={{ color: 'var(--text-secondary)' }}
+                <div className="space-y-3">
+                  <select
+                    value={newScheduleId}
+                    onChange={(e) => setNewScheduleId(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl text-sm"
+                    style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
                   >
-                    <ChevronDown
-                      size={14}
-                      strokeWidth={2}
-                      className={`transition-transform ${quickAddMoreExpanded ? 'rotate-180' : ''}`}
-                    />
-                    更多选项
-                  </button>
-
-                  <AnimatePresence>
-                    {quickAddMoreExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pt-3 space-y-3">
-                          <select
-                            value={newScheduleId}
-                            onChange={(e) => setNewScheduleId(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl text-sm"
-                            style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
-                          >
-                            <option value="">不关联具体课时</option>
-                            {schedules.filter(s => s.course_id === newCourseId).map(s => (
-                              <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
-                            ))}
-                          </select>
-                          <textarea
-                            value={newDesc}
-                            onChange={(e) => setNewDesc(e.target.value)}
-                            placeholder="描述（可选）"
-                            rows={2}
-                            className="w-full px-3 py-2 rounded-xl text-sm resize-none"
-                            style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
-                          />
-                          <div>
-                            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</label>
-                            <div className="flex flex-wrap gap-2">
-                              {DDL_REMINDER_OPTIONS.map(opt => (
-                                <button
-                                  key={opt.value}
-                                  onClick={() => setNewReminders(prev =>
-                                    prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
-                                  )}
-                                  className="px-3 py-1 rounded-lg text-xs transition-colors"
-                                  style={{
-                                    backgroundColor: newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-primary)',
-                                    color: newReminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
-                                    border: `1px solid ${newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--border-light)'}`,
-                                  }}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                              {newReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
-                                <span key={r} className="px-3 py-1 rounded-lg text-xs flex items-center gap-1"
-                                  style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
-                                  {formatReminderLabel(r)}
-                                  <button onClick={() => setNewReminders(prev => prev.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
-                                </span>
-                              ))}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-2">
-                              <input
-                                type="number"
-                                min="1"
-                                value={customReminderInput}
-                                onChange={(e) => setCustomReminderInput(e.target.value)}
-                                placeholder="自定义分钟数"
-                                className="w-28 px-2 py-1 rounded-lg text-xs"
-                                style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    const v = parseInt(customReminderInput)
-                                    if (v > 0 && !newReminders.includes(v)) {
-                                      setNewReminders(prev => [...prev, v])
-                                      setCustomReminderInput('')
-                                    }
-                                  }
-                                }}
-                              />
-                              <button
-                                onClick={() => {
-                                  const v = parseInt(customReminderInput)
-                                  if (v > 0 && !newReminders.includes(v)) {
-                                    setNewReminders(prev => [...prev, v])
-                                    setCustomReminderInput('')
-                                  }
-                                }}
-                                className="px-2 py-1 rounded-lg text-xs"
-                                style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
-                              >+ 添加</button>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                    <option value="">不关联具体课时</option>
+                    {schedules.filter(s => s.course_id === newCourseId).map(s => (
+                      <option key={s.id} value={s.id}>{getScheduleLabel(s)}</option>
+                    ))}
+                  </select>
+                  <textarea
+                    value={newDesc}
+                    onChange={(e) => setNewDesc(e.target.value)}
+                    placeholder="描述（可选）"
+                    rows={2}
+                    className="w-full px-3 py-2 rounded-xl text-sm resize-none"
+                    style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                  />
+                  <div>
+                    <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</label>
+                    <div className="flex flex-wrap gap-2">
+                      {DDL_REMINDER_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setNewReminders(prev =>
+                            prev.includes(opt.value) ? prev.filter(v => v !== opt.value) : [...prev, opt.value]
+                          )}
+                          className="px-3 py-1 rounded-lg text-xs transition-colors"
+                          style={{
+                            backgroundColor: newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--bg-primary)',
+                            color: newReminders.includes(opt.value) ? '#fff' : 'var(--text-secondary)',
+                            border: `1px solid ${newReminders.includes(opt.value) ? 'var(--accent-info)' : 'var(--border-light)'}`,
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                      {newReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                        <span key={r} className="px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                          style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                          {formatReminderLabel(r)}
+                          <button onClick={() => setNewReminders(prev => prev.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={customReminderInput}
+                        onChange={(e) => setCustomReminderInput(e.target.value)}
+                        placeholder="自定义分钟数"
+                        className="w-28 px-2 py-1 rounded-lg text-xs"
+                        style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const v = parseInt(customReminderInput)
+                            if (v > 0 && !newReminders.includes(v)) {
+                              setNewReminders(prev => [...prev, v])
+                              setCustomReminderInput('')
+                            }
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const v = parseInt(customReminderInput)
+                          if (v > 0 && !newReminders.includes(v)) {
+                            setNewReminders(prev => [...prev, v])
+                            setCustomReminderInput('')
+                          }
+                        }}
+                        className="px-2 py-1 rounded-lg text-xs"
+                        style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+                      >+ 添加</button>
+                    </div>
+                  </div>
                 </div>
 
                 <p className="text-xs" style={{ color: 'var(--text-secondary)', opacity: 0.7 }}>按 Enter 键快速添加</p>
