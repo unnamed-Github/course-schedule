@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor, DDL_REMINDER_OPTIONS } from '@/lib/types'
+import { Course, CourseSchedule, Assignment, Memo, MoodTag, getMoodColor, DDL_REMINDER_OPTIONS, formatReminderLabel } from '@/lib/types'
 import { getCourse, getSchedules, updateCourse, getAssignments, createAssignment, updateAssignment, deleteAssignment, getMemos, createMemo, deleteMemo, createSchedule, updateSchedule, deleteSchedule } from '@/lib/data'
 import { getWeekNumber, getSemesterConfig } from '@/lib/semester'
 import { MoodTagSelector } from '@/components/MoodTagSelector'
@@ -51,6 +51,8 @@ export default function CourseDetailPage() {
   const [assignmentForm, setAssignmentForm] = useState({ title: '', description: '', due_date: '', reminders: [] as number[] })
   const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null)
   const [editAssignmentForm, setEditAssignmentForm] = useState({ title: '', description: '', due_date: '', reminders: [] as number[] })
+  const [customReminderInput, setCustomReminderInput] = useState('')
+  const [editCustomReminderInput, setEditCustomReminderInput] = useState('')
 
   const [showMemoForm, setShowMemoForm] = useState(false)
   const [memoForm, setMemoForm] = useState({ content: '', mood_emoji: '😊', mood_tags: [] as MoodTag[] })
@@ -462,6 +464,44 @@ export default function CourseDetailPage() {
                   {opt.label}
                 </button>
               ))}
+              {assignmentForm.reminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                <span key={r} className="px-2 py-0.5 rounded text-xs flex items-center gap-0.5"
+                  style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                  {formatReminderLabel(r)}
+                  <button onClick={() => setAssignmentForm((f) => ({ ...f, reminders: f.reminders.filter(v => v !== r) }))} className="hover:opacity-70">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min="1"
+                value={customReminderInput}
+                onChange={(e) => setCustomReminderInput(e.target.value)}
+                placeholder="自定义分钟数"
+                className="w-28 px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const v = parseInt(customReminderInput)
+                    if (v > 0 && !assignmentForm.reminders.includes(v)) {
+                      setAssignmentForm((f) => ({ ...f, reminders: [...f.reminders, v] }))
+                      setCustomReminderInput('')
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const v = parseInt(customReminderInput)
+                  if (v > 0 && !assignmentForm.reminders.includes(v)) {
+                    setAssignmentForm((f) => ({ ...f, reminders: [...f.reminders, v] }))
+                    setCustomReminderInput('')
+                  }
+                }}
+                className="px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+              >+ 添加</button>
             </div>
             <div className="flex gap-2">
               <button onClick={handleAddAssignment} className="btn-primary text-xs">添加</button>
@@ -504,6 +544,44 @@ export default function CourseDetailPage() {
                             {opt.label}
                           </button>
                         ))}
+                        {editAssignmentForm.reminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                          <span key={r} className="px-2 py-0.5 rounded text-xs flex items-center gap-0.5"
+                            style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                            {formatReminderLabel(r)}
+                            <button onClick={() => setEditAssignmentForm((f) => ({ ...f, reminders: f.reminders.filter(v => v !== r) }))} className="hover:opacity-70">×</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="number"
+                          min="1"
+                          value={editCustomReminderInput}
+                          onChange={(e) => setEditCustomReminderInput(e.target.value)}
+                          placeholder="自定义分钟数"
+                          className="w-28 px-2 py-1 rounded-lg text-xs"
+                          style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const v = parseInt(editCustomReminderInput)
+                              if (v > 0 && !editAssignmentForm.reminders.includes(v)) {
+                                setEditAssignmentForm((f) => ({ ...f, reminders: [...f.reminders, v] }))
+                                setEditCustomReminderInput('')
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            const v = parseInt(editCustomReminderInput)
+                            if (v > 0 && !editAssignmentForm.reminders.includes(v)) {
+                              setEditAssignmentForm((f) => ({ ...f, reminders: [...f.reminders, v] }))
+                              setEditCustomReminderInput('')
+                            }
+                          }}
+                          className="px-2 py-1 rounded-lg text-xs"
+                          style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+                        >+ 添加</button>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={handleSaveEditAssignment} className="btn-primary text-xs">保存</button>

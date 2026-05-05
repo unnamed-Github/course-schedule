@@ -11,7 +11,7 @@ import { getPeriodTime, PERIOD_TIMES } from '@/lib/semester'
 import { SkeletonCard } from './Skeleton'
 import { useToast } from './ToastProvider'
 import { useScheduleOverride } from '@/hooks/useScheduleOverride'
-import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw, BookOpen, ClipboardList, StickyNote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, User, MapPin, Sparkles, ChevronDown, ChevronRight as ChevronRightIcon, Trash2, CheckCircle2, RotateCcw, BookOpen, ClipboardList, StickyNote, Bell } from 'lucide-react'
 import { EMOJI_OPTIONS, DAY_NAMES } from '@/lib/constants'
 import { addDays, isSameDay } from '@/lib/utils'
 import { WarmthBanner } from './WarmthBanner'
@@ -55,11 +55,14 @@ export function DayView() {
 
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
+    const onDataChanged = () => loadOverrides()
     window.addEventListener('storage', onStorage)
+    window.addEventListener('data-changed', onDataChanged)
 
     return () => {
       clearInterval(timer)
       window.removeEventListener('storage', onStorage)
+      window.removeEventListener('data-changed', onDataChanged)
     }
   }, [])
 
@@ -116,9 +119,30 @@ export function DayView() {
     return memos.filter((m) => m.schedule_id && todayScheduleIds.has(m.schedule_id))
   }, [memos, todayScheduleIds])
 
+  const ddlReminderCount = useMemo(() => {
+    const viewDateStart = new Date(todayStr + 'T00:00:00').getTime()
+    const viewDateEnd = new Date(todayStr + 'T23:59:59').getTime()
+    let count = 0
+    for (const a of assignments) {
+      if (a.status !== 'pending') continue
+      if (!a.reminders || a.reminders.length === 0) continue
+      const dueMs = new Date(a.due_date).getTime()
+      if (dueMs <= viewDateEnd) continue
+      for (const rm of a.reminders) {
+        const triggerMs = dueMs - rm * 60000
+        if (triggerMs >= viewDateStart && triggerMs <= viewDateEnd) {
+          count++
+          break
+        }
+      }
+    }
+    return count
+  }, [assignments, todayStr])
+
   const dailyStats = {
     classes: todaySchedules.length,
     assignments: todayAssignments.length,
+    reminders: ddlReminderCount,
     memos: todayMemos.length,
   }
 
@@ -175,7 +199,7 @@ export function DayView() {
       )}
 
       {/* 一日纵览统计 */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
         <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
           <BookOpen size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: 'var(--accent-info)' }} />
           <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.classes}</div>
@@ -185,6 +209,11 @@ export function DayView() {
           <ClipboardList size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: dailyStats.assignments > 0 ? 'var(--accent-warm)' : 'var(--text-secondary)' }} />
           <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.assignments}</div>
           <div className="text-[10px] sm:text-xs" style={{ color: 'var(--text-secondary)' }}>作业截止</div>
+        </div>
+        <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
+          <Bell size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: dailyStats.reminders > 0 ? 'var(--accent-info)' : 'var(--text-secondary)' }} />
+          <div className="text-lg sm:text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{dailyStats.reminders}</div>
+          <div className="text-[10px] sm:text-xs" style={{ color: 'var(--text-secondary)' }}>DDL 提醒</div>
         </div>
         <div className="rounded-2xl p-3 sm:p-4 text-center glass-strong">
           <StickyNote size={16} strokeWidth={1.5} className="mx-auto mb-0.5 sm:mb-1" style={{ color: dailyStats.memos > 0 ? 'var(--accent-bamboo)' : 'var(--text-secondary)' }} />
@@ -371,16 +400,36 @@ export function DayView() {
             <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>今日截止作业</h3>
           </div>
           <div className="space-y-2">
-            {todayAssignments.slice(0, 3).map((a) => (
-              <div key={a.id} className="flex items-center justify-between text-sm">
-                <span style={{ color: 'var(--text-primary)' }}>{a.title}</span>
-                <span className="text-xs" style={{ color: 'var(--accent-danger)' }}>逾期</span>
-              </div>
-            ))}
+            {todayAssignments.map((a) => {
+              const now = Date.now()
+              const dueMs = new Date(a.due_date).getTime()
+              const isOverdue = dueMs < now && a.status === 'pending'
+              const isNear = !isOverdue && dueMs - now < 86400000 && a.status === 'pending'
+              const dueDate = new Date(a.due_date)
+              const timeStr = String(dueDate.getHours()).padStart(2, '0') + ':' + String(dueDate.getMinutes()).padStart(2, '0')
+              let statusText: string
+              let statusColor: string
+              if (isOverdue) {
+                statusText = '逾期'
+                statusColor = 'var(--accent-danger)'
+              } else if (isNear) {
+                const diff = dueMs - now
+                const hours = Math.floor(diff / 3600000)
+                const minutes = Math.floor((diff % 3600000) / 60000)
+                statusText = hours > 0 ? `${hours}h${minutes > 0 ? minutes + 'm' : ''}后` : `${minutes}m后`
+                statusColor = 'var(--accent-warm)'
+              } else {
+                statusText = timeStr
+                statusColor = 'var(--text-secondary)'
+              }
+              return (
+                <div key={a.id} className="flex items-center justify-between text-sm">
+                  <span className="truncate flex-1 mr-2" style={{ color: 'var(--text-primary)' }}>{a.title}</span>
+                  <span className="text-xs flex-shrink-0" style={{ color: statusColor }}>{statusText}</span>
+                </div>
+              )
+            })}
           </div>
-          {todayAssignments.length > 3 && (
-            <p className="text-xs mt-2" style={{ color: 'var(--text-tertiary)' }}>还有 {todayAssignments.length - 3} 项…</p>
-          )}
         </div>
       ) : (
         <div className="rounded-2xl p-4 text-center glass">

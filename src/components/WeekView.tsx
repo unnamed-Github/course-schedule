@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride, DDL_REMINDER_OPTIONS } from '@/lib/types'
+import { CourseSchedule, Course, Assignment, Memo, ScheduleOverride, DDL_REMINDER_OPTIONS, formatReminderLabel } from '@/lib/types'
 import { getScheduleOverridesBatch, createAssignment, createMemo, getAssignments, getMemos } from '@/lib/data'
 import { useData } from './DataContext'
 import { getLocalSetting, setSettingBoth } from '@/lib/user-settings'
@@ -47,6 +47,7 @@ export function WeekView() {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
   })
   const [quickReminders, setQuickReminders] = useState<number[]>([])
+  const [quickCustomReminder, setQuickCustomReminder] = useState('')
   const [showQuickMemo, setShowQuickMemo] = useState(false)
   const [quickMemoContent, setQuickMemoContent] = useState('')
   const [quickMemoEmoji, setQuickMemoEmoji] = useState('📝')
@@ -93,11 +94,14 @@ export function WeekView() {
   useEffect(() => {
     setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
     const onStorage = () => setHighlightEnabled(getLocalSetting('highlight_enabled', 'true') !== 'false')
+    const onDataChanged = () => loadOverrides()
     window.addEventListener('storage', onStorage)
+    window.addEventListener('data-changed', onDataChanged)
     return () => {
       window.removeEventListener('storage', onStorage)
+      window.removeEventListener('data-changed', onDataChanged)
     }
-  }, [])
+  }, [loadOverrides])
 
   useEffect(() => {
     setShowQuickAssign(false)
@@ -572,6 +576,47 @@ export function WeekView() {
                                                 {opt.label}
                                               </button>
                                             ))}
+                                            {quickReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                                              <span key={r} className="px-2 py-0.5 rounded text-[9px] flex items-center gap-0.5"
+                                                style={{ backgroundColor: 'rgba(255,255,255,0.35)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                {formatReminderLabel(r)}
+                                                <button onClick={(e) => { e.stopPropagation(); setQuickReminders(prev => prev.filter(v => v !== r)) }} className="hover:opacity-70">×</button>
+                                              </span>
+                                            ))}
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              value={quickCustomReminder}
+                                              onChange={(e) => setQuickCustomReminder(e.target.value)}
+                                              placeholder="自定义(分钟)"
+                                              className="w-20 rounded-lg px-1.5 py-0.5 text-[9px] outline-none"
+                                              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.2)' }}
+                                              onClick={(e) => e.stopPropagation()}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                  e.stopPropagation()
+                                                  const v = parseInt(quickCustomReminder)
+                                                  if (v > 0 && !quickReminders.includes(v)) {
+                                                    setQuickReminders(prev => [...prev, v])
+                                                    setQuickCustomReminder('')
+                                                  }
+                                                }
+                                              }}
+                                            />
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                const v = parseInt(quickCustomReminder)
+                                                if (v > 0 && !quickReminders.includes(v)) {
+                                                  setQuickReminders(prev => [...prev, v])
+                                                  setQuickCustomReminder('')
+                                                }
+                                              }}
+                                              className="px-1.5 py-0.5 rounded text-[9px]"
+                                              style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'white' }}
+                                            >+</button>
                                           </div>
                                           <div className="flex gap-1 justify-end">
                                             <button

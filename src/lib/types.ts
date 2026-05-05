@@ -39,6 +39,18 @@ export const DDL_REMINDER_OPTIONS = [
   { value: 4320, label: '3天前' },
 ]
 
+export function formatReminderLabel(minutes: number): string {
+  const preset = DDL_REMINDER_OPTIONS.find(o => o.value === minutes)
+  if (preset) return preset.label
+  if (minutes < 60) return `${minutes}分钟前`
+  if (minutes < 1440) {
+    const h = minutes / 60
+    return Number.isInteger(h) ? `${h}小时前` : `${(h).toFixed(1)}小时前`
+  }
+  const d = minutes / 1440
+  return Number.isInteger(d) ? `${d}天前` : `${(d).toFixed(1)}天前`
+}
+
 export const MOOD_TAGS = [
   { value: '⭐喜欢' as const, emoji: '⭐', label: '喜欢', color: '#F59E0B' },
   { value: '🥱苟住' as const, emoji: '🥱', label: '苟住', color: '#6B7280' },

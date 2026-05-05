@@ -1,7 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { useReminder } from '@/components/ReminderProvider'
 import { Bell, BellOff } from 'lucide-react'
+import { DDL_REMINDER_OPTIONS, formatReminderLabel } from '@/lib/types'
 
 const WATER_INTERVALS = [
   { value: 30, label: '30 分钟' },
@@ -18,6 +20,7 @@ export function HealthReminderSettings() {
     kegelTimes,
     nightEnabled,
     ddlEnabled,
+    ddlReminderDefaults,
     notificationPermission,
     toggleWater,
     setWaterInterval,
@@ -25,8 +28,11 @@ export function HealthReminderSettings() {
     setKegelTimes,
     toggleNight,
     toggleDdl,
+    setDdlReminderDefaults,
     requestPermission,
   } = useReminder()
+
+  const [customDefaultInput, setCustomDefaultInput] = useState('')
 
   return (
     <div className="rounded-2xl p-5 glass-strong">
@@ -174,6 +180,76 @@ export function HealthReminderSettings() {
             />
           </button>
         </div>
+
+        {ddlEnabled && (
+          <div className="pl-4 space-y-2">
+            <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>默认提醒时间</span>
+            <div className="flex flex-wrap gap-1.5">
+              {DDL_REMINDER_OPTIONS.map(opt => {
+                const isActive = ddlReminderDefaults.includes(opt.value)
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      if (isActive) {
+                        setDdlReminderDefaults(ddlReminderDefaults.filter(v => v !== opt.value))
+                      } else {
+                        setDdlReminderDefaults([...ddlReminderDefaults, opt.value])
+                      }
+                    }}
+                    className="px-2 py-1 rounded-lg text-xs transition-colors"
+                    style={{
+                      backgroundColor: isActive ? 'var(--accent-info)' : 'var(--bg-primary)',
+                      color: isActive ? '#fff' : 'var(--text-secondary)',
+                      border: `1px solid ${isActive ? 'var(--accent-info)' : 'var(--border-light)'}`,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+              {ddlReminderDefaults.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                <span key={r} className="px-2 py-1 rounded-lg text-xs flex items-center gap-0.5"
+                  style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                  {formatReminderLabel(r)}
+                  <button onClick={() => setDdlReminderDefaults(ddlReminderDefaults.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min="1"
+                value={customDefaultInput}
+                onChange={(e) => setCustomDefaultInput(e.target.value)}
+                placeholder="自定义分钟数"
+                className="w-28 px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const v = parseInt(customDefaultInput)
+                    if (v > 0 && !ddlReminderDefaults.includes(v)) {
+                      setDdlReminderDefaults([...ddlReminderDefaults, v])
+                      setCustomDefaultInput('')
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const v = parseInt(customDefaultInput)
+                  if (v > 0 && !ddlReminderDefaults.includes(v)) {
+                    setDdlReminderDefaults([...ddlReminderDefaults, v])
+                    setCustomDefaultInput('')
+                  }
+                }}
+                className="px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+              >+ 添加</button>
+            </div>
+            <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>新建作业时自动应用这些提醒</p>
+          </div>
+        )}
       </div>
     </div>
   )

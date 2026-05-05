@@ -34,7 +34,7 @@ function invalidateCache(prefix: string) {
   for (const key of cache.keys()) { if (key.startsWith(prefix)) cache.delete(key) }
 }
 
-function emitDataChangedEvent(type: 'assignment' | 'memo') {
+function emitDataChangedEvent(type: 'assignment' | 'memo' | 'override') {
   try { window.dispatchEvent(new CustomEvent('data-changed', { detail: { type } })) } catch {}
 }
 
@@ -468,6 +468,7 @@ export async function createScheduleOverride(input: { schedule_id: string; date:
       localStorage.scheduleOverrides.push(record)
     }
     invalidateCache('overrides')
+    emitDataChangedEvent('override')
     return record
   }
   try {
@@ -477,6 +478,7 @@ export async function createScheduleOverride(input: { schedule_id: string; date:
     ).select().single()
     if (error) { return null }
     invalidateCache('overrides')
+    emitDataChangedEvent('override')
     return data
   } catch (e) {
     markSupabaseUnavailable()
@@ -488,6 +490,7 @@ export async function createScheduleOverride(input: { schedule_id: string; date:
       localStorage.scheduleOverrides.push(record)
     }
     invalidateCache('overrides')
+    emitDataChangedEvent('override')
     return record
   }
 }
@@ -496,16 +499,21 @@ export async function deleteScheduleOverride(scheduleId: string, date: string): 
   if (!isSupabaseAvailable()) {
     localStorage.scheduleOverrides = localStorage.scheduleOverrides.filter(o => !(o.schedule_id === scheduleId && o.date === date))
     invalidateCache('overrides')
+    emitDataChangedEvent('override')
     return true
   }
   try {
     const { error } = await supabase.from('schedule_overrides').delete().eq('schedule_id', scheduleId).eq('date', date)
-    if (!error) invalidateCache('overrides')
+    if (!error) {
+      invalidateCache('overrides')
+      emitDataChangedEvent('override')
+    }
     return !error
   } catch (e) {
     markSupabaseUnavailable()
     localStorage.scheduleOverrides = localStorage.scheduleOverrides.filter(o => !(o.schedule_id === scheduleId && o.date === date))
     invalidateCache('overrides')
+    emitDataChangedEvent('override')
     return true
   }
 }

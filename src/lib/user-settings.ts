@@ -11,6 +11,7 @@ export const HEALTH_REMINDER_DEFAULTS = {
   silent_start: '00:30',
   silent_end: '08:00',
   ddl_reminder_enabled: 'true',
+  ddl_reminder_defaults: '[]',
 }
 
 export function getHealthReminderSetting(key: string): string {

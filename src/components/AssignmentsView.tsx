@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Course, Assignment, CourseSchedule, DDL_REMINDER_OPTIONS } from '@/lib/types'
+import { Course, Assignment, CourseSchedule, DDL_REMINDER_OPTIONS, formatReminderLabel } from '@/lib/types'
 import { updateAssignment, createAssignment, deleteAssignment } from '@/lib/data'
 import { useData } from './DataContext'
 import { Modal } from './Modal'
@@ -85,6 +85,8 @@ export function AssignmentsView() {
   const [editDesc, setEditDesc] = useState('')
   const [editScheduleId, setEditScheduleId] = useState('')
   const [editReminders, setEditReminders] = useState<number[]>([])
+  const [customReminderInput, setCustomReminderInput] = useState('')
+  const [editCustomReminderInput, setEditCustomReminderInput] = useState('')
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60000)
@@ -333,6 +335,44 @@ export function AssignmentsView() {
                                   {opt.label}
                                 </button>
                               ))}
+                              {newReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                                <span key={r} className="px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                                  style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                                  {formatReminderLabel(r)}
+                                  <button onClick={() => setNewReminders(prev => prev.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
+                                </span>
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-2">
+                              <input
+                                type="number"
+                                min="1"
+                                value={customReminderInput}
+                                onChange={(e) => setCustomReminderInput(e.target.value)}
+                                placeholder="自定义分钟数"
+                                className="w-28 px-2 py-1 rounded-lg text-xs"
+                                style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const v = parseInt(customReminderInput)
+                                    if (v > 0 && !newReminders.includes(v)) {
+                                      setNewReminders(prev => [...prev, v])
+                                      setCustomReminderInput('')
+                                    }
+                                  }
+                                }}
+                              />
+                              <button
+                                onClick={() => {
+                                  const v = parseInt(customReminderInput)
+                                  if (v > 0 && !newReminders.includes(v)) {
+                                    setNewReminders(prev => [...prev, v])
+                                    setCustomReminderInput('')
+                                  }
+                                }}
+                                className="px-2 py-1 rounded-lg text-xs"
+                                style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+                              >+ 添加</button>
                             </div>
                           </div>
                         </div>
@@ -530,6 +570,44 @@ export function AssignmentsView() {
                                     {opt.label}
                                   </button>
                                 ))}
+                                {editReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                                  <span key={r} className="px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                                    style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                                    {formatReminderLabel(r)}
+                                    <button onClick={() => setEditReminders(prev => prev.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-2">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={editCustomReminderInput}
+                                  onChange={(e) => setEditCustomReminderInput(e.target.value)}
+                                  placeholder="自定义分钟数"
+                                  className="w-28 px-2 py-1 rounded-lg text-xs"
+                                  style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const v = parseInt(editCustomReminderInput)
+                                      if (v > 0 && !editReminders.includes(v)) {
+                                        setEditReminders(prev => [...prev, v])
+                                        setEditCustomReminderInput('')
+                                      }
+                                    }
+                                  }}
+                                />
+                                <button
+                                  onClick={() => {
+                                    const v = parseInt(editCustomReminderInput)
+                                    if (v > 0 && !editReminders.includes(v)) {
+                                      setEditReminders(prev => [...prev, v])
+                                      setEditCustomReminderInput('')
+                                    }
+                                  }}
+                                  className="px-2 py-1 rounded-lg text-xs"
+                                  style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+                                >+ 添加</button>
                               </div>
                             </div>
                             <div className="flex gap-2">
@@ -549,15 +627,12 @@ export function AssignmentsView() {
                               <div className="mb-3">
                                 <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>提醒设置</p>
                                 <div className="flex flex-wrap gap-1">
-                                  {assignment.reminders.map(r => {
-                                    const opt = DDL_REMINDER_OPTIONS.find(o => o.value === r)
-                                    return (
-                                      <span key={r} className="px-2 py-0.5 rounded-full text-xs"
-                                        style={{ backgroundColor: 'var(--accent-info)26', color: 'var(--accent-info)', border: '1px solid var(--accent-info)40' }}>
-                                        ⏰ {opt?.label || `${r}分钟前`}
-                                      </span>
-                                    )
-                                  })}
+                                  {assignment.reminders.map(r => (
+                                    <span key={r} className="px-2 py-0.5 rounded-full text-xs"
+                                      style={{ backgroundColor: 'var(--accent-info)26', color: 'var(--accent-info)', border: '1px solid var(--accent-info)40' }}>
+                                      ⏰ {formatReminderLabel(r)}
+                                    </span>
+                                  ))}
                                 </div>
                               </div>
                             )}
@@ -672,6 +747,44 @@ export function AssignmentsView() {
                   {opt.label}
                 </button>
               ))}
+              {newReminders.filter(r => !DDL_REMINDER_OPTIONS.some(o => o.value === r)).map(r => (
+                <span key={r} className="px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                  style={{ backgroundColor: 'var(--accent-info)', color: '#fff', border: '1px solid var(--accent-info)' }}>
+                  {formatReminderLabel(r)}
+                  <button onClick={() => setNewReminders(prev => prev.filter(v => v !== r))} className="ml-0.5 hover:opacity-70">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 mt-2">
+              <input
+                type="number"
+                min="1"
+                value={customReminderInput}
+                onChange={(e) => setCustomReminderInput(e.target.value)}
+                placeholder="自定义分钟数"
+                className="w-28 px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--border-light)', color: 'var(--text-primary)', backgroundColor: 'var(--bg-primary)' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const v = parseInt(customReminderInput)
+                    if (v > 0 && !newReminders.includes(v)) {
+                      setNewReminders(prev => [...prev, v])
+                      setCustomReminderInput('')
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const v = parseInt(customReminderInput)
+                  if (v > 0 && !newReminders.includes(v)) {
+                    setNewReminders(prev => [...prev, v])
+                    setCustomReminderInput('')
+                  }
+                }}
+                className="px-2 py-1 rounded-lg text-xs"
+                style={{ border: '1px solid var(--accent-info)', color: 'var(--accent-info)', backgroundColor: 'var(--bg-primary)' }}
+              >+ 添加</button>
             </div>
           </div>
           <button

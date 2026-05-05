@@ -14,6 +14,7 @@ interface ReminderContextType {
   kegelTimes: string
   nightEnabled: boolean
   ddlEnabled: boolean
+  ddlReminderDefaults: number[]
   notificationPermission: NotificationPermission
   lastWaterCheck: number
   lastKegelCheck: number
@@ -27,6 +28,7 @@ interface ReminderContextType {
   setKegelTimes: (times: string) => void
   toggleNight: () => void
   toggleDdl: () => void
+  setDdlReminderDefaults: (defaults: number[]) => void
   requestPermission: () => Promise<NotificationPermission>
   dismissPermissionPrompt: () => void
 }
@@ -85,6 +87,12 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
   })
   const [nightEnabled, setNightEnabled] = useState(() => getHealthReminderSetting('night_reminder_enabled') !== 'false')
   const [ddlEnabled, setDdlEnabled] = useState(() => getHealthReminderSetting('ddl_reminder_enabled') !== 'false')
+  const [ddlReminderDefaults, setDdlReminderDefaultsState] = useState<number[]>(() => {
+    try {
+      const stored = getHealthReminderSetting('ddl_reminder_defaults')
+      return stored ? JSON.parse(stored) : []
+    } catch { return [] }
+  })
   const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission)
 
   const [lastWaterCheck, setLastWaterCheck] = useState(() => {
@@ -230,6 +238,11 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const setDdlReminderDefaults = useCallback((defaults: number[]) => {
+    setDdlReminderDefaultsState(defaults)
+    setSettingBoth('ddl_reminder_defaults', JSON.stringify(defaults))
+  }, [])
+
   const requestPermission = useCallback(async () => {
     setPermissionError(false)
     try {
@@ -324,6 +337,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         kegelTimes,
         nightEnabled,
         ddlEnabled,
+        ddlReminderDefaults,
         notificationPermission,
         lastWaterCheck,
         lastKegelCheck,
@@ -337,6 +351,7 @@ export function ReminderProvider({ children }: { children: ReactNode }) {
         setKegelTimes,
         toggleNight,
         toggleDdl,
+        setDdlReminderDefaults,
         requestPermission,
         dismissPermissionPrompt,
       }}
